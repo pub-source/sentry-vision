@@ -85,7 +85,7 @@ export default function CameraFeed({
         ctx.drawImage(video, 0, 0, w, h);
         ctx.restore();
       } else if (simulationMode) {
-        // Generate animated simulation pattern
+        // Generate animated simulation pattern with high contrast for saliency detection
         const t = Date.now() / 1000;
         const imgData = ctx.createImageData(w, h);
         for (let y = 0; y < h; y++) {
@@ -93,10 +93,16 @@ export default function CameraFeed({
             const i = (y * w + x) * 4;
             const nx = x / w;
             const ny = y / h;
-            const v = Math.sin(nx * 10 + t) * Math.cos(ny * 8 + t * 0.7) * 0.5 + 0.5;
-            imgData.data[i] = Math.floor(v * 30 + 10);
-            imgData.data[i + 1] = Math.floor(v * 40 + 15);
-            imgData.data[i + 2] = Math.floor(v * 50 + 20);
+            // Multiple frequency patterns for rich edge content
+            const v1 = Math.sin(nx * 20 + t * 1.5) * Math.cos(ny * 15 + t * 0.9);
+            const v2 = Math.sin((nx + ny) * 12 + t * 2) * 0.5;
+            const v3 = Math.cos(nx * 8 - ny * 6 + t * 1.2) * 0.3;
+            const v = (v1 + v2 + v3) * 0.5 + 0.5;
+            // High contrast range 20-240
+            const brightness = Math.floor(v * 220 + 20);
+            imgData.data[i] = Math.floor(brightness * 0.4);
+            imgData.data[i + 1] = Math.floor(brightness * 0.7);
+            imgData.data[i + 2] = brightness;
             imgData.data[i + 3] = 255;
           }
         }

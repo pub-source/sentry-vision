@@ -7,12 +7,13 @@ interface SaliencyViewProps {
   sourceCanvas: HTMLCanvasElement | null;
   saliencyMode: SaliencyMode;
   threshold: number;
-  colored: boolean; // true = heatmap, false = raw grayscale (low-fi)
+  colored: boolean;
   active: boolean;
   score: number;
+  onScoreUpdate?: (score: number) => void;
 }
 
-export default function SaliencyView({ title, sourceCanvas, saliencyMode, threshold, colored, active, score }: SaliencyViewProps) {
+export default function SaliencyView({ title, sourceCanvas, saliencyMode, threshold, colored, active, score, onScoreUpdate }: SaliencyViewProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const prevFrameRef = useRef<ImageData | null>(null);
   const animRef = useRef<number>(0);
@@ -50,6 +51,9 @@ export default function SaliencyView({ title, sourceCanvas, saliencyMode, thresh
           } else {
             ctx.putImageData(saliencyData, 0, 0);
           }
+
+          const s = computeSaliencyScore(saliencyData);
+          onScoreUpdate?.(s);
         }
       }
 
@@ -62,10 +66,10 @@ export default function SaliencyView({ title, sourceCanvas, saliencyMode, thresh
       running = false;
       cancelAnimationFrame(animRef.current);
     };
-  }, [active, sourceCanvas, saliencyMode, threshold, colored]);
+  }, [active, sourceCanvas, saliencyMode, threshold, colored, onScoreUpdate]);
 
   return (
-    <div className="relative bg-card rounded-md overflow-hidden border border-border panel-glow">
+    <div className="relative bg-card rounded-md overflow-hidden border border-border panel-glow h-full">
       <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between px-2 py-1 bg-gradient-to-b from-background/80 to-transparent">
         <span className="text-[10px] font-mono text-primary uppercase tracking-wider">{title}</span>
         <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded ${
@@ -80,7 +84,7 @@ export default function SaliencyView({ title, sourceCanvas, saliencyMode, thresh
         ref={canvasRef}
         width={320}
         height={240}
-        className="w-full aspect-video bg-background"
+        className="w-full h-full object-cover aspect-video bg-background"
       />
       {!active && (
         <div className="absolute inset-0 flex items-center justify-center bg-background/80">
