@@ -37,7 +37,8 @@ export default function Index() {
   const [researchMode, setResearchMode] = useState(false);
   const [sourceCanvas, setSourceCanvas] = useState<HTMLCanvasElement | null>(null);
   const alertCooldownRef = useRef<Record<string, number>>({});
-
+  const snapshotCooldownRef = useRef(0);
+  const [snapshots, setSnapshots] = useState<{ id: string; timestamp: Date; dataUrl: string; reason: string }[]>([]);
   const addAlert = useCallback((message: string, severity: Alert['severity'], cameraId: number) => {
     const key = `${message}-${cameraId}`;
     const now = Date.now();
@@ -108,8 +109,33 @@ export default function Index() {
     }
     if (audioFeatures.speechDetected && score > 50) {
       addAlert('Person + loud speech = HIGH ATTENTION', 'critical', 1);
+
+      // Auto-snapshot on high attention (cooldown 5s)
+      const now = Date.now();
+      if (now - snapshotCooldownRef.current > 5000 && sourceCanvas) {
+        snapshotCooldownRef.current = now;
+        try {
+          const dataUrl = sourceCanvas.toDataURL('image/png');
+          const snap = {
+            id: `snap-${now}`,
+            timestamp: new Date(),
+            dataUrl,
+            reason: 'Person + loud speech (HIGH ATTENTION)',
+          };
+          setSnapshots(prev => [snap, ...prev].slice(0, 50));
+          console.log('[AutoSnapshot] Captured snapshot:', snap.reason);
+
+          // Auto-download
+          const a = document.createElement('a');
+          a.href = dataUrl;
+          a.download = `snapshot-${new Date().toISOString().replace(/[:.]/g, '-')}.png`;
+          a.click();
+        } catch (err) {
+          console.error('[AutoSnapshot] Failed:', err);
+        }
+      }
     }
-  }, [audioFeatures, addAlert, updateCamera]);
+  }, [audioFeatures, addAlert, updateCamera, sourceCanvas]);
 
   const handleSaliencyViewScore = useCallback((score: number) => {
     setGlobalSaliencyScore(score);
@@ -297,6 +323,47 @@ export default function Index() {
           />
 
           <AlertLog alerts={alerts} visible={showAlerts} />
+
+          {/* Auto-Snapshots */}
+          {snapshots.length > 0 && (
+            <div className="bg-card rounded-md border border-border panel-glow p-3 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-mono text-primary uppercase tracking-wider">
+                  Auto-Snapshots ({snapshots.length})
+                </span>
+                <button
+                  onClick={() => setSnapshots([])}
+                  className="text-[9px] font-mono text-muted-foreground hover:text-destructive transition-colors"
+                >
+                  Clear
+                </button>
+              </div>
+              <div className="space-y-1.5 max-h-40 overflow-y-auto">
+                {snapshots.slice(0, 10).map(snap => (
+                  <div key={snap.id} className="space-y-0.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[9px] font-mono text-muted-foreground">
+                        {snap.timestamp.toLocaleTimeString()}
+                      </span>
+                      <a
+                        href={snap.dataUrl}
+                        download={`snapshot-${snap.id}.png`}
+                        className="text-[9px] font-mono text-primary hover:underline"
+                      >
+                        ↓ Save
+                      </a>
+                    </div>
+                    <img
+                      src={snap.dataUrl}
+                      alt={snap.reason}
+                      className="w-full rounded border border-border"
+                    />
+                    <span className="text-[8px] font-mono text-destructive">{snap.reason}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           <DebugPanel cameras={cameras} devices={devices} errors={errors} detectionStats={detectionStats} />
         </div>
