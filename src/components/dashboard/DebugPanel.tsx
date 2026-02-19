@@ -1,15 +1,46 @@
 import type { CameraState } from '@/types/dashboard';
 
+interface DetectionStats {
+  totalDetected: number;
+  filteredPriority: number;
+  modelLoaded: boolean;
+  modelLoading: boolean;
+  modelError: string | null;
+}
+
 interface DebugPanelProps {
   cameras: CameraState[];
   devices: MediaDeviceInfo[];
   errors: string[];
+  detectionStats: DetectionStats;
 }
 
-export default function DebugPanel({ cameras, devices, errors }: DebugPanelProps) {
+export default function DebugPanel({ cameras, devices, errors, detectionStats }: DebugPanelProps) {
   return (
     <div className="bg-card rounded-md border border-border panel-glow p-3 space-y-2">
       <span className="text-[10px] font-mono text-primary uppercase tracking-wider">Debug</span>
+
+      {/* Object Detection Status */}
+      <div className="space-y-1">
+        <span className="text-[9px] font-mono text-muted-foreground">Object Detection</span>
+        <div className="flex justify-between text-[9px] font-mono">
+          <span className="text-foreground/70">Model</span>
+          <span className={detectionStats.modelLoaded ? 'text-success' : detectionStats.modelLoading ? 'text-warning' : 'text-destructive'}>
+            {detectionStats.modelLoading ? 'LOADING' : detectionStats.modelLoaded ? 'COCO-SSD OK' : 'NOT LOADED'}
+          </span>
+        </div>
+        <div className="flex justify-between text-[9px] font-mono">
+          <span className="text-foreground/70">Total Detected</span>
+          <span className="text-foreground">{detectionStats.totalDetected}</span>
+        </div>
+        <div className="flex justify-between text-[9px] font-mono">
+          <span className="text-foreground/70">Priority Filtered</span>
+          <span className="text-accent">{detectionStats.filteredPriority}</span>
+        </div>
+        {detectionStats.modelError && (
+          <div className="text-[9px] font-mono text-destructive break-all">⚠ {detectionStats.modelError}</div>
+        )}
+      </div>
 
       <div className="space-y-1">
         <span className="text-[9px] font-mono text-muted-foreground">Detected Devices ({devices.length})</span>
