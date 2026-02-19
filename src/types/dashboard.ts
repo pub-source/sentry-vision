@@ -8,11 +8,14 @@ export interface DetectedObject {
   bbox: [number, number, number, number]; // x, y, width, height
 }
 
+export type AudioEventType = 'speech' | 'clap' | 'scream' | 'bang' | 'none';
+
 export interface AudioFeatures {
   decibel: number;
   speechDetected: boolean;
   pitchEstimate: number;
   waveform: number[];
+  audioEvent: AudioEventType;
 }
 
 export interface Alert {
@@ -21,6 +24,7 @@ export interface Alert {
   message: string;
   severity: AlertSeverity;
   cameraId: number;
+  snapshotId?: string;
 }
 
 export interface CameraState {

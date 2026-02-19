@@ -39,7 +39,8 @@ export default function Index() {
   const alertCooldownRef = useRef<Record<string, number>>({});
   const snapshotCooldownRef = useRef(0);
   const [snapshots, setSnapshots] = useState<{ id: string; timestamp: Date; dataUrl: string; reason: string }[]>([]);
-  const addAlert = useCallback((message: string, severity: Alert['severity'], cameraId: number) => {
+  const [selectedSnapshot, setSelectedSnapshot] = useState<{ id: string; timestamp: Date; dataUrl: string; reason: string } | null>(null);
+  const addAlert = useCallback((message: string, severity: Alert['severity'], cameraId: number, snapshotId?: string) => {
     const key = `${message}-${cameraId}`;
     const now = Date.now();
     if (alertCooldownRef.current[key] && now - alertCooldownRef.current[key] < 3000) return;
@@ -51,6 +52,7 @@ export default function Index() {
       message,
       severity,
       cameraId,
+      snapshotId,
     }, ...prev].slice(0, 200));
   }, []);
 
@@ -101,6 +103,16 @@ export default function Index() {
     const newAttention = Math.min(100, Math.round(score + audioBoost + dbBoost));
     setAttentionScore(newAttention);
 
+    // Audio event classification alerts
+    if (audioFeatures.audioEvent === 'clap') {
+      addAlert('Clap detected', 'medium', 0);
+    }
+    if (audioFeatures.audioEvent === 'scream') {
+      addAlert('Scream detected!', 'high', 0);
+    }
+    if (audioFeatures.audioEvent === 'bang') {
+      addAlert('Bang/impact detected!', 'critical', 0);
+    }
     if (audioFeatures.speechDetected) {
       addAlert('Speech detected', 'low', 0);
     }
@@ -108,16 +120,16 @@ export default function Index() {
       addAlert('High noise level', 'medium', 0);
     }
     if (audioFeatures.speechDetected && score > 50) {
-      addAlert('Person + loud speech = HIGH ATTENTION', 'critical', 1);
-
       // Auto-snapshot on high attention (cooldown 5s)
       const now = Date.now();
+      let snapId: string | undefined;
       if (now - snapshotCooldownRef.current > 5000 && sourceCanvas) {
         snapshotCooldownRef.current = now;
         try {
           const dataUrl = sourceCanvas.toDataURL('image/png');
+          snapId = `snap-${now}`;
           const snap = {
-            id: `snap-${now}`,
+            id: snapId,
             timestamp: new Date(),
             dataUrl,
             reason: 'Person + loud speech (HIGH ATTENTION)',
@@ -125,7 +137,6 @@ export default function Index() {
           setSnapshots(prev => [snap, ...prev].slice(0, 50));
           console.log('[AutoSnapshot] Captured snapshot:', snap.reason);
 
-          // Auto-download
           const a = document.createElement('a');
           a.href = dataUrl;
           a.download = `snapshot-${new Date().toISOString().replace(/[:.]/g, '-')}.png`;
@@ -134,6 +145,7 @@ export default function Index() {
           console.error('[AutoSnapshot] Failed:', err);
         }
       }
+      addAlert('Person + loud speech = HIGH ATTENTION', 'critical', 1, snapId);
     }
   }, [audioFeatures, addAlert, updateCamera, sourceCanvas]);
 
@@ -257,22 +269,55 @@ export default function Index() {
               <span className="text-[9px] font-mono text-muted-foreground">{alerts.length} events</span>
             </div>
             <div className="flex gap-0.5 overflow-x-auto pb-1 items-end h-8">
-              {alerts.slice(0, 80).map(alert => (
-                <div
-                  key={alert.id}
-                  className={`flex-shrink-0 w-1 rounded-t-full transition-all ${
-                    alert.severity === 'critical' ? 'bg-destructive h-8' :
-                    alert.severity === 'high' ? 'bg-destructive/60 h-6' :
-                    alert.severity === 'medium' ? 'bg-warning h-4' :
-                    'bg-primary/40 h-2'
-                  }`}
-                  title={`${alert.message} - ${alert.timestamp.toLocaleTimeString()}`}
-                />
-              ))}
+              {alerts.slice(0, 80).map(alert => {
+                const hasSnap = alert.snapshotId || snapshots.some(s => Math.abs(s.timestamp.getTime() - alert.timestamp.getTime()) < 5000);
+                return (
+                  <div
+                    key={alert.id}
+                    onClick={() => {
+                      const snap = alert.snapshotId
+                        ? snapshots.find(s => s.id === alert.snapshotId)
+                        : snapshots.find(s => Math.abs(s.timestamp.getTime() - alert.timestamp.getTime()) < 5000);
+                      if (snap) setSelectedSnapshot(snap);
+                    }}
+                    className={`flex-shrink-0 w-1 rounded-t-full transition-all ${
+                      hasSnap ? 'cursor-pointer hover:opacity-70 ring-1 ring-primary/50' : ''
+                    } ${
+                      alert.severity === 'critical' ? 'bg-destructive h-8' :
+                      alert.severity === 'high' ? 'bg-destructive/60 h-6' :
+                      alert.severity === 'medium' ? 'bg-warning h-4' :
+                      'bg-primary/40 h-2'
+                    }`}
+                    title={`${alert.message} - ${alert.timestamp.toLocaleTimeString()}${hasSnap ? ' 📸 Click to view' : ''}`}
+                  />
+                );
+              })}
               {alerts.length === 0 && (
                 <span className="text-[9px] font-mono text-muted-foreground">No events recorded</span>
               )}
             </div>
+            {/* Selected snapshot viewer */}
+            {selectedSnapshot && (
+              <div className="mt-2 p-2 bg-secondary/50 rounded border border-primary/30 space-y-1">
+                <div className="flex items-center justify-between">
+                  <span className="text-[9px] font-mono text-primary">
+                    📸 Playback — {selectedSnapshot.timestamp.toLocaleTimeString()}
+                  </span>
+                  <button
+                    onClick={() => setSelectedSnapshot(null)}
+                    className="text-[9px] font-mono text-muted-foreground hover:text-destructive"
+                  >
+                    ✕ Close
+                  </button>
+                </div>
+                <img
+                  src={selectedSnapshot.dataUrl}
+                  alt={selectedSnapshot.reason}
+                  className="w-full max-h-48 object-contain rounded border border-border"
+                />
+                <span className="text-[8px] font-mono text-destructive">{selectedSnapshot.reason}</span>
+              </div>
+            )}
           </div>
         </div>
 
@@ -322,7 +367,7 @@ export default function Index() {
             onToggleResearch={() => setResearchMode(p => !p)}
           />
 
-          <AlertLog alerts={alerts} visible={showAlerts} />
+          <AlertLog alerts={alerts} visible={showAlerts} snapshots={snapshots} />
 
           {/* Auto-Snapshots */}
           {snapshots.length > 0 && (

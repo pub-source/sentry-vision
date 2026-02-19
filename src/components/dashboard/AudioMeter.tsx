@@ -5,8 +5,17 @@ interface AudioMeterProps {
   active: boolean;
 }
 
+const EVENT_STYLES: Record<string, { label: string; color: string; bg: string }> = {
+  speech: { label: '🗣 SPEECH', color: 'text-primary', bg: 'border-primary bg-primary/10' },
+  clap: { label: '👏 CLAP', color: 'text-accent', bg: 'border-accent bg-accent/10' },
+  scream: { label: '😱 SCREAM', color: 'text-destructive', bg: 'border-destructive bg-destructive/10' },
+  bang: { label: '💥 BANG', color: 'text-warning', bg: 'border-warning bg-warning/10' },
+  none: { label: '○ QUIET', color: 'text-muted-foreground', bg: 'border-border' },
+};
+
 export default function AudioMeter({ features, active }: AudioMeterProps) {
   const dbNormalized = Math.max(0, Math.min(100, ((features.decibel + 60) / 60) * 100));
+  const evt = EVENT_STYLES[features.audioEvent] || EVENT_STYLES.none;
 
   return (
     <div className="bg-card rounded-md border border-border panel-glow p-3 space-y-3">
@@ -51,6 +60,14 @@ export default function AudioMeter({ features, active }: AudioMeterProps) {
               }}
             />
           ))}
+        </div>
+      </div>
+
+      {/* Audio Event Classification */}
+      <div className="space-y-1">
+        <span className="text-[10px] font-mono text-muted-foreground">Event Classification</span>
+        <div className={`text-[10px] font-mono px-2 py-1.5 rounded border transition-all ${evt.bg} ${evt.color}`}>
+          {evt.label}
         </div>
       </div>
 
