@@ -10,12 +10,14 @@ import AttentionGauge from '@/components/dashboard/AttentionGauge';
 import ResearchPanel from '@/components/dashboard/ResearchPanel';
 import { useCamera } from '@/hooks/useCamera';
 import { useAudioAnalysis } from '@/hooks/useAudioAnalysis';
+import { useObjectDetection } from '@/hooks/useObjectDetection';
 import type { SaliencyMode, QualityMode, Alert, DetectedObject } from '@/types/dashboard';
 import { DEFAULT_PRIORITY_OBJECTS } from '@/types/dashboard';
 
 export default function Index() {
   const { cameras, devices, startCameras, stopCameras, updateCamera, enumerateDevices } = useCamera();
   const { audioFeatures, startAudio, stopAudio } = useAudioAnalysis();
+  const { loadModel, detect, stats: detectionStats } = useObjectDetection();
 
   const [running, setRunning] = useState(false);
   const [saliencyMode, setSaliencyMode] = useState<SaliencyMode>('sobel');
@@ -53,6 +55,7 @@ export default function Index() {
 
   const handleStart = useCallback(async () => {
     await enumerateDevices();
+    loadModel(); // Start loading COCO-SSD model
     if (simulationMode) {
       setRunning(true);
       startAudio();
@@ -61,7 +64,7 @@ export default function Index() {
       await startAudio();
       setRunning(true);
     }
-  }, [simulationMode, quality, startCameras, startAudio, enumerateDevices]);
+  }, [simulationMode, quality, startCameras, startAudio, enumerateDevices, loadModel]);
 
   const handleStop = useCallback(() => {
     setRunning(false);
@@ -112,8 +115,11 @@ export default function Index() {
     setGlobalSaliencyScore(score);
   }, []);
 
+  const handleDetectFrame = useCallback(async (video: HTMLVideoElement): Promise<DetectedObject[]> => {
+    return detect(video, priorityObjects);
+  }, [detect, priorityObjects]);
+
   const handleFrameCapture = useCallback((canvas: HTMLCanvasElement) => {
-    // Only update state once to avoid re-render loops
     setSourceCanvas(prev => prev === canvas ? prev : canvas);
   }, []);
 
@@ -176,10 +182,13 @@ export default function Index() {
               saliencyMode={saliencyMode}
               threshold={threshold}
               simulationMode={simulationMode && running}
+              priorityObjects={priorityObjects}
+              detectionStats={detectionStats}
               onFpsUpdate={handleFpsUpdate}
               onObjectsUpdate={handleObjectsUpdate}
               onSaliencyScoreUpdate={handleCameraSaliencyScore}
               onFrameCapture={handleFrameCapture}
+              onDetectFrame={handleDetectFrame}
             />
 
             {/* Panel 2: Saliency Output (Colored Heatmap) */}
@@ -289,7 +298,7 @@ export default function Index() {
 
           <AlertLog alerts={alerts} visible={showAlerts} />
 
-          <DebugPanel cameras={cameras} devices={devices} errors={errors} />
+          <DebugPanel cameras={cameras} devices={devices} errors={errors} detectionStats={detectionStats} />
         </div>
       </div>
     </div>

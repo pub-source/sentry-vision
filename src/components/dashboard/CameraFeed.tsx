@@ -2,6 +2,14 @@ import { useRef, useEffect, useState, useCallback } from 'react';
 import type { CameraState, SaliencyMode, DetectedObject } from '@/types/dashboard';
 import { computeSaliency, applyHeatmapColor, computeSaliencyScore } from '@/lib/saliency';
 
+interface DetectionStats {
+  totalDetected: number;
+  filteredPriority: number;
+  modelLoaded: boolean;
+  modelLoading: boolean;
+  modelError: string | null;
+}
+
 interface CameraFeedProps {
   camera: CameraState;
   mirror: boolean;
@@ -11,10 +19,13 @@ interface CameraFeedProps {
   saliencyMode: SaliencyMode;
   threshold: number;
   simulationMode: boolean;
+  priorityObjects: string[];
+  detectionStats: DetectionStats;
   onFpsUpdate: (fps: number) => void;
   onObjectsUpdate: (objects: DetectedObject[]) => void;
   onSaliencyScoreUpdate: (score: number) => void;
   onFrameCapture?: (canvas: HTMLCanvasElement) => void;
+  onDetectFrame?: (video: HTMLVideoElement) => Promise<DetectedObject[]>;
 }
 
 export default function CameraFeed({
@@ -26,10 +37,13 @@ export default function CameraFeed({
   saliencyMode,
   threshold,
   simulationMode,
+  priorityObjects,
+  detectionStats,
   onFpsUpdate,
   onObjectsUpdate,
   onSaliencyScoreUpdate,
   onFrameCapture,
+  onDetectFrame,
 }: CameraFeedProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -37,6 +51,8 @@ export default function CameraFeed({
   const fpsCountRef = useRef(0);
   const fpsTimeRef = useRef(Date.now());
   const animRef = useRef<number>(0);
+  const detectedObjectsRef = useRef<DetectedObject[]>([]);
+  const detectionIntervalRef = useRef<number>(0);
   const [simObjects] = useState<DetectedObject[]>(() => {
     if (!simulationMode) return [];
     return [
@@ -52,10 +68,36 @@ export default function CameraFeed({
     if (!video || !camera.stream) return;
     video.srcObject = camera.stream;
     video.play().catch(() => {});
+    console.log('[CameraFeed] Camera stream initialized for', camera.label);
     return () => {
       video.srcObject = null;
     };
-  }, [camera.stream]);
+  }, [camera.stream, camera.label]);
+
+  // Object detection loop (separate from render loop, runs every 200ms)
+  useEffect(() => {
+    if (!camera.active || simulationMode || !onDetectFrame) return;
+    const video = videoRef.current;
+    if (!video) return;
+
+    console.log('[CameraFeed] Detection loop starting for', camera.label);
+
+    const runDetection = async () => {
+      if (video.readyState >= 2) {
+        console.log('[CameraFeed] Detection loop running.');
+        const objects = await onDetectFrame(video);
+        detectedObjectsRef.current = objects;
+        onObjectsUpdate(objects);
+      }
+    };
+
+    // Run detection every 200ms (5 FPS detection, separate from render)
+    detectionIntervalRef.current = window.setInterval(runDetection, 200);
+
+    return () => {
+      window.clearInterval(detectionIntervalRef.current);
+    };
+  }, [camera.active, camera.label, simulationMode, onDetectFrame, onObjectsUpdate]);
 
   // Main render loop
   useEffect(() => {
@@ -85,7 +127,6 @@ export default function CameraFeed({
         ctx.drawImage(video, 0, 0, w, h);
         ctx.restore();
       } else if (simulationMode) {
-        // Generate animated simulation pattern with high contrast for saliency detection
         const t = Date.now() / 1000;
         const imgData = ctx.createImageData(w, h);
         for (let y = 0; y < h; y++) {
@@ -93,12 +134,10 @@ export default function CameraFeed({
             const i = (y * w + x) * 4;
             const nx = x / w;
             const ny = y / h;
-            // Multiple frequency patterns for rich edge content
             const v1 = Math.sin(nx * 20 + t * 1.5) * Math.cos(ny * 15 + t * 0.9);
             const v2 = Math.sin((nx + ny) * 12 + t * 2) * 0.5;
             const v3 = Math.cos(nx * 8 - ny * 6 + t * 1.2) * 0.3;
             const v = (v1 + v2 + v3) * 0.5 + 0.5;
-            // High contrast range 20-240
             const brightness = Math.floor(v * 220 + 20);
             imgData.data[i] = Math.floor(brightness * 0.4);
             imgData.data[i + 1] = Math.floor(brightness * 0.7);
@@ -118,7 +157,6 @@ export default function CameraFeed({
         const score = computeSaliencyScore(saliencyData);
         onSaliencyScoreUpdate(score);
 
-        // Draw heatmap overlay
         if (showHeatmap) {
           const heatmap = applyHeatmapColor(saliencyData);
           const tempCanvas = document.createElement('canvas');
@@ -136,24 +174,44 @@ export default function CameraFeed({
         // Skip saliency on error
       }
 
-      // Draw bounding boxes
+      // Draw bounding boxes for priority objects
       if (showBoundingBoxes) {
-        const objects = simulationMode ? simObjects : camera.objects;
+        const objects = simulationMode ? simObjects : detectedObjectsRef.current;
         if (objects.length > 0) {
           objects.forEach(obj => {
             const [bx, by, bw, bh] = obj.bbox;
+            // Scale bbox to canvas size
+            const sx = w / (video?.videoWidth || w);
+            const sy = h / (video?.videoHeight || h);
+            const dx = simulationMode ? bx : bx * sx;
+            const dy = simulationMode ? by : by * sy;
+            const dw = simulationMode ? bw : bw * sx;
+            const dh = simulationMode ? bh : bh * sy;
+
             ctx.strokeStyle = obj.confidence > 0.8 ? '#00e5ff' : obj.confidence > 0.5 ? '#ffab00' : '#ff1744';
             ctx.lineWidth = 2;
-            ctx.strokeRect(bx, by, bw, bh);
+            ctx.strokeRect(dx, dy, dw, dh);
 
             const labelText = `${obj.label} ${(obj.confidence * 100).toFixed(0)}%`;
             ctx.font = '11px "JetBrains Mono", monospace';
             const tm = ctx.measureText(labelText);
             ctx.fillStyle = 'rgba(0,0,0,0.7)';
-            ctx.fillRect(bx, by - 16, tm.width + 8, 16);
+            ctx.fillRect(dx, dy - 16, tm.width + 8, 16);
             ctx.fillStyle = ctx.strokeStyle;
-            ctx.fillText(labelText, bx + 4, by - 4);
+            ctx.fillText(labelText, dx + 4, dy - 4);
           });
+        } else if (!simulationMode && camera.active) {
+          // Show "No Priority Object Detected" message
+          ctx.font = '12px "JetBrains Mono", monospace';
+          ctx.fillStyle = 'rgba(0,0,0,0.6)';
+          const msg = 'No Priority Object Detected';
+          const tm = ctx.measureText(msg);
+          ctx.fillRect(w / 2 - tm.width / 2 - 6, h - 28, tm.width + 12, 20);
+          ctx.fillStyle = '#888888';
+          ctx.fillText(msg, w / 2 - tm.width / 2, h - 14);
+        }
+
+        if (simulationMode && objects.length > 0) {
           onObjectsUpdate(objects);
         }
       }
@@ -179,7 +237,7 @@ export default function CameraFeed({
       running = false;
       cancelAnimationFrame(animRef.current);
     };
-  }, [camera.active, camera.objects, simulationMode, mirror, showBoundingBoxes, showHeatmap, heatmapOpacity, saliencyMode, threshold, simObjects, onFpsUpdate, onObjectsUpdate, onSaliencyScoreUpdate, onFrameCapture]);
+  }, [camera.active, simulationMode, mirror, showBoundingBoxes, showHeatmap, heatmapOpacity, saliencyMode, threshold, simObjects, onFpsUpdate, onObjectsUpdate, onSaliencyScoreUpdate, onFrameCapture]);
 
   return (
     <div className="relative bg-card rounded-md overflow-hidden border border-border panel-glow group">
@@ -213,6 +271,22 @@ export default function CameraFeed({
         className="w-full h-full object-cover aspect-video"
       />
 
+      {/* Detection stats badge */}
+      <div className="absolute bottom-1 left-1 z-10 flex gap-1">
+        <span className={`text-[9px] font-mono px-1 py-0.5 rounded ${
+          detectionStats.modelLoaded ? 'bg-success/20 text-success' :
+          detectionStats.modelLoading ? 'bg-warning/20 text-warning' :
+          'bg-muted/50 text-muted-foreground'
+        }`}>
+          {detectionStats.modelLoading ? 'LOADING…' : detectionStats.modelLoaded ? 'MODEL OK' : 'NO MODEL'}
+        </span>
+        {detectionStats.modelLoaded && (
+          <span className="text-[9px] font-mono px-1 py-0.5 rounded bg-secondary/60 text-secondary-foreground">
+            {detectionStats.filteredPriority}/{detectionStats.totalDetected} obj
+          </span>
+        )}
+      </div>
+
       {/* Saliency score badge */}
       <div className="absolute bottom-1 right-1 z-10">
         <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded ${
@@ -223,6 +297,15 @@ export default function CameraFeed({
           S:{camera.saliencyScore}
         </span>
       </div>
+
+      {/* Model error overlay */}
+      {detectionStats.modelError && (
+        <div className="absolute top-8 left-1 right-1 z-10">
+          <span className="text-[9px] font-mono text-destructive bg-destructive/10 px-1.5 py-0.5 rounded block truncate">
+            ⚠ {detectionStats.modelError}
+          </span>
+        </div>
+      )}
 
       {/* Inactive overlay */}
       {!camera.active && !simulationMode && (
