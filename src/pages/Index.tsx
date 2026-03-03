@@ -1,4 +1,5 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import CameraFeed from '@/components/dashboard/CameraFeed';
 import SaliencyView from '@/components/dashboard/SaliencyView';
 import ThresholdView from '@/components/dashboard/ThresholdView';
@@ -11,13 +12,19 @@ import ResearchPanel from '@/components/dashboard/ResearchPanel';
 import { useCamera } from '@/hooks/useCamera';
 import { useAudioAnalysis } from '@/hooks/useAudioAnalysis';
 import { useObjectDetection } from '@/hooks/useObjectDetection';
+import { useAuth } from '@/hooks/useAuth';
+import { useHousehold } from '@/hooks/useHousehold';
 import type { SaliencyMode, QualityMode, Alert, DetectedObject } from '@/types/dashboard';
 import { DEFAULT_PRIORITY_OBJECTS } from '@/types/dashboard';
 
 export default function Index() {
+  const { user, loading: authLoading, signOut } = useAuth();
+  const navigate = useNavigate();
+  const { householdId, wakeWords, members, checkForWakeWord, logAlert } = useHousehold(user?.id);
   const { cameras, devices, startCameras, stopCameras, updateCamera, enumerateDevices } = useCamera();
   const { audioFeatures, startAudio, stopAudio } = useAudioAnalysis();
   const { loadModel, detect, stats: detectionStats } = useObjectDetection();
+  const [showEmergency, setShowEmergency] = useState(false);
 
   const [running, setRunning] = useState(false);
   const [saliencyMode, setSaliencyMode] = useState<SaliencyMode>('sobel');
@@ -109,12 +116,23 @@ export default function Index() {
     }
     if (audioFeatures.audioEvent === 'scream') {
       addAlert('Scream detected!', 'high', 0);
+      logAlert('scream', 'Scream detected by audio analysis');
     }
     if (audioFeatures.audioEvent === 'bang') {
       addAlert('Bang/impact detected!', 'critical', 0);
+      logAlert('bang', 'Bang/impact detected by audio analysis');
     }
     if (audioFeatures.speechDetected) {
       addAlert('Speech detected', 'low', 0);
+
+      // Check wake words when speech is detected
+      // Using audioEvent as a simple proxy - in production you'd use speech-to-text
+      wakeWords.forEach(ww => {
+        if (ww.is_emergency && audioFeatures.audioEvent === 'scream') {
+          setShowEmergency(true);
+          logAlert('emergency_trigger', `Emergency wake word triggered: "${ww.phrase}"`);
+        }
+      });
     }
     if (audioFeatures.decibel > -10) {
       addAlert('High noise level', 'medium', 0);
@@ -141,6 +159,9 @@ export default function Index() {
           a.href = dataUrl;
           a.download = `snapshot-${new Date().toISOString().replace(/[:.]/g, '-')}.png`;
           a.click();
+
+          // Log high attention alert to household
+          logAlert('high_attention', 'Person + loud speech = HIGH ATTENTION');
         } catch (err) {
           console.error('[AutoSnapshot] Failed:', err);
         }
@@ -179,6 +200,33 @@ export default function Index() {
   // Use only camera 1 for feed
   const mainCamera = cameras[0];
 
+  // Emergency 911 overlay
+  if (showEmergency) {
+    return (
+      <div className="min-h-screen bg-destructive/10 flex items-center justify-center p-4">
+        <div className="text-center space-y-6 max-w-sm">
+          <div className="text-6xl animate-pulse">🚨</div>
+          <h1 className="text-2xl font-mono font-bold text-destructive">EMERGENCY DETECTED</h1>
+          <p className="text-sm font-mono text-foreground">
+            An emergency wake word was triggered. All household members will be notified.
+          </p>
+          <a
+            href="tel:911"
+            className="block w-full py-4 px-6 bg-destructive text-destructive-foreground font-mono font-bold text-lg rounded-md hover:bg-destructive/80 transition-all"
+          >
+            📞 CALL 911
+          </a>
+          <button
+            onClick={() => setShowEmergency(false)}
+            className="text-xs font-mono text-muted-foreground hover:text-foreground"
+          >
+            Dismiss (false alarm)
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       {/* Header */}
@@ -194,11 +242,41 @@ export default function Index() {
               RESEARCH
             </span>
           )}
+          {householdId && (
+            <span className="text-[9px] font-mono text-success border border-success/30 bg-success/5 px-1.5 py-0.5 rounded">
+              🏠 HOUSEHOLD
+            </span>
+          )}
         </div>
         <div className="flex items-center gap-3">
           <span className={`text-[10px] font-mono ${running ? 'text-success' : 'text-muted-foreground'}`}>
             {running ? '● LIVE' : '○ STANDBY'}
           </span>
+          {user && (
+            <>
+              <button
+                onClick={() => navigate('/household')}
+                className="text-[10px] font-mono text-primary hover:underline"
+              >
+                🏠 Household
+              </button>
+              <span className="text-[10px] font-mono text-muted-foreground">{user.email}</span>
+              <button
+                onClick={signOut}
+                className="text-[10px] font-mono text-muted-foreground hover:text-destructive"
+              >
+                Sign Out
+              </button>
+            </>
+          )}
+          {!user && !authLoading && (
+            <button
+              onClick={() => navigate('/auth')}
+              className="text-[10px] font-mono text-primary hover:underline"
+            >
+              Sign In
+            </button>
+          )}
           <span className="text-[10px] font-mono text-muted-foreground">
             {new Date().toLocaleTimeString()}
           </span>
