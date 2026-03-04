@@ -1,0 +1,1468 @@
+import { useNavigate } from 'react-router-dom';
+
+export default function Research() {
+  const navigate = useNavigate();
+
+  return (
+    <div className="min-h-screen bg-background text-foreground">
+      {/* Header */}
+      <header className="border-b border-border px-6 py-3 flex items-center justify-between sticky top-0 bg-background/95 backdrop-blur-sm z-50">
+        <div className="flex items-center gap-3">
+          <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+          <h1 className="text-sm font-mono font-bold tracking-wide">
+            THESIS DOCUMENTATION
+          </h1>
+          <span className="text-[9px] font-mono text-muted-foreground border border-border px-1.5 py-0.5 rounded">
+            CSP111
+          </span>
+        </div>
+        <button
+          onClick={() => navigate('/')}
+          className="text-[10px] font-mono text-primary hover:underline"
+        >
+          ← Back to Dashboard
+        </button>
+      </header>
+
+      {/* Title Section */}
+      <div className="border-b border-border bg-card px-6 py-8">
+        <div className="max-w-5xl mx-auto">
+          <p className="text-[10px] font-mono text-primary uppercase tracking-[0.3em] mb-2">
+            Discussion on Algorithms, Mathematical Models, and Formulas
+          </p>
+          <h1 className="text-2xl font-mono font-bold text-foreground mb-3">
+            Multimodal Saliency Detection System with Real-Time Household Alert Integration
+          </h1>
+          <p className="text-sm text-muted-foreground leading-relaxed max-w-3xl">
+            A comprehensive browser-based surveillance system that combines visual saliency analysis 
+            (Sobel, Laplacian, Motion Detection), audio event classification, and object detection 
+            (COCO-SSD) to produce real-time attention scores and trigger emergency alerts across 
+            household devices.
+          </p>
+        </div>
+      </div>
+
+      {/* Content */}
+      <div className="max-w-5xl mx-auto px-6 py-8 space-y-12">
+
+        {/* ============================================================ */}
+        {/* SECTION 1: FUNDAMENTALS */}
+        {/* ============================================================ */}
+        <section className="space-y-6">
+          <div className="flex items-center gap-3 border-b border-border pb-3">
+            <span className="text-xs font-mono text-primary-foreground bg-primary px-2 py-1 rounded">01</span>
+            <h2 className="text-lg font-mono font-bold text-foreground">
+              Fundamentals of the Algorithm / Mathematical Model
+            </h2>
+          </div>
+
+          <div className="space-y-4 text-sm text-foreground/90 leading-relaxed">
+            <h3 className="text-base font-mono font-semibold text-primary">Problem Statement</h3>
+            <p>
+              Home security systems traditionally rely on simple motion sensors or passive infrared (PIR) 
+              detectors, which suffer from high false-positive rates (pets, shadows, curtains). This system 
+              solves the problem of <strong>intelligent, context-aware threat detection</strong> by fusing 
+              multiple sensory modalities—video and audio—into a single attention score that determines 
+              when to alert household members.
+            </p>
+
+            <h3 className="text-base font-mono font-semibold text-primary">Inputs, Outputs, Variables & Parameters</h3>
+            <div className="bg-card border border-border rounded-md p-4 font-mono text-xs space-y-3">
+              <div>
+                <span className="text-primary font-semibold">INPUTS:</span>
+                <ul className="ml-4 mt-1 space-y-1 text-foreground/80">
+                  <li>• <span className="text-accent">V(t)</span> — Video frame at time t (RGB image, W×H×3)</li>
+                  <li>• <span className="text-accent">A(t)</span> — Audio signal buffer at time t (PCM samples)</li>
+                  <li>• <span className="text-accent">τ</span> — Saliency threshold parameter (user-configurable, default=15)</li>
+                  <li>• <span className="text-accent">M</span> — Saliency mode ∈ &#123;sobel, laplacian, motion&#125;</li>
+                  <li>• <span className="text-accent">P</span> — Priority object set (e.g., &#123;person, knife, cell phone&#125;)</li>
+                </ul>
+              </div>
+              <div>
+                <span className="text-primary font-semibold">OUTPUTS:</span>
+                <ul className="ml-4 mt-1 space-y-1 text-foreground/80">
+                  <li>• <span className="text-accent">S(t)</span> — Saliency map (grayscale or heatmap image)</li>
+                  <li>• <span className="text-accent">α(t)</span> — Attention score ∈ [0, 100]</li>
+                  <li>• <span className="text-accent">O(t)</span> — Set of detected objects with bounding boxes</li>
+                  <li>• <span className="text-accent">E(t)</span> — Audio event classification ∈ &#123;none, speech, clap, scream, bang&#125;</li>
+                  <li>• <span className="text-accent">ALERT</span> — Boolean trigger for household notification</li>
+                </ul>
+              </div>
+              <div>
+                <span className="text-primary font-semibold">PARAMETERS:</span>
+                <ul className="ml-4 mt-1 space-y-1 text-foreground/80">
+                  <li>• <span className="text-accent">σ</span> — Smoothing time constant for audio analyser (default=0.8)</li>
+                  <li>• <span className="text-accent">C<sub>min</sub></span> — Minimum confidence for object detection (default=0.4)</li>
+                  <li>• <span className="text-accent">T<sub>cool</sub></span> — Alert cooldown period in ms (default=3000)</li>
+                  <li>• <span className="text-accent">FFT<sub>size</sub></span> — FFT window size for audio (default=2048)</li>
+                </ul>
+              </div>
+            </div>
+
+            <h3 className="text-base font-mono font-semibold text-primary">General Method Overview</h3>
+            <p>
+              The system operates in a continuous loop at approximately 30 frames per second. Each iteration:
+            </p>
+            <ol className="list-decimal ml-6 space-y-2 text-foreground/80">
+              <li>Captures a video frame from the webcam and an audio sample from the microphone.</li>
+              <li>Converts the frame to grayscale and applies edge detection (Sobel/Laplacian) or frame differencing (Motion) to produce a saliency map.</li>
+              <li>Runs COCO-SSD object detection on the video frame to identify priority objects.</li>
+              <li>Analyzes the audio for decibel level, speech presence, pitch, and event classification (bang, clap, scream).</li>
+              <li>Fuses saliency score with audio features into a unified attention score.</li>
+              <li>If attention exceeds thresholds, triggers alerts, captures snapshots, and logs to the cloud database.</li>
+            </ol>
+
+            <h3 className="text-base font-mono font-semibold text-primary">Illustrative Example</h3>
+            <div className="bg-secondary/50 border border-border rounded-md p-4 text-xs font-mono">
+              <p className="text-muted-foreground mb-2">// Scenario: Intruder enters through a door at night</p>
+              <p>Frame t=0: Empty room → Sobel saliency = 5% (edges of furniture only)</p>
+              <p>Frame t=1: Person appears → Sobel saliency = 45% (strong new edges)</p>
+              <p className="ml-4 text-primary">→ COCO-SSD detects "person" (confidence: 0.87)</p>
+              <p className="ml-4 text-accent">→ Audio: footstep sounds, dB = -18, event = "none"</p>
+              <p className="ml-4 text-destructive">→ Attention = 45 + 0 + 6 = 51 → Alert: "Person detected"</p>
+              <p className="mt-2">Frame t=2: Person speaks → Audio: speech detected, dB = -8</p>
+              <p className="ml-4 text-destructive">→ Attention = 45 + 20 + 11 = 76 → CRITICAL: Auto-snapshot captured</p>
+            </div>
+          </div>
+
+          {/* Section 1 Visual Representation */}
+          <div className="bg-card border border-border rounded-md p-4">
+            <p className="text-[10px] font-mono text-primary uppercase tracking-wider mb-3">
+              Figure 1.1 — System Overview Block Diagram
+            </p>
+            <div className="bg-background rounded-md p-6 border border-border overflow-x-auto">
+              <svg viewBox="0 0 900 320" className="w-full max-w-4xl mx-auto" style={{ minWidth: '600px' }}>
+                {/* Input Nodes */}
+                <rect x="10" y="40" width="120" height="50" rx="6" className="fill-primary/20 stroke-primary" strokeWidth="1.5"/>
+                <text x="70" y="62" textAnchor="middle" className="fill-primary text-[10px] font-mono">VIDEO</text>
+                <text x="70" y="76" textAnchor="middle" className="fill-foreground text-[8px] font-mono">V(t) RGB Frame</text>
+
+                <rect x="10" y="120" width="120" height="50" rx="6" className="fill-primary/20 stroke-primary" strokeWidth="1.5"/>
+                <text x="70" y="142" textAnchor="middle" className="fill-primary text-[10px] font-mono">AUDIO</text>
+                <text x="70" y="156" textAnchor="middle" className="fill-foreground text-[8px] font-mono">A(t) PCM Signal</text>
+
+                {/* Arrows from inputs */}
+                <line x1="130" y1="65" x2="180" y2="65" className="stroke-primary" strokeWidth="1" markerEnd="url(#arrowP)"/>
+                <line x1="130" y1="145" x2="180" y2="145" className="stroke-primary" strokeWidth="1" markerEnd="url(#arrowP)"/>
+
+                {/* Processing blocks */}
+                <rect x="180" y="30" width="140" height="70" rx="6" className="fill-accent/10 stroke-accent" strokeWidth="1.5"/>
+                <text x="250" y="55" textAnchor="middle" className="fill-accent text-[9px] font-mono">SALIENCY ENGINE</text>
+                <text x="250" y="70" textAnchor="middle" className="fill-foreground text-[7px] font-mono">Sobel / Laplacian / Motion</text>
+                <text x="250" y="82" textAnchor="middle" className="fill-muted-foreground text-[7px] font-mono">→ S(t) saliency map</text>
+
+                <rect x="180" y="115" width="140" height="60" rx="6" className="fill-accent/10 stroke-accent" strokeWidth="1.5"/>
+                <text x="250" y="138" textAnchor="middle" className="fill-accent text-[9px] font-mono">AUDIO ANALYZER</text>
+                <text x="250" y="152" textAnchor="middle" className="fill-foreground text-[7px] font-mono">FFT + ZCR + Autocorr</text>
+                <text x="250" y="164" textAnchor="middle" className="fill-muted-foreground text-[7px] font-mono">→ E(t) event class</text>
+
+                {/* Object detection */}
+                <line x1="130" y1="55" x2="155" y2="55" className="stroke-primary/50" strokeWidth="1" strokeDasharray="3,3"/>
+                <line x1="155" y1="55" x2="155" y2="225" className="stroke-primary/50" strokeWidth="1" strokeDasharray="3,3"/>
+                <line x1="155" y1="225" x2="180" y2="225" className="stroke-primary/50" strokeWidth="1" markerEnd="url(#arrowP)"/>
+                <rect x="180" y="195" width="140" height="60" rx="6" className="fill-accent/10 stroke-accent" strokeWidth="1.5"/>
+                <text x="250" y="218" textAnchor="middle" className="fill-accent text-[9px] font-mono">OBJECT DETECTION</text>
+                <text x="250" y="232" textAnchor="middle" className="fill-foreground text-[7px] font-mono">COCO-SSD (MobileNet)</text>
+                <text x="250" y="244" textAnchor="middle" className="fill-muted-foreground text-[7px] font-mono">→ O(t) bounding boxes</text>
+
+                {/* Fusion */}
+                <line x1="320" y1="65" x2="420" y2="145" className="stroke-accent" strokeWidth="1" markerEnd="url(#arrowA)"/>
+                <line x1="320" y1="145" x2="420" y2="145" className="stroke-accent" strokeWidth="1" markerEnd="url(#arrowA)"/>
+                <line x1="320" y1="225" x2="420" y2="155" className="stroke-accent" strokeWidth="1" markerEnd="url(#arrowA)"/>
+
+                <rect x="420" y="115" width="140" height="70" rx="6" className="fill-destructive/10 stroke-destructive" strokeWidth="1.5"/>
+                <text x="490" y="140" textAnchor="middle" className="fill-destructive text-[9px] font-mono">ATTENTION FUSION</text>
+                <text x="490" y="155" textAnchor="middle" className="fill-foreground text-[7px] font-mono">α(t) = f(S, E, O)</text>
+                <text x="490" y="168" textAnchor="middle" className="fill-muted-foreground text-[7px] font-mono">Score ∈ [0, 100]</text>
+
+                {/* Decision */}
+                <line x1="560" y1="150" x2="630" y2="150" className="stroke-destructive" strokeWidth="1" markerEnd="url(#arrowD)"/>
+                
+                {/* Diamond */}
+                <polygon points="690,115 750,150 690,185 630,150" className="fill-warning/10 stroke-warning" strokeWidth="1.5"/>
+                <text x="690" y="147" textAnchor="middle" className="fill-warning text-[8px] font-mono">α {">"} τ ?</text>
+                <text x="690" y="158" textAnchor="middle" className="fill-muted-foreground text-[7px] font-mono">threshold</text>
+
+                {/* Yes / No */}
+                <line x1="750" y1="150" x2="800" y2="150" className="stroke-destructive" strokeWidth="1" markerEnd="url(#arrowD)"/>
+                <text x="775" y="143" textAnchor="middle" className="fill-destructive text-[8px] font-mono">YES</text>
+
+                <line x1="690" y1="185" x2="690" y2="230" className="stroke-muted-foreground" strokeWidth="1"/>
+                <text x="705" y="210" className="fill-muted-foreground text-[8px] font-mono">NO</text>
+                <text x="690" y="245" textAnchor="middle" className="fill-muted-foreground text-[8px] font-mono">Continue</text>
+
+                <rect x="800" y="120" width="90" height="60" rx="6" className="fill-destructive/20 stroke-destructive" strokeWidth="1.5"/>
+                <text x="845" y="142" textAnchor="middle" className="fill-destructive text-[9px] font-mono">ALERT</text>
+                <text x="845" y="155" textAnchor="middle" className="fill-foreground text-[7px] font-mono">SMS + Push</text>
+                <text x="845" y="167" textAnchor="middle" className="fill-foreground text-[7px] font-mono">+ Snapshot</text>
+
+                {/* Arrow markers */}
+                <defs>
+                  <marker id="arrowP" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+                    <polygon points="0 0, 8 3, 0 6" className="fill-primary"/>
+                  </marker>
+                  <marker id="arrowA" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+                    <polygon points="0 0, 8 3, 0 6" className="fill-accent"/>
+                  </marker>
+                  <marker id="arrowD" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+                    <polygon points="0 0, 8 3, 0 6" className="fill-destructive"/>
+                  </marker>
+                </defs>
+              </svg>
+            </div>
+          </div>
+        </section>
+
+        {/* ============================================================ */}
+        {/* SECTION 2: THEORETICAL FOUNDATIONS */}
+        {/* ============================================================ */}
+        <section className="space-y-6">
+          <div className="flex items-center gap-3 border-b border-border pb-3">
+            <span className="text-xs font-mono text-primary-foreground bg-primary px-2 py-1 rounded">02</span>
+            <h2 className="text-lg font-mono font-bold text-foreground">
+              Theoretical Foundations
+            </h2>
+          </div>
+
+          <div className="space-y-4 text-sm text-foreground/90 leading-relaxed">
+            <h3 className="text-base font-mono font-semibold text-primary">2.1 Edge Detection Theory</h3>
+            <p>
+              The visual saliency engine is grounded in <strong>differential image processing</strong>, 
+              specifically the detection of edges as regions of rapid intensity change. The theoretical 
+              basis comes from the first and second spatial derivatives of the image intensity function.
+            </p>
+            <p>
+              <strong>Sobel Operator (1968):</strong> Introduced by Irwin Sobel, this operator approximates 
+              the gradient of image intensity using two 3×3 convolution kernels. It is based on the 
+              principle that edges correspond to local maxima of the gradient magnitude 
+              (Sobel & Feldman, 1968; Gonzalez & Woods, <em>Digital Image Processing</em>, 4th Ed.).
+            </p>
+            <p>
+              <strong>Laplacian Operator:</strong> Based on the second-order partial derivative (Laplace operator), 
+              this detects edges as zero-crossings of the second derivative. It is rotationally symmetric and 
+              responds to edges in all directions equally (Marr & Hildreth, 1980).
+            </p>
+
+            <h3 className="text-base font-mono font-semibold text-primary">2.2 Temporal Differencing (Motion Detection)</h3>
+            <p>
+              Frame differencing is a classical technique in video surveillance (Collins et al., 2000). 
+              The premise is simple: if a pixel's intensity changes significantly between consecutive frames, 
+              motion has occurred at that location. This approach assumes a <strong>stationary camera</strong> and 
+              relies on the temporal derivative of the image function:
+            </p>
+            <div className="bg-card border border-border rounded-md p-4 font-mono text-xs text-center">
+              <p className="text-accent">∂I/∂t ≈ I(x, y, t) − I(x, y, t−1)</p>
+              <p className="text-muted-foreground mt-1">Where I(x,y,t) is pixel intensity at position (x,y) at time t</p>
+            </div>
+
+            <h3 className="text-base font-mono font-semibold text-primary">2.3 Audio Signal Processing Foundations</h3>
+            <p>
+              The audio analysis module relies on the <strong>Fast Fourier Transform (FFT)</strong> 
+              (Cooley & Tukey, 1965) to decompose time-domain audio signals into frequency components. 
+              Key theoretical concepts:
+            </p>
+            <ul className="list-disc ml-6 space-y-1 text-foreground/80">
+              <li><strong>RMS Energy & Decibels:</strong> Root Mean Square provides a measure of signal power, 
+              converted to decibels via logarithmic scaling (20·log₁₀).</li>
+              <li><strong>Zero-Crossing Rate (ZCR):</strong> The rate at which the signal changes sign, 
+              used to distinguish voiced from unvoiced sounds (Rabiner & Schafer, 1978).</li>
+              <li><strong>Autocorrelation for Pitch:</strong> The autocorrelation function identifies periodicity 
+              in the signal, enabling fundamental frequency estimation (de Cheveigné & Kawahara, 2002).</li>
+              <li><strong>Spectral Band Energy:</strong> Energy concentrated in specific frequency bands 
+              (e.g., 300–3000 Hz for speech) enables event classification.</li>
+            </ul>
+
+            <h3 className="text-base font-mono font-semibold text-primary">2.4 Convolutional Neural Networks for Object Detection</h3>
+            <p>
+              The COCO-SSD model uses <strong>MobileNetV2</strong> (Sandler et al., 2018) as a backbone 
+              with a Single Shot MultiBox Detector (SSD) head (Liu et al., 2016). This combines:
+            </p>
+            <ul className="list-disc ml-6 space-y-1 text-foreground/80">
+              <li><strong>Depthwise Separable Convolutions:</strong> Reduce computational cost from O(D²·M·N) to O(D²·M + M·N)</li>
+              <li><strong>Multi-scale Feature Maps:</strong> Detect objects at different scales via feature pyramid</li>
+              <li><strong>Non-Maximum Suppression (NMS):</strong> Remove overlapping detections</li>
+            </ul>
+
+            <h3 className="text-base font-mono font-semibold text-primary">2.5 Assumptions & Limitations</h3>
+            <ul className="list-disc ml-6 space-y-1 text-foreground/80">
+              <li>Camera is assumed to be <strong>stationary</strong>; camera motion would cause false saliency</li>
+              <li>Audio classification is <strong>heuristic-based</strong>, not ML-trained; accuracy varies by environment</li>
+              <li>Browser WebRTC constraints limit frame rate and resolution</li>
+              <li>COCO-SSD is limited to 80 object classes from the COCO dataset</li>
+              <li>Real-time performance depends on client hardware (GPU acceleration via WebGL)</li>
+            </ul>
+          </div>
+
+          {/* Section 2 Visual Representation */}
+          <div className="bg-card border border-border rounded-md p-4">
+            <p className="text-[10px] font-mono text-primary uppercase tracking-wider mb-3">
+              Figure 2.1 — Theoretical Concept Map
+            </p>
+            <div className="bg-background rounded-md p-6 border border-border overflow-x-auto">
+              <svg viewBox="0 0 800 400" className="w-full max-w-3xl mx-auto" style={{ minWidth: '500px' }}>
+                {/* Central node */}
+                <circle cx="400" cy="200" r="50" className="fill-primary/20 stroke-primary" strokeWidth="2"/>
+                <text x="400" y="195" textAnchor="middle" className="fill-primary text-[10px] font-mono font-bold">MULTIMODAL</text>
+                <text x="400" y="210" textAnchor="middle" className="fill-primary text-[10px] font-mono font-bold">FUSION</text>
+
+                {/* Branch 1: Spatial Derivatives */}
+                <line x1="350" y1="180" x2="160" y2="80" className="stroke-accent" strokeWidth="1.5"/>
+                <rect x="60" y="40" width="200" height="80" rx="6" className="fill-accent/10 stroke-accent" strokeWidth="1"/>
+                <text x="160" y="63" textAnchor="middle" className="fill-accent text-[9px] font-mono font-bold">SPATIAL DERIVATIVES</text>
+                <text x="160" y="78" textAnchor="middle" className="fill-foreground text-[7px] font-mono">∇I = (∂I/∂x, ∂I/∂y)</text>
+                <text x="160" y="93" textAnchor="middle" className="fill-muted-foreground text-[7px] font-mono">Sobel: 1st order gradient</text>
+                <text x="160" y="106" textAnchor="middle" className="fill-muted-foreground text-[7px] font-mono">Laplacian: ∇²I = ∂²I/∂x² + ∂²I/∂y²</text>
+
+                {/* Branch 2: Temporal Derivatives */}
+                <line x1="450" y1="180" x2="640" y2="80" className="stroke-accent" strokeWidth="1.5"/>
+                <rect x="540" y="40" width="200" height="80" rx="6" className="fill-accent/10 stroke-accent" strokeWidth="1"/>
+                <text x="640" y="63" textAnchor="middle" className="fill-accent text-[9px] font-mono font-bold">TEMPORAL DERIVATIVES</text>
+                <text x="640" y="78" textAnchor="middle" className="fill-foreground text-[7px] font-mono">∂I/∂t ≈ I(t) − I(t−1)</text>
+                <text x="640" y="93" textAnchor="middle" className="fill-muted-foreground text-[7px] font-mono">Frame differencing</text>
+                <text x="640" y="106" textAnchor="middle" className="fill-muted-foreground text-[7px] font-mono">Collins et al. (2000)</text>
+
+                {/* Branch 3: Fourier Analysis */}
+                <line x1="360" y1="230" x2="140" y2="320" className="stroke-info" strokeWidth="1.5"/>
+                <rect x="30" y="280" width="220" height="90" rx="6" className="fill-info/10 stroke-info" strokeWidth="1"/>
+                <text x="140" y="303" textAnchor="middle" className="fill-info text-[9px] font-mono font-bold">FOURIER ANALYSIS</text>
+                <text x="140" y="318" textAnchor="middle" className="fill-foreground text-[7px] font-mono">X(k) = Σ x(n)·e^(-j2πkn/N)</text>
+                <text x="140" y="333" textAnchor="middle" className="fill-muted-foreground text-[7px] font-mono">FFT: O(N log N)</text>
+                <text x="140" y="348" textAnchor="middle" className="fill-muted-foreground text-[7px] font-mono">→ Spectral band energy</text>
+                <text x="140" y="361" textAnchor="middle" className="fill-muted-foreground text-[7px] font-mono">→ ZCR, Autocorrelation</text>
+
+                {/* Branch 4: Deep Learning */}
+                <line x1="440" y1="230" x2="660" y2="320" className="stroke-warning" strokeWidth="1.5"/>
+                <rect x="550" y="280" width="220" height="90" rx="6" className="fill-warning/10 stroke-warning" strokeWidth="1"/>
+                <text x="660" y="303" textAnchor="middle" className="fill-warning text-[9px] font-mono font-bold">DEEP LEARNING</text>
+                <text x="660" y="318" textAnchor="middle" className="fill-foreground text-[7px] font-mono">CNN → Feature Maps → BBox</text>
+                <text x="660" y="333" textAnchor="middle" className="fill-muted-foreground text-[7px] font-mono">MobileNetV2 + SSD</text>
+                <text x="660" y="348" textAnchor="middle" className="fill-muted-foreground text-[7px] font-mono">Liu et al. (2016)</text>
+                <text x="660" y="361" textAnchor="middle" className="fill-muted-foreground text-[7px] font-mono">Sandler et al. (2018)</text>
+              </svg>
+            </div>
+          </div>
+        </section>
+
+        {/* ============================================================ */}
+        {/* SECTION 3: ALGORITHM DESIGN */}
+        {/* ============================================================ */}
+        <section className="space-y-6">
+          <div className="flex items-center gap-3 border-b border-border pb-3">
+            <span className="text-xs font-mono text-primary-foreground bg-primary px-2 py-1 rounded">03</span>
+            <h2 className="text-lg font-mono font-bold text-foreground">
+              Algorithm Design
+            </h2>
+          </div>
+
+          <div className="space-y-4 text-sm text-foreground/90 leading-relaxed">
+            <h3 className="text-base font-mono font-semibold text-primary">3.1 Saliency Computation Algorithm</h3>
+            <p>
+              The saliency engine supports three modes. Each mode converts the input frame to grayscale 
+              first, then applies a specific spatial or temporal filter.
+            </p>
+
+            {/* Pseudocode: Sobel */}
+            <div className="bg-card border border-border rounded-md p-4">
+              <p className="text-[10px] font-mono text-accent uppercase tracking-wider mb-2">
+                Algorithm 3.1 — Sobel Edge Detection
+              </p>
+              <pre className="font-mono text-xs text-foreground/80 whitespace-pre-wrap leading-relaxed">
+{`FUNCTION ComputeSobel(frame, threshold):
+  gray ← ConvertToGrayscale(frame)     // 0.299R + 0.587G + 0.114B
+  output ← EmptyImage(width, height)
+  
+  FOR y = 1 TO height-2:
+    FOR x = 1 TO width-2:
+      // Horizontal gradient (Gx)
+      Gx ← -gray[y-1][x-1] + gray[y-1][x+1]
+           -2·gray[y][x-1]   + 2·gray[y][x+1]
+           -gray[y+1][x-1]   + gray[y+1][x+1]
+      
+      // Vertical gradient (Gy)
+      Gy ← -gray[y-1][x-1] - 2·gray[y-1][x] - gray[y-1][x+1]
+           +gray[y+1][x-1]  + 2·gray[y+1][x] + gray[y+1][x+1]
+      
+      magnitude ← √(Gx² + Gy²)
+      
+      IF magnitude > threshold THEN
+        output[y][x] ← min(255, magnitude)
+      ELSE
+        output[y][x] ← 0
+      END IF
+    END FOR
+  END FOR
+  
+  RETURN output`}
+              </pre>
+            </div>
+
+            {/* Pseudocode: Laplacian */}
+            <div className="bg-card border border-border rounded-md p-4">
+              <p className="text-[10px] font-mono text-accent uppercase tracking-wider mb-2">
+                Algorithm 3.2 — Laplacian Edge Detection
+              </p>
+              <pre className="font-mono text-xs text-foreground/80 whitespace-pre-wrap leading-relaxed">
+{`FUNCTION ComputeLaplacian(frame, threshold):
+  gray ← ConvertToGrayscale(frame)
+  output ← EmptyImage(width, height)
+  
+  FOR y = 1 TO height-2:
+    FOR x = 1 TO width-2:
+      // 4-connected Laplacian kernel
+      lap ← gray[y-1][x] + gray[y+1][x]
+           + gray[y][x-1] + gray[y][x+1]
+           - 4·gray[y][x]
+      
+      magnitude ← |lap|
+      
+      IF magnitude > threshold THEN
+        output[y][x] ← min(255, magnitude × 2)
+      ELSE
+        output[y][x] ← 0
+      END IF
+    END FOR
+  END FOR
+  
+  RETURN output`}
+              </pre>
+            </div>
+
+            {/* Pseudocode: Motion */}
+            <div className="bg-card border border-border rounded-md p-4">
+              <p className="text-[10px] font-mono text-accent uppercase tracking-wider mb-2">
+                Algorithm 3.3 — Motion Detection (Frame Differencing)
+              </p>
+              <pre className="font-mono text-xs text-foreground/80 whitespace-pre-wrap leading-relaxed">
+{`FUNCTION ComputeMotion(currentFrame, previousFrame, threshold):
+  grayCurrent ← ConvertToGrayscale(currentFrame)
+  grayPrevious ← ConvertToGrayscale(previousFrame)
+  output ← EmptyImage(width, height)
+  
+  FOR each pixel i:
+    diff ← |grayCurrent[i] - grayPrevious[i]|
+    
+    IF diff > threshold THEN
+      output[i] ← min(255, diff × 2)    // Amplify
+    ELSE
+      output[i] ← 0                      // Suppress noise
+    END IF
+  END FOR
+  
+  RETURN output`}
+              </pre>
+            </div>
+
+            <h3 className="text-base font-mono font-semibold text-primary">3.2 Audio Event Classification Algorithm</h3>
+            <div className="bg-card border border-border rounded-md p-4">
+              <p className="text-[10px] font-mono text-accent uppercase tracking-wider mb-2">
+                Algorithm 3.4 — Audio Event Classifier
+              </p>
+              <pre className="font-mono text-xs text-foreground/80 whitespace-pre-wrap leading-relaxed">
+{`FUNCTION ClassifyAudioEvent(freqData, timeData, sampleRate, dB):
+  // Compute spectral band energies
+  lowEnergy   ← AverageBand(freqData, 20Hz–300Hz)
+  midEnergy   ← AverageBand(freqData, 300Hz–3000Hz)
+  highEnergy  ← AverageBand(freqData, 3000Hz–8000Hz)
+  vHighEnergy ← AverageBand(freqData, 8000Hz–16000Hz)
+  
+  // Compute Zero-Crossing Rate
+  zcr ← CountZeroCrossings(timeData) / length(timeData)
+  
+  // Classification rules (priority order)
+  IF dB > -15 AND lowEnergy > 80 AND lowEnergy > 1.5×midEnergy AND zcr < 0.15:
+    RETURN "bang"
+  
+  IF dB > -20 AND zcr > 0.25 AND highEnergy > 40 AND vHighEnergy > 25:
+    RETURN "clap"
+  
+  IF dB > -15 AND highEnergy > 50 AND midEnergy > 50 AND highEnergy > 1.2×lowEnergy:
+    RETURN "scream"
+  
+  IF speechDetected AND midEnergy > 40:
+    RETURN "speech"
+  
+  RETURN "none"`}
+              </pre>
+            </div>
+
+            <h3 className="text-base font-mono font-semibold text-primary">3.3 Attention Fusion Algorithm</h3>
+            <div className="bg-card border border-border rounded-md p-4">
+              <p className="text-[10px] font-mono text-accent uppercase tracking-wider mb-2">
+                Algorithm 3.5 — Multimodal Attention Score Fusion
+              </p>
+              <pre className="font-mono text-xs text-foreground/80 whitespace-pre-wrap leading-relaxed">
+{`FUNCTION ComputeAttention(saliencyScore, audioFeatures):
+  // Base: visual saliency score (0–100)
+  α ← saliencyScore
+  
+  // Audio boost: +20 if speech detected
+  IF audioFeatures.speechDetected THEN
+    α ← α + 20
+  
+  // Decibel boost: louder = more attention
+  // Map dB from [-30, 0] to [0, 15]
+  dbBoost ← max(0, (audioFeatures.decibel + 30) × 0.5)
+  α ← α + dbBoost
+  
+  // Clamp to [0, 100]
+  α ← min(100, round(α))
+  
+  RETURN α`}
+              </pre>
+            </div>
+
+            <h3 className="text-base font-mono font-semibold text-primary">3.4 Design Rationale</h3>
+            <p>
+              The pipeline architecture was chosen for several reasons:
+            </p>
+            <ul className="list-disc ml-6 space-y-1 text-foreground/80">
+              <li><strong>Modularity:</strong> Each processing stage (saliency, audio, detection) operates independently, 
+              enabling parallel development and easy mode switching.</li>
+              <li><strong>Threshold-based classification:</strong> Chosen over ML-based audio classification to avoid 
+              model loading overhead and enable real-time performance on low-end devices.</li>
+              <li><strong>Late fusion:</strong> Audio and visual scores are combined after independent analysis, 
+              reducing cross-modal noise and simplifying the attention model.</li>
+              <li><strong>Cooldown mechanism:</strong> Prevents alert flooding by suppressing duplicate alerts within 
+              a 3-second window per unique (message, camera) pair.</li>
+            </ul>
+          </div>
+
+          {/* Section 3 Visual: Algorithm Flowchart */}
+          <div className="bg-card border border-border rounded-md p-4">
+            <p className="text-[10px] font-mono text-primary uppercase tracking-wider mb-3">
+              Figure 3.1 — Main Processing Loop Flowchart
+            </p>
+            <div className="bg-background rounded-md p-6 border border-border overflow-x-auto">
+              <svg viewBox="0 0 700 700" className="w-full max-w-2xl mx-auto" style={{ minWidth: '400px' }}>
+                {/* Start */}
+                <ellipse cx="350" cy="30" rx="60" ry="20" className="fill-primary/20 stroke-primary" strokeWidth="1.5"/>
+                <text x="350" y="35" textAnchor="middle" className="fill-primary text-[9px] font-mono">START</text>
+                <line x1="350" y1="50" x2="350" y2="75" className="stroke-primary" strokeWidth="1" markerEnd="url(#arrowFlow)"/>
+
+                {/* Capture */}
+                <rect x="270" y="75" width="160" height="35" rx="4" className="fill-card stroke-border" strokeWidth="1"/>
+                <text x="350" y="97" textAnchor="middle" className="fill-foreground text-[8px] font-mono">Capture Frame V(t) + Audio A(t)</text>
+                <line x1="350" y1="110" x2="350" y2="135" className="stroke-primary" strokeWidth="1" markerEnd="url(#arrowFlow)"/>
+
+                {/* Grayscale */}
+                <rect x="270" y="135" width="160" height="35" rx="4" className="fill-card stroke-border" strokeWidth="1"/>
+                <text x="350" y="157" textAnchor="middle" className="fill-foreground text-[8px] font-mono">Convert V(t) to Grayscale</text>
+                <line x1="350" y1="170" x2="350" y2="200" className="stroke-primary" strokeWidth="1" markerEnd="url(#arrowFlow)"/>
+
+                {/* Mode Decision */}
+                <polygon points="350,200 430,235 350,270 270,235" className="fill-accent/10 stroke-accent" strokeWidth="1.5"/>
+                <text x="350" y="232" textAnchor="middle" className="fill-accent text-[8px] font-mono">Mode?</text>
+
+                {/* Three branches */}
+                <line x1="270" y1="235" x2="130" y2="235" className="stroke-accent" strokeWidth="1"/>
+                <line x1="130" y1="235" x2="130" y2="290" className="stroke-accent" strokeWidth="1" markerEnd="url(#arrowFlow)"/>
+                <text x="200" y="228" textAnchor="middle" className="fill-accent text-[7px] font-mono">Sobel</text>
+
+                <line x1="350" y1="270" x2="350" y2="290" className="stroke-accent" strokeWidth="1" markerEnd="url(#arrowFlow)"/>
+                <text x="370" y="285" className="fill-accent text-[7px] font-mono">Laplacian</text>
+
+                <line x1="430" y1="235" x2="570" y2="235" className="stroke-accent" strokeWidth="1"/>
+                <line x1="570" y1="235" x2="570" y2="290" className="stroke-accent" strokeWidth="1" markerEnd="url(#arrowFlow)"/>
+                <text x="500" y="228" textAnchor="middle" className="fill-accent text-[7px] font-mono">Motion</text>
+
+                {/* Processing boxes */}
+                <rect x="55" y="290" width="150" height="40" rx="4" className="fill-accent/10 stroke-accent" strokeWidth="1"/>
+                <text x="130" y="307" textAnchor="middle" className="fill-foreground text-[7px] font-mono">Apply Sobel 3x3</text>
+                <text x="130" y="320" textAnchor="middle" className="fill-muted-foreground text-[6px] font-mono">G = √(Gx² + Gy²)</text>
+
+                <rect x="275" y="290" width="150" height="40" rx="4" className="fill-accent/10 stroke-accent" strokeWidth="1"/>
+                <text x="350" y="307" textAnchor="middle" className="fill-foreground text-[7px] font-mono">Apply Laplacian 3x3</text>
+                <text x="350" y="320" textAnchor="middle" className="fill-muted-foreground text-[6px] font-mono">L = Σneighbors − 4·center</text>
+
+                <rect x="495" y="290" width="150" height="40" rx="4" className="fill-accent/10 stroke-accent" strokeWidth="1"/>
+                <text x="570" y="307" textAnchor="middle" className="fill-foreground text-[7px] font-mono">Frame Diff |I(t)−I(t−1)|</text>
+                <text x="570" y="320" textAnchor="middle" className="fill-muted-foreground text-[6px] font-mono">Temporal derivative</text>
+
+                {/* Merge */}
+                <line x1="130" y1="330" x2="130" y2="370" className="stroke-accent" strokeWidth="1"/>
+                <line x1="350" y1="330" x2="350" y2="370" className="stroke-accent" strokeWidth="1"/>
+                <line x1="570" y1="330" x2="570" y2="370" className="stroke-accent" strokeWidth="1"/>
+                <line x1="130" y1="370" x2="570" y2="370" className="stroke-primary" strokeWidth="1"/>
+                <line x1="350" y1="370" x2="350" y2="395" className="stroke-primary" strokeWidth="1" markerEnd="url(#arrowFlow)"/>
+
+                {/* Threshold */}
+                <polygon points="350,395 420,420 350,445 280,420" className="fill-warning/10 stroke-warning" strokeWidth="1.5"/>
+                <text x="350" y="418" textAnchor="middle" className="fill-warning text-[7px] font-mono">mag {">"} τ ?</text>
+
+                <line x1="420" y1="420" x2="480" y2="420" className="stroke-primary" strokeWidth="1"/>
+                <text x="450" y="414" className="fill-foreground text-[7px] font-mono">Yes</text>
+                <rect x="480" y="405" width="100" height="30" rx="4" className="fill-primary/10 stroke-primary" strokeWidth="1"/>
+                <text x="530" y="424" textAnchor="middle" className="fill-foreground text-[7px] font-mono">Mark as salient</text>
+
+                <line x1="280" y1="420" x2="220" y2="420" className="stroke-muted-foreground" strokeWidth="1"/>
+                <text x="250" y="414" className="fill-muted-foreground text-[7px] font-mono">No</text>
+                <rect x="120" y="405" width="100" height="30" rx="4" className="fill-muted/30 stroke-border" strokeWidth="1"/>
+                <text x="170" y="424" textAnchor="middle" className="fill-muted-foreground text-[7px] font-mono">Suppress (=0)</text>
+
+                {/* Continue to audio + fusion */}
+                <line x1="350" y1="445" x2="350" y2="475" className="stroke-primary" strokeWidth="1" markerEnd="url(#arrowFlow)"/>
+
+                <rect x="260" y="475" width="180" height="35" rx="4" className="fill-info/10 stroke-info" strokeWidth="1"/>
+                <text x="350" y="492" textAnchor="middle" className="fill-foreground text-[8px] font-mono">Classify Audio Event E(t)</text>
+                <text x="350" y="503" textAnchor="middle" className="fill-muted-foreground text-[6px] font-mono">FFT + ZCR + Band Energy</text>
+                <line x1="350" y1="510" x2="350" y2="535" className="stroke-primary" strokeWidth="1" markerEnd="url(#arrowFlow)"/>
+
+                <rect x="260" y="535" width="180" height="35" rx="4" className="fill-destructive/10 stroke-destructive" strokeWidth="1"/>
+                <text x="350" y="552" textAnchor="middle" className="fill-foreground text-[8px] font-mono">Fuse: α(t) = S + audio boost</text>
+                <text x="350" y="563" textAnchor="middle" className="fill-muted-foreground text-[6px] font-mono">Attention score [0-100]</text>
+                <line x1="350" y1="570" x2="350" y2="595" className="stroke-primary" strokeWidth="1" markerEnd="url(#arrowFlow)"/>
+
+                {/* Alert decision */}
+                <polygon points="350,595 420,625 350,655 280,625" className="fill-destructive/10 stroke-destructive" strokeWidth="1.5"/>
+                <text x="350" y="622" textAnchor="middle" className="fill-destructive text-[7px] font-mono">α {">"} alert</text>
+                <text x="350" y="635" textAnchor="middle" className="fill-destructive text-[7px] font-mono">threshold?</text>
+
+                <line x1="420" y1="625" x2="530" y2="625" className="stroke-destructive" strokeWidth="1"/>
+                <text x="470" y="618" className="fill-destructive text-[7px] font-mono">Yes</text>
+                <rect x="530" y="610" width="120" height="30" rx="4" className="fill-destructive/20 stroke-destructive" strokeWidth="1"/>
+                <text x="590" y="629" textAnchor="middle" className="fill-destructive text-[8px] font-mono">TRIGGER ALERT</text>
+
+                <line x1="350" y1="655" x2="350" y2="680" className="stroke-primary" strokeWidth="1" markerEnd="url(#arrowFlow)"/>
+                <ellipse cx="350" cy="690" rx="60" ry="15" className="fill-primary/20 stroke-primary" strokeWidth="1.5"/>
+                <text x="350" y="694" textAnchor="middle" className="fill-primary text-[8px] font-mono">NEXT FRAME →</text>
+
+                <defs>
+                  <marker id="arrowFlow" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+                    <polygon points="0 0, 8 3, 0 6" className="fill-primary"/>
+                  </marker>
+                </defs>
+              </svg>
+            </div>
+          </div>
+        </section>
+
+        {/* ============================================================ */}
+        {/* SECTION 4: MATHEMATICAL MODEL FORMULATION */}
+        {/* ============================================================ */}
+        <section className="space-y-6">
+          <div className="flex items-center gap-3 border-b border-border pb-3">
+            <span className="text-xs font-mono text-primary-foreground bg-primary px-2 py-1 rounded">04</span>
+            <h2 className="text-lg font-mono font-bold text-foreground">
+              Mathematical Model Formulation
+            </h2>
+          </div>
+
+          <div className="space-y-4 text-sm text-foreground/90 leading-relaxed">
+            <h3 className="text-base font-mono font-semibold text-primary">4.1 Image Grayscale Conversion</h3>
+            <p>
+              The input RGB frame is converted to grayscale using the ITU-R BT.601 luminance formula:
+            </p>
+            <div className="bg-card border border-primary/30 rounded-md p-5 text-center space-y-2">
+              <p className="font-mono text-base text-accent font-bold">
+                I(x, y) = 0.299 · R(x, y) + 0.587 · G(x, y) + 0.114 · B(x, y)
+              </p>
+              <p className="text-xs text-muted-foreground font-mono">
+                where R, G, B ∈ [0, 255] are the red, green, blue channel values
+              </p>
+            </div>
+
+            <h3 className="text-base font-mono font-semibold text-primary">4.2 Sobel Gradient Magnitude</h3>
+            <p>
+              The Sobel operator uses two 3×3 convolution kernels to approximate the horizontal and vertical 
+              partial derivatives of the image:
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="bg-card border border-border rounded-md p-4 text-center">
+                <p className="text-[10px] font-mono text-accent uppercase tracking-wider mb-2">
+                  Horizontal Kernel (Gx)
+                </p>
+                <div className="font-mono text-sm inline-block">
+                  <table className="border-collapse mx-auto">
+                    <tbody>
+                      <tr>
+                        <td className="border border-border px-3 py-1.5 text-center text-foreground">-1</td>
+                        <td className="border border-border px-3 py-1.5 text-center text-foreground">0</td>
+                        <td className="border border-border px-3 py-1.5 text-center text-foreground">+1</td>
+                      </tr>
+                      <tr>
+                        <td className="border border-border px-3 py-1.5 text-center text-primary font-bold">-2</td>
+                        <td className="border border-border px-3 py-1.5 text-center text-foreground">0</td>
+                        <td className="border border-border px-3 py-1.5 text-center text-primary font-bold">+2</td>
+                      </tr>
+                      <tr>
+                        <td className="border border-border px-3 py-1.5 text-center text-foreground">-1</td>
+                        <td className="border border-border px-3 py-1.5 text-center text-foreground">0</td>
+                        <td className="border border-border px-3 py-1.5 text-center text-foreground">+1</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              <div className="bg-card border border-border rounded-md p-4 text-center">
+                <p className="text-[10px] font-mono text-accent uppercase tracking-wider mb-2">
+                  Vertical Kernel (Gy)
+                </p>
+                <div className="font-mono text-sm inline-block">
+                  <table className="border-collapse mx-auto">
+                    <tbody>
+                      <tr>
+                        <td className="border border-border px-3 py-1.5 text-center text-foreground">-1</td>
+                        <td className="border border-border px-3 py-1.5 text-center text-primary font-bold">-2</td>
+                        <td className="border border-border px-3 py-1.5 text-center text-foreground">-1</td>
+                      </tr>
+                      <tr>
+                        <td className="border border-border px-3 py-1.5 text-center text-foreground">0</td>
+                        <td className="border border-border px-3 py-1.5 text-center text-foreground">0</td>
+                        <td className="border border-border px-3 py-1.5 text-center text-foreground">0</td>
+                      </tr>
+                      <tr>
+                        <td className="border border-border px-3 py-1.5 text-center text-foreground">+1</td>
+                        <td className="border border-border px-3 py-1.5 text-center text-primary font-bold">+2</td>
+                        <td className="border border-border px-3 py-1.5 text-center text-foreground">+1</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+            <div className="bg-card border border-primary/30 rounded-md p-5 text-center space-y-3">
+              <p className="font-mono text-base text-accent font-bold">
+                G<sub>x</sub> = K<sub>x</sub> * I(x, y)
+              </p>
+              <p className="font-mono text-base text-accent font-bold">
+                G<sub>y</sub> = K<sub>y</sub> * I(x, y)
+              </p>
+              <p className="font-mono text-lg text-primary font-bold">
+                G = √(G<sub>x</sub>² + G<sub>y</sub>²)
+              </p>
+              <p className="text-xs text-muted-foreground font-mono">
+                where * denotes 2D convolution, G is the gradient magnitude
+              </p>
+            </div>
+
+            <h3 className="text-base font-mono font-semibold text-primary">4.3 Laplacian Second-Order Derivative</h3>
+            <p>
+              The discrete Laplacian uses a 3×3 kernel to approximate the sum of second partial derivatives:
+            </p>
+            <div className="bg-card border border-border rounded-md p-4 text-center">
+              <p className="text-[10px] font-mono text-accent uppercase tracking-wider mb-2">
+                Laplacian Kernel
+              </p>
+              <div className="font-mono text-sm inline-block">
+                <table className="border-collapse mx-auto">
+                  <tbody>
+                    <tr>
+                      <td className="border border-border px-3 py-1.5 text-center text-foreground">0</td>
+                      <td className="border border-border px-3 py-1.5 text-center text-primary font-bold">1</td>
+                      <td className="border border-border px-3 py-1.5 text-center text-foreground">0</td>
+                    </tr>
+                    <tr>
+                      <td className="border border-border px-3 py-1.5 text-center text-primary font-bold">1</td>
+                      <td className="border border-border px-3 py-1.5 text-center text-destructive font-bold">-4</td>
+                      <td className="border border-border px-3 py-1.5 text-center text-primary font-bold">1</td>
+                    </tr>
+                    <tr>
+                      <td className="border border-border px-3 py-1.5 text-center text-foreground">0</td>
+                      <td className="border border-border px-3 py-1.5 text-center text-primary font-bold">1</td>
+                      <td className="border border-border px-3 py-1.5 text-center text-foreground">0</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <div className="bg-card border border-primary/30 rounded-md p-5 text-center space-y-2">
+              <p className="font-mono text-base text-primary font-bold">
+                ∇²I(x,y) = I(x-1,y) + I(x+1,y) + I(x,y-1) + I(x,y+1) − 4·I(x,y)
+              </p>
+              <p className="text-xs text-muted-foreground font-mono">
+                ∇²I = ∂²I/∂x² + ∂²I/∂y² (isotropic, responds equally in all directions)
+              </p>
+            </div>
+
+            <h3 className="text-base font-mono font-semibold text-primary">4.4 Motion Detection (Temporal Differencing)</h3>
+            <div className="bg-card border border-primary/30 rounded-md p-5 text-center space-y-2">
+              <p className="font-mono text-base text-primary font-bold">
+                D(x, y, t) = |I(x, y, t) − I(x, y, t−1)|
+              </p>
+              <p className="font-mono text-sm text-accent">
+                S(x, y) = {'{'} min(255, 2·D) &nbsp; if D {'>'} τ {'}'} &nbsp; else {'{'} 0 {'}'}
+              </p>
+              <p className="text-xs text-muted-foreground font-mono">
+                τ = threshold parameter (default 15), factor of 2 amplifies motion signal
+              </p>
+            </div>
+
+            <h3 className="text-base font-mono font-semibold text-primary">4.5 Saliency Score Computation</h3>
+            <div className="bg-card border border-primary/30 rounded-md p-5 text-center space-y-2">
+              <p className="font-mono text-base text-primary font-bold">
+                Score(S) = min(100, ⌊(Σᵢ S[i] / N) × 100 / 255⌋)
+              </p>
+              <p className="text-xs text-muted-foreground font-mono">
+                where N = total pixels, S[i] ∈ [0, 255] is pixel intensity in saliency map
+              </p>
+            </div>
+
+            <h3 className="text-base font-mono font-semibold text-primary">4.6 Audio Feature Extraction</h3>
+            <div className="bg-card border border-primary/30 rounded-md p-5 space-y-4">
+              <div className="text-center">
+                <p className="text-[10px] font-mono text-accent uppercase tracking-wider mb-1">RMS & Decibel Level</p>
+                <p className="font-mono text-base text-primary font-bold">
+                  RMS = √(1/N · Σᵢ xᵢ²)
+                </p>
+                <p className="font-mono text-base text-primary font-bold mt-1">
+                  dB = 20 · log₁₀(RMS)
+                </p>
+                <p className="text-xs text-muted-foreground font-mono">
+                  where xᵢ = (sample[i] − 128) / 128, normalized to [-1, 1]
+                </p>
+              </div>
+              <div className="text-center border-t border-border pt-3">
+                <p className="text-[10px] font-mono text-accent uppercase tracking-wider mb-1">Zero-Crossing Rate</p>
+                <p className="font-mono text-base text-primary font-bold">
+                  ZCR = (1/N) · Σᵢ₌₁ᴺ |sign(x[i]) − sign(x[i−1])| / 2
+                </p>
+              </div>
+              <div className="text-center border-t border-border pt-3">
+                <p className="text-[10px] font-mono text-accent uppercase tracking-wider mb-1">Spectral Band Energy</p>
+                <p className="font-mono text-base text-primary font-bold">
+                  E<sub>band</sub>(f₁, f₂) = (1/(b₂−b₁)) · Σ<sub>k=b₁</sub><sup>b₂</sup> |X[k]|
+                </p>
+                <p className="text-xs text-muted-foreground font-mono">
+                  where b₁ = ⌊f₁/Δf⌋, b₂ = ⌊f₂/Δf⌋, Δf = sampleRate / FFTsize
+                </p>
+              </div>
+              <div className="text-center border-t border-border pt-3">
+                <p className="text-[10px] font-mono text-accent uppercase tracking-wider mb-1">Pitch Estimation (Autocorrelation)</p>
+                <p className="font-mono text-base text-primary font-bold">
+                  R(τ) = Σᵢ x[i] · x[i + τ]
+                </p>
+                <p className="font-mono text-sm text-accent mt-1">
+                  f₀ = sampleRate / argmax<sub>τ∈[τ_min,τ_max]</sub> R(τ)
+                </p>
+                <p className="text-xs text-muted-foreground font-mono">
+                  τ_min = ⌊fs/500⌋ (500Hz max), τ_max = ⌊fs/80⌋ (80Hz min)
+                </p>
+              </div>
+            </div>
+
+            <h3 className="text-base font-mono font-semibold text-primary">4.7 Multimodal Attention Fusion Model</h3>
+            <div className="bg-card border border-primary/30 rounded-md p-5 text-center space-y-3">
+              <p className="font-mono text-lg text-primary font-bold">
+                α(t) = min(100, ⌊S(t) + β₁·δ<sub>speech</sub> + β₂·max(0, dB(t) + 30) × 0.5⌋)
+              </p>
+              <div className="text-xs text-muted-foreground font-mono text-left max-w-md mx-auto space-y-1">
+                <p>where:</p>
+                <p className="ml-4">S(t) ∈ [0, 100] = visual saliency score</p>
+                <p className="ml-4">β₁ = 20 (speech detection boost weight)</p>
+                <p className="ml-4">δ<sub>speech</sub> ∈ {'{'} 0, 1 {'}'} = speech detection indicator</p>
+                <p className="ml-4">β₂ = 0.5 (decibel scaling factor)</p>
+                <p className="ml-4">dB(t) ∈ [-60, 0] = current decibel level</p>
+              </div>
+            </div>
+
+            <h3 className="text-base font-mono font-semibold text-primary">4.8 Heatmap Colorization Function</h3>
+            <p>
+              The grayscale saliency map is colorized using a piecewise-linear colormap that maps intensity 
+              values to a cool-to-warm gradient:
+            </p>
+            <div className="bg-card border border-border rounded-md p-4 font-mono text-xs space-y-2">
+              <p className="text-accent font-semibold">Colormap C(v) for v ∈ [0, 255]:</p>
+              <div className="ml-4 space-y-1 text-foreground/80">
+                <p>v ∈ [0, 63]: &nbsp;&nbsp;&nbsp; R=0, &nbsp; G=4v, &nbsp;&nbsp;&nbsp; B=128+2v &nbsp;→ <span className="text-info">Deep Blue → Cyan</span></p>
+                <p>v ∈ [64, 127]: &nbsp; R=0, &nbsp; G=128+2t, B=255-4t &nbsp;→ <span className="text-primary">Cyan → Green</span></p>
+                <p>v ∈ [128, 191]: R=4t, G=255, &nbsp;&nbsp;&nbsp; B=0 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;→ <span className="text-accent">Green → Yellow</span></p>
+                <p>v ∈ [192, 255]: R=255, G=255-4t, B=0 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;→ <span className="text-destructive">Yellow → Red</span></p>
+              </div>
+              <p className="text-muted-foreground mt-2">Alpha: α = min(255, v + 50) if v {'>'} 10, else α = 0</p>
+            </div>
+
+            <h3 className="text-base font-mono font-semibold text-primary">4.9 Constraints & Boundaries</h3>
+            <ul className="list-disc ml-6 space-y-1 text-foreground/80">
+              <li>All pixel values clamped to [0, 255]</li>
+              <li>Saliency score clamped to [0, 100]</li>
+              <li>Attention score clamped to [0, 100]</li>
+              <li>dB range: [-60, 0] (silence to maximum)</li>
+              <li>Object detection confidence threshold: C<sub>min</sub> ≥ 0.4</li>
+              <li>Alert cooldown: T<sub>cool</sub> = 3000ms per unique (message, camera) pair</li>
+              <li>Snapshot cooldown: 5000ms minimum between auto-captures</li>
+            </ul>
+          </div>
+
+          {/* Section 4 Visual: Mathematical Model Representation */}
+          <div className="bg-card border border-border rounded-md p-4">
+            <p className="text-[10px] font-mono text-primary uppercase tracking-wider mb-3">
+              Figure 4.1 — Mathematical Model Data Flow with Formulas
+            </p>
+            <div className="bg-background rounded-md p-6 border border-border overflow-x-auto">
+              <svg viewBox="0 0 900 280" className="w-full max-w-4xl mx-auto" style={{ minWidth: '600px' }}>
+                {/* Stage 1: Input */}
+                <rect x="10" y="80" width="100" height="120" rx="6" className="fill-primary/10 stroke-primary" strokeWidth="1.5"/>
+                <text x="60" y="105" textAnchor="middle" className="fill-primary text-[9px] font-mono font-bold">INPUT</text>
+                <text x="60" y="125" textAnchor="middle" className="fill-foreground text-[7px] font-mono">V(t): W×H×3</text>
+                <text x="60" y="140" textAnchor="middle" className="fill-foreground text-[7px] font-mono">A(t): PCM</text>
+                <text x="60" y="160" textAnchor="middle" className="fill-muted-foreground text-[6px] font-mono">R,G,B ∈ [0,255]</text>
+                <text x="60" y="175" textAnchor="middle" className="fill-muted-foreground text-[6px] font-mono">x ∈ [-1,1]</text>
+                <line x1="110" y1="140" x2="150" y2="140" className="stroke-primary" strokeWidth="1" markerEnd="url(#am)"/>
+
+                {/* Stage 2: Transform */}
+                <rect x="150" y="60" width="140" height="160" rx="6" className="fill-accent/10 stroke-accent" strokeWidth="1.5"/>
+                <text x="220" y="82" textAnchor="middle" className="fill-accent text-[9px] font-mono font-bold">TRANSFORM</text>
+                <text x="220" y="100" textAnchor="middle" className="fill-foreground text-[7px] font-mono">I = 0.299R+0.587G+0.114B</text>
+                <line x1="170" y1="110" x2="270" y2="110" className="stroke-border" strokeWidth="0.5"/>
+                <text x="220" y="128" textAnchor="middle" className="fill-foreground text-[7px] font-mono">G = √(Gx²+Gy²)</text>
+                <text x="220" y="143" textAnchor="middle" className="fill-muted-foreground text-[6px] font-mono">— or —</text>
+                <text x="220" y="158" textAnchor="middle" className="fill-foreground text-[7px] font-mono">∇²I = ΣN − 4·I</text>
+                <text x="220" y="173" textAnchor="middle" className="fill-muted-foreground text-[6px] font-mono">— or —</text>
+                <text x="220" y="188" textAnchor="middle" className="fill-foreground text-[7px] font-mono">D = |I(t)−I(t−1)|</text>
+                <text x="220" y="208" textAnchor="middle" className="fill-foreground text-[7px] font-mono">dB = 20·log₁₀(RMS)</text>
+                <line x1="290" y1="140" x2="340" y2="140" className="stroke-accent" strokeWidth="1" markerEnd="url(#am)"/>
+
+                {/* Stage 3: Quantify */}
+                <rect x="340" y="80" width="140" height="120" rx="6" className="fill-warning/10 stroke-warning" strokeWidth="1.5"/>
+                <text x="410" y="105" textAnchor="middle" className="fill-warning text-[9px] font-mono font-bold">QUANTIFY</text>
+                <text x="410" y="125" textAnchor="middle" className="fill-foreground text-[7px] font-mono">S = min(100,⌊Σ/N·100/255⌋)</text>
+                <text x="410" y="145" textAnchor="middle" className="fill-foreground text-[7px] font-mono">E = classify(band, ZCR, dB)</text>
+                <text x="410" y="165" textAnchor="middle" className="fill-foreground text-[7px] font-mono">O = COCO-SSD(V)</text>
+                <text x="410" y="185" textAnchor="middle" className="fill-muted-foreground text-[6px] font-mono">S∈[0,100], E∈events</text>
+                <line x1="480" y1="140" x2="530" y2="140" className="stroke-warning" strokeWidth="1" markerEnd="url(#am)"/>
+
+                {/* Stage 4: Fuse */}
+                <rect x="530" y="90" width="150" height="100" rx="6" className="fill-destructive/10 stroke-destructive" strokeWidth="1.5"/>
+                <text x="605" y="115" textAnchor="middle" className="fill-destructive text-[9px] font-mono font-bold">FUSE</text>
+                <text x="605" y="135" textAnchor="middle" className="fill-foreground text-[7px] font-mono">α = S + 20·δ_speech</text>
+                <text x="605" y="150" textAnchor="middle" className="fill-foreground text-[7px] font-mono">+ 0.5·max(0, dB+30)</text>
+                <text x="605" y="170" textAnchor="middle" className="fill-foreground text-[7px] font-mono">α = min(100, ⌊α⌋)</text>
+                <text x="605" y="183" textAnchor="middle" className="fill-muted-foreground text-[6px] font-mono">α∈[0,100]</text>
+                <line x1="680" y1="140" x2="730" y2="140" className="stroke-destructive" strokeWidth="1" markerEnd="url(#am)"/>
+
+                {/* Stage 5: Decide */}
+                <rect x="730" y="100" width="110" height="80" rx="6" className="fill-destructive/20 stroke-destructive" strokeWidth="2"/>
+                <text x="785" y="125" textAnchor="middle" className="fill-destructive text-[9px] font-mono font-bold">DECIDE</text>
+                <text x="785" y="145" textAnchor="middle" className="fill-foreground text-[7px] font-mono">IF α {">"} τ_alert</text>
+                <text x="785" y="160" textAnchor="middle" className="fill-destructive text-[8px] font-mono font-bold">→ ALERT</text>
+                <text x="785" y="175" textAnchor="middle" className="fill-muted-foreground text-[6px] font-mono">SMS + Push + Log</text>
+
+                <defs>
+                  <marker id="am" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+                    <polygon points="0 0, 8 3, 0 6" className="fill-foreground"/>
+                  </marker>
+                </defs>
+              </svg>
+            </div>
+          </div>
+        </section>
+
+        {/* ============================================================ */}
+        {/* SECTION 5: ALGORITHM IMPLEMENTATION */}
+        {/* ============================================================ */}
+        <section className="space-y-6">
+          <div className="flex items-center gap-3 border-b border-border pb-3">
+            <span className="text-xs font-mono text-primary-foreground bg-primary px-2 py-1 rounded">05</span>
+            <h2 className="text-lg font-mono font-bold text-foreground">
+              Algorithm Implementation
+            </h2>
+          </div>
+
+          <div className="space-y-4 text-sm text-foreground/90 leading-relaxed">
+            <h3 className="text-base font-mono font-semibold text-primary">5.1 Technology Stack</h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {[
+                { name: 'TypeScript', desc: 'Type-safe language' },
+                { name: 'React 18', desc: 'UI framework' },
+                { name: 'Canvas API', desc: 'Pixel manipulation' },
+                { name: 'Web Audio API', desc: 'Audio processing' },
+                { name: 'TensorFlow.js', desc: 'ML inference' },
+                { name: 'COCO-SSD', desc: 'Object detection' },
+                { name: 'WebRTC', desc: 'Camera/mic access' },
+                { name: 'Lovable Cloud', desc: 'Backend & DB' },
+              ].map(tech => (
+                <div key={tech.name} className="bg-card border border-border rounded-md p-3 text-center">
+                  <p className="text-xs font-mono font-bold text-primary">{tech.name}</p>
+                  <p className="text-[10px] font-mono text-muted-foreground">{tech.desc}</p>
+                </div>
+              ))}
+            </div>
+
+            <h3 className="text-base font-mono font-semibold text-primary">5.2 Data Structures</h3>
+            <div className="bg-card border border-border rounded-md p-4 font-mono text-xs space-y-3">
+              <div>
+                <span className="text-accent font-bold">ImageData</span>
+                <span className="text-muted-foreground"> — W×H×4 Uint8ClampedArray (RGBA pixels)</span>
+                <p className="text-foreground/70 ml-4">Used for both input frames and saliency output maps.</p>
+              </div>
+              <div>
+                <span className="text-accent font-bold">Float32Array</span>
+                <span className="text-muted-foreground"> — W×H grayscale intensity buffer</span>
+                <p className="text-foreground/70 ml-4">Intermediate representation for convolution operations.</p>
+              </div>
+              <div>
+                <span className="text-accent font-bold">Uint8Array</span>
+                <span className="text-muted-foreground"> — FFT frequency bins (frequencyBinCount)</span>
+                <p className="text-foreground/70 ml-4">Output of Web Audio AnalyserNode.getByteFrequencyData().</p>
+              </div>
+              <div>
+                <span className="text-accent font-bold">DetectedObject[]</span>
+                <span className="text-muted-foreground"> — label, confidence, bbox[x,y,w,h]</span>
+                <p className="text-foreground/70 ml-4">COCO-SSD prediction results filtered by priority set.</p>
+              </div>
+            </div>
+
+            <h3 className="text-base font-mono font-semibold text-primary">5.3 Core Implementation — Saliency Engine</h3>
+            <div className="bg-card border border-border rounded-md p-4">
+              <p className="text-[10px] font-mono text-accent uppercase tracking-wider mb-2">
+                src/lib/saliency.ts — Sobel Implementation (Excerpt)
+              </p>
+              <pre className="font-mono text-xs text-foreground/80 whitespace-pre-wrap leading-relaxed overflow-x-auto">
+{`// Convert to grayscale using ITU-R BT.601
+const gray = new Float32Array(w * h);
+for (let i = 0; i < w * h; i++) {
+  const idx = i * 4;
+  gray[i] = 0.299 * src[idx] + 0.587 * src[idx + 1] + 0.114 * src[idx + 2];
+}
+
+// Sobel edge detection with 3×3 kernels
+for (let y = 1; y < h - 1; y++) {
+  for (let x = 1; x < w - 1; x++) {
+    const gx =
+      -gray[(y-1)*w+(x-1)] + gray[(y-1)*w+(x+1)]
+      -2*gray[y*w+(x-1)]   + 2*gray[y*w+(x+1)]
+      -gray[(y+1)*w+(x-1)] + gray[(y+1)*w+(x+1)];
+    const gy =
+      -gray[(y-1)*w+(x-1)] - 2*gray[(y-1)*w+x] - gray[(y-1)*w+(x+1)]
+      +gray[(y+1)*w+(x-1)] + 2*gray[(y+1)*w+x] + gray[(y+1)*w+(x+1)];
+    const mag = Math.sqrt(gx * gx + gy * gy);
+    const val = mag > threshold ? Math.min(255, mag) : 0;
+    // Write to output ImageData
+  }
+}`}
+              </pre>
+            </div>
+
+            <h3 className="text-base font-mono font-semibold text-primary">5.4 Core Implementation — Audio Event Classifier</h3>
+            <div className="bg-card border border-border rounded-md p-4">
+              <p className="text-[10px] font-mono text-accent uppercase tracking-wider mb-2">
+                src/hooks/useAudioAnalysis.ts — Event Classification (Excerpt)
+              </p>
+              <pre className="font-mono text-xs text-foreground/80 whitespace-pre-wrap leading-relaxed overflow-x-auto">
+{`// Spectral band energy computation
+const bandEnergy = (lo: number, hi: number) => {
+  const loBin = Math.floor(lo / binSize);
+  const hiBin = Math.min(Math.floor(hi / binSize), freqData.length - 1);
+  let sum = 0;
+  for (let i = loBin; i <= hiBin; i++) sum += freqData[i];
+  return sum / (hiBin - loBin + 1);
+};
+
+// Zero-Crossing Rate
+let zeroCrossings = 0;
+for (let i = 1; i < timeData.length; i++) {
+  if ((timeData[i] >= 128) !== (timeData[i - 1] >= 128)) zeroCrossings++;
+}
+const zcr = zeroCrossings / timeData.length;
+
+// Classification: BANG detection
+if (db > -15 && lowEnergy > 80 && lowEnergy > midEnergy * 1.5 && zcr < 0.15) {
+  return 'bang';
+}`}
+              </pre>
+            </div>
+
+            <h3 className="text-base font-mono font-semibold text-primary">5.5 Practical Challenges & Solutions</h3>
+            <div className="space-y-3">
+              {[
+                { challenge: 'Canvas cross-origin restrictions', solution: 'Use dedicated off-screen canvas with willReadFrequently hint for consistent pixel access.' },
+                { challenge: 'requestAnimationFrame drift', solution: 'Cleanup via returned animation frame ID; boolean running flag prevents orphan frames.' },
+                { challenge: 'COCO-SSD model load latency', solution: 'Use lite_mobilenet_v2 base (~4MB vs ~20MB), lazy-load on first start.' },
+                { challenge: 'Alert flooding from repeated events', solution: 'Cooldown map keyed by (message, cameraId) with 3-second suppression window.' },
+                { challenge: 'Memory from snapshot accumulation', solution: 'Circular buffer capped at 50 snapshots with FIFO eviction.' },
+              ].map(item => (
+                <div key={item.challenge} className="bg-secondary/30 border border-border rounded-md p-3 flex gap-4">
+                  <span className="text-destructive font-mono text-xs font-bold shrink-0">⚠</span>
+                  <div>
+                    <p className="font-mono text-xs font-semibold text-foreground">{item.challenge}</p>
+                    <p className="font-mono text-[11px] text-muted-foreground">{item.solution}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Section 5 Visual: Module Architecture */}
+          <div className="bg-card border border-border rounded-md p-4">
+            <p className="text-[10px] font-mono text-primary uppercase tracking-wider mb-3">
+              Figure 5.1 — Implementation Module Architecture
+            </p>
+            <div className="bg-background rounded-md p-6 border border-border overflow-x-auto">
+              <svg viewBox="0 0 800 360" className="w-full max-w-3xl mx-auto" style={{ minWidth: '500px' }}>
+                {/* Hooks Layer */}
+                <text x="20" y="25" className="fill-muted-foreground text-[9px] font-mono">HOOKS LAYER</text>
+                <rect x="20" y="35" width="760" height="80" rx="6" className="fill-primary/5 stroke-primary/30" strokeWidth="1" strokeDasharray="4,4"/>
+                
+                <rect x="40" y="50" width="140" height="50" rx="4" className="fill-primary/10 stroke-primary" strokeWidth="1"/>
+                <text x="110" y="72" textAnchor="middle" className="fill-primary text-[8px] font-mono font-bold">useCamera</text>
+                <text x="110" y="86" textAnchor="middle" className="fill-muted-foreground text-[6px] font-mono">WebRTC + MediaDevices</text>
+
+                <rect x="200" y="50" width="140" height="50" rx="4" className="fill-info/10 stroke-info" strokeWidth="1"/>
+                <text x="270" y="72" textAnchor="middle" className="fill-info text-[8px] font-mono font-bold">useAudioAnalysis</text>
+                <text x="270" y="86" textAnchor="middle" className="fill-muted-foreground text-[6px] font-mono">Web Audio + FFT</text>
+
+                <rect x="360" y="50" width="160" height="50" rx="4" className="fill-warning/10 stroke-warning" strokeWidth="1"/>
+                <text x="440" y="72" textAnchor="middle" className="fill-warning text-[8px] font-mono font-bold">useObjectDetection</text>
+                <text x="440" y="86" textAnchor="middle" className="fill-muted-foreground text-[6px] font-mono">TF.js + COCO-SSD</text>
+
+                <rect x="540" y="50" width="130" height="50" rx="4" className="fill-accent/10 stroke-accent" strokeWidth="1"/>
+                <text x="605" y="72" textAnchor="middle" className="fill-accent text-[8px] font-mono font-bold">useHousehold</text>
+                <text x="605" y="86" textAnchor="middle" className="fill-muted-foreground text-[6px] font-mono">Cloud DB + Auth</text>
+
+                <rect x="690" y="50" width="80" height="50" rx="4" className="fill-primary/10 stroke-primary" strokeWidth="1"/>
+                <text x="730" y="72" textAnchor="middle" className="fill-primary text-[8px] font-mono font-bold">useAuth</text>
+                <text x="730" y="86" textAnchor="middle" className="fill-muted-foreground text-[6px] font-mono">Session</text>
+
+                {/* Core Lib Layer */}
+                <text x="20" y="140" className="fill-muted-foreground text-[9px] font-mono">CORE LIB LAYER</text>
+                <rect x="20" y="150" width="760" height="60" rx="6" className="fill-accent/5 stroke-accent/30" strokeWidth="1" strokeDasharray="4,4"/>
+
+                <rect x="40" y="160" width="220" height="35" rx="4" className="fill-accent/10 stroke-accent" strokeWidth="1"/>
+                <text x="150" y="182" textAnchor="middle" className="fill-accent text-[8px] font-mono font-bold">saliency.ts</text>
+
+                <rect x="280" y="160" width="220" height="35" rx="4" className="fill-accent/10 stroke-accent" strokeWidth="1"/>
+                <text x="390" y="182" textAnchor="middle" className="fill-accent text-[8px] font-mono font-bold">computeSaliency() + applyHeatmap()</text>
+
+                <rect x="520" y="160" width="250" height="35" rx="4" className="fill-accent/10 stroke-accent" strokeWidth="1"/>
+                <text x="645" y="182" textAnchor="middle" className="fill-accent text-[8px] font-mono font-bold">classifyAudioEvent() + bandEnergy()</text>
+
+                {/* Arrows hooks → lib */}
+                <line x1="110" y1="100" x2="110" y2="160" className="stroke-primary/50" strokeWidth="1" strokeDasharray="3,3"/>
+                <line x1="270" y1="100" x2="500" y2="160" className="stroke-info/50" strokeWidth="1" strokeDasharray="3,3"/>
+
+                {/* Component Layer */}
+                <text x="20" y="240" className="fill-muted-foreground text-[9px] font-mono">COMPONENT LAYER</text>
+                <rect x="20" y="250" width="760" height="60" rx="6" className="fill-destructive/5 stroke-destructive/30" strokeWidth="1" strokeDasharray="4,4"/>
+                
+                {['CameraFeed', 'SaliencyView', 'ThresholdView', 'AudioMeter', 'AlertLog'].map((comp, i) => (
+                  <g key={comp}>
+                    <rect x={40 + i * 148} y="260" width="135" height="35" rx="4" className="fill-card stroke-border" strokeWidth="1"/>
+                    <text x={40 + i * 148 + 67} y="282" textAnchor="middle" className="fill-foreground text-[7px] font-mono font-bold">{comp}</text>
+                  </g>
+                ))}
+
+                {/* Page Layer */}
+                <text x="20" y="340" className="fill-muted-foreground text-[9px] font-mono">PAGE LAYER</text>
+                <rect x="250" y="325" width="300" height="30" rx="4" className="fill-destructive/10 stroke-destructive" strokeWidth="1.5"/>
+                <text x="400" y="345" textAnchor="middle" className="fill-destructive text-[9px] font-mono font-bold">Index.tsx — Main Dashboard Orchestrator</text>
+              </svg>
+            </div>
+          </div>
+        </section>
+
+        {/* ============================================================ */}
+        {/* SECTION 6: COMPLEXITY ANALYSIS */}
+        {/* ============================================================ */}
+        <section className="space-y-6">
+          <div className="flex items-center gap-3 border-b border-border pb-3">
+            <span className="text-xs font-mono text-primary-foreground bg-primary px-2 py-1 rounded">06</span>
+            <h2 className="text-lg font-mono font-bold text-foreground">
+              Complexity Analysis
+            </h2>
+          </div>
+
+          <div className="space-y-4 text-sm text-foreground/90 leading-relaxed">
+            <h3 className="text-base font-mono font-semibold text-primary">6.1 Time Complexity</h3>
+
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse font-mono text-xs">
+                <thead>
+                  <tr className="border-b border-border">
+                    <th className="text-left py-2 px-3 text-primary">Algorithm</th>
+                    <th className="text-left py-2 px-3 text-primary">Time Complexity</th>
+                    <th className="text-left py-2 px-3 text-primary">Per Frame (320×240)</th>
+                    <th className="text-left py-2 px-3 text-primary">Notes</th>
+                  </tr>
+                </thead>
+                <tbody className="text-foreground/80">
+                  <tr className="border-b border-border/50">
+                    <td className="py-2 px-3">Grayscale Conversion</td>
+                    <td className="py-2 px-3 text-accent">O(N)</td>
+                    <td className="py-2 px-3">76,800 ops</td>
+                    <td className="py-2 px-3 text-muted-foreground">N = W × H pixels</td>
+                  </tr>
+                  <tr className="border-b border-border/50">
+                    <td className="py-2 px-3">Sobel Edge Detection</td>
+                    <td className="py-2 px-3 text-accent">O(N × K²)</td>
+                    <td className="py-2 px-3">691,200 ops</td>
+                    <td className="py-2 px-3 text-muted-foreground">K=3 kernel, 9 mults/pixel</td>
+                  </tr>
+                  <tr className="border-b border-border/50">
+                    <td className="py-2 px-3">Laplacian</td>
+                    <td className="py-2 px-3 text-accent">O(N × K²)</td>
+                    <td className="py-2 px-3">384,000 ops</td>
+                    <td className="py-2 px-3 text-muted-foreground">5 ops/pixel (4-connected)</td>
+                  </tr>
+                  <tr className="border-b border-border/50">
+                    <td className="py-2 px-3">Motion Detection</td>
+                    <td className="py-2 px-3 text-accent">O(N)</td>
+                    <td className="py-2 px-3">76,800 ops</td>
+                    <td className="py-2 px-3 text-muted-foreground">1 subtraction/pixel</td>
+                  </tr>
+                  <tr className="border-b border-border/50">
+                    <td className="py-2 px-3">Audio FFT</td>
+                    <td className="py-2 px-3 text-accent">O(N log N)</td>
+                    <td className="py-2 px-3">~22,000 ops</td>
+                    <td className="py-2 px-3 text-muted-foreground">N=2048, native WebAudio</td>
+                  </tr>
+                  <tr className="border-b border-border/50">
+                    <td className="py-2 px-3">Audio Classification</td>
+                    <td className="py-2 px-3 text-accent">O(B)</td>
+                    <td className="py-2 px-3">~1,024 ops</td>
+                    <td className="py-2 px-3 text-muted-foreground">B = frequency bins</td>
+                  </tr>
+                  <tr className="border-b border-border/50">
+                    <td className="py-2 px-3">Pitch Autocorrelation</td>
+                    <td className="py-2 px-3 text-accent">O(N × L)</td>
+                    <td className="py-2 px-3">~500K ops</td>
+                    <td className="py-2 px-3 text-muted-foreground">L = max_lag - min_lag</td>
+                  </tr>
+                  <tr className="border-b border-border/50">
+                    <td className="py-2 px-3">COCO-SSD Inference</td>
+                    <td className="py-2 px-3 text-accent">O(CNN)</td>
+                    <td className="py-2 px-3">~30-100ms</td>
+                    <td className="py-2 px-3 text-muted-foreground">GPU-accelerated via WebGL</td>
+                  </tr>
+                  <tr className="border-b border-border/50">
+                    <td className="py-2 px-3">Saliency Score</td>
+                    <td className="py-2 px-3 text-accent">O(N)</td>
+                    <td className="py-2 px-3">76,800 ops</td>
+                    <td className="py-2 px-3 text-muted-foreground">Sum + divide</td>
+                  </tr>
+                  <tr>
+                    <td className="py-2 px-3">Heatmap Colorization</td>
+                    <td className="py-2 px-3 text-accent">O(N)</td>
+                    <td className="py-2 px-3">76,800 ops</td>
+                    <td className="py-2 px-3 text-muted-foreground">Piecewise lookup</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div className="bg-card border border-primary/30 rounded-md p-5 text-center space-y-2">
+              <p className="text-[10px] font-mono text-accent uppercase tracking-wider">Total Per-Frame Complexity</p>
+              <p className="font-mono text-lg text-primary font-bold">
+                T<sub>total</sub> = O(N·K²) + O(N·log N) + O(N·L) + O(CNN)
+              </p>
+              <p className="text-xs text-muted-foreground font-mono">
+                Dominant term: COCO-SSD inference (30-100ms), all other operations complete in {"<"}5ms
+              </p>
+            </div>
+
+            <h3 className="text-base font-mono font-semibold text-primary">6.2 Space Complexity</h3>
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse font-mono text-xs">
+                <thead>
+                  <tr className="border-b border-border">
+                    <th className="text-left py-2 px-3 text-primary">Data Structure</th>
+                    <th className="text-left py-2 px-3 text-primary">Space</th>
+                    <th className="text-left py-2 px-3 text-primary">Size (320×240)</th>
+                  </tr>
+                </thead>
+                <tbody className="text-foreground/80">
+                  <tr className="border-b border-border/50">
+                    <td className="py-2 px-3">Input ImageData (RGBA)</td>
+                    <td className="py-2 px-3 text-accent">O(4N)</td>
+                    <td className="py-2 px-3">307.2 KB</td>
+                  </tr>
+                  <tr className="border-b border-border/50">
+                    <td className="py-2 px-3">Grayscale buffer (Float32)</td>
+                    <td className="py-2 px-3 text-accent">O(4N)</td>
+                    <td className="py-2 px-3">307.2 KB</td>
+                  </tr>
+                  <tr className="border-b border-border/50">
+                    <td className="py-2 px-3">Output saliency ImageData</td>
+                    <td className="py-2 px-3 text-accent">O(4N)</td>
+                    <td className="py-2 px-3">307.2 KB</td>
+                  </tr>
+                  <tr className="border-b border-border/50">
+                    <td className="py-2 px-3">Previous frame (Motion)</td>
+                    <td className="py-2 px-3 text-accent">O(4N)</td>
+                    <td className="py-2 px-3">307.2 KB</td>
+                  </tr>
+                  <tr className="border-b border-border/50">
+                    <td className="py-2 px-3">FFT buffers (freq + time)</td>
+                    <td className="py-2 px-3 text-accent">O(FFTsize)</td>
+                    <td className="py-2 px-3">2 KB</td>
+                  </tr>
+                  <tr className="border-b border-border/50">
+                    <td className="py-2 px-3">COCO-SSD model weights</td>
+                    <td className="py-2 px-3 text-accent">O(1)</td>
+                    <td className="py-2 px-3">~4 MB</td>
+                  </tr>
+                  <tr>
+                    <td className="py-2 px-3">Snapshot buffer (max 50)</td>
+                    <td className="py-2 px-3 text-accent">O(50·N)</td>
+                    <td className="py-2 px-3">~15 MB max</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div className="bg-card border border-primary/30 rounded-md p-5 text-center space-y-2">
+              <p className="text-[10px] font-mono text-accent uppercase tracking-wider">Total Memory Footprint</p>
+              <p className="font-mono text-lg text-primary font-bold">
+                M<sub>total</sub> ≈ 16N + FFTsize + |Model| + 50·|Snapshot|
+              </p>
+              <p className="text-xs text-muted-foreground font-mono">
+                ≈ 1.2 MB (buffers) + 4 MB (model) + 15 MB (snapshots) ≈ 20.2 MB peak
+              </p>
+            </div>
+
+            <h3 className="text-base font-mono font-semibold text-primary">6.3 Comparison with Alternative Approaches</h3>
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse font-mono text-xs">
+                <thead>
+                  <tr className="border-b border-border">
+                    <th className="text-left py-2 px-3 text-primary">Approach</th>
+                    <th className="text-left py-2 px-3 text-primary">Time</th>
+                    <th className="text-left py-2 px-3 text-primary">Space</th>
+                    <th className="text-left py-2 px-3 text-primary">Accuracy</th>
+                    <th className="text-left py-2 px-3 text-primary">Browser?</th>
+                  </tr>
+                </thead>
+                <tbody className="text-foreground/80">
+                  <tr className="border-b border-border/50 bg-primary/5">
+                    <td className="py-2 px-3 font-bold text-primary">Ours (Sobel + Heuristic Audio)</td>
+                    <td className="py-2 px-3">~5ms/frame</td>
+                    <td className="py-2 px-3">~1.2 MB</td>
+                    <td className="py-2 px-3">Moderate</td>
+                    <td className="py-2 px-3 text-success">✓</td>
+                  </tr>
+                  <tr className="border-b border-border/50">
+                    <td className="py-2 px-3">Canny Edge + ML Audio</td>
+                    <td className="py-2 px-3">~15ms</td>
+                    <td className="py-2 px-3">~50 MB</td>
+                    <td className="py-2 px-3">High</td>
+                    <td className="py-2 px-3 text-warning">Partial</td>
+                  </tr>
+                  <tr className="border-b border-border/50">
+                    <td className="py-2 px-3">Optical Flow (Lucas-Kanade)</td>
+                    <td className="py-2 px-3">~50ms</td>
+                    <td className="py-2 px-3">~5 MB</td>
+                    <td className="py-2 px-3">High</td>
+                    <td className="py-2 px-3 text-destructive">✗</td>
+                  </tr>
+                  <tr>
+                    <td className="py-2 px-3">Deep Saliency (U-Net)</td>
+                    <td className="py-2 px-3">~200ms</td>
+                    <td className="py-2 px-3">~100 MB</td>
+                    <td className="py-2 px-3">Very High</td>
+                    <td className="py-2 px-3 text-destructive">✗</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <h3 className="text-base font-mono font-semibold text-primary">6.4 Scalability Analysis</h3>
+            <ul className="list-disc ml-6 space-y-2 text-foreground/80">
+              <li>
+                <strong>Resolution scaling:</strong> All pixel-based operations scale linearly with N = W×H. 
+                Moving from 320×240 (76.8K pixels) to 1920×1080 (2.07M pixels) increases processing time 
+                by approximately 27×. For HD, processing time per frame rises from ~5ms to ~135ms, 
+                making real-time operation at 30fps infeasible without GPU shaders.
+              </li>
+              <li>
+                <strong>Multi-camera scaling:</strong> Each additional camera multiplies the visual processing 
+                pipeline linearly. The current architecture supports this via the CameraState array but 
+                would require Web Workers for parallel processing beyond 2 cameras.
+              </li>
+              <li>
+                <strong>Household scaling:</strong> Alert distribution scales with O(M) where M = number of 
+                household members. Cloud database operations are O(1) per alert with indexing.
+              </li>
+              <li>
+                <strong>Model inference:</strong> COCO-SSD with lite_mobilenet_v2 is optimized for mobile 
+                devices. On mid-range hardware, inference runs at 10-30fps. GPU acceleration via WebGL 
+                is critical; without it, inference drops to 1-3fps.
+              </li>
+            </ul>
+
+            <h3 className="text-base font-mono font-semibold text-primary">6.5 Performance Limitations</h3>
+            <ul className="list-disc ml-6 space-y-1 text-foreground/80">
+              <li>JavaScript is single-threaded; heavy computation blocks the UI. Web Workers could offload saliency computation.</li>
+              <li>Canvas getImageData() triggers a GPU-to-CPU readback, which is inherently slow (~1-3ms).</li>
+              <li>The autocorrelation pitch estimator has O(N·L) complexity and is the most expensive audio operation.</li>
+              <li>Heuristic audio classification trades accuracy for speed; ML models (YAMNet) would improve classification but add ~20MB model weight.</li>
+              <li>Memory is bounded by the snapshot buffer (50 × ~300KB = ~15MB), which could be reduced with JPEG compression.</li>
+            </ul>
+          </div>
+
+          {/* Section 6 Visual: Complexity Comparison Chart */}
+          <div className="bg-card border border-border rounded-md p-4">
+            <p className="text-[10px] font-mono text-primary uppercase tracking-wider mb-3">
+              Figure 6.1 — Time Complexity Comparison (Per Frame, 320×240)
+            </p>
+            <div className="bg-background rounded-md p-6 border border-border">
+              <div className="space-y-3">
+                {[
+                  { name: 'Grayscale', ops: 76800, color: 'bg-primary' },
+                  { name: 'Motion Diff', ops: 76800, color: 'bg-primary' },
+                  { name: 'Saliency Score', ops: 76800, color: 'bg-primary' },
+                  { name: 'Heatmap Color', ops: 76800, color: 'bg-primary' },
+                  { name: 'Laplacian', ops: 384000, color: 'bg-accent' },
+                  { name: 'Audio Classify', ops: 1024, color: 'bg-info' },
+                  { name: 'Audio FFT', ops: 22000, color: 'bg-info' },
+                  { name: 'Pitch Autocorr', ops: 500000, color: 'bg-warning' },
+                  { name: 'Sobel', ops: 691200, color: 'bg-warning' },
+                  { name: 'COCO-SSD', ops: 3000000, color: 'bg-destructive' },
+                ].map(item => {
+                  const maxOps = 3000000;
+                  const pct = Math.max(1, (item.ops / maxOps) * 100);
+                  return (
+                    <div key={item.name} className="flex items-center gap-3">
+                      <span className="text-[10px] font-mono text-foreground/70 w-28 text-right shrink-0">{item.name}</span>
+                      <div className="flex-1 h-5 bg-secondary/30 rounded overflow-hidden">
+                        <div
+                          className={`h-full ${item.color} rounded transition-all`}
+                          style={{ width: `${pct}%` }}
+                        />
+                      </div>
+                      <span className="text-[9px] font-mono text-muted-foreground w-20 shrink-0">
+                        {item.ops >= 1000000
+                          ? `${(item.ops / 1000000).toFixed(1)}M`
+                          : item.ops >= 1000
+                          ? `${(item.ops / 1000).toFixed(0)}K`
+                          : `${item.ops}`
+                        }
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="mt-4 flex gap-4 justify-center text-[9px] font-mono text-muted-foreground">
+                <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-primary inline-block" /> O(N)</span>
+                <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-info inline-block" /> O(B)</span>
+                <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-accent inline-block" /> O(N·K²)</span>
+                <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-warning inline-block" /> O(N·L)</span>
+                <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-destructive inline-block" /> O(CNN)</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* References */}
+        <section className="space-y-4 border-t border-border pt-8">
+          <h2 className="text-lg font-mono font-bold text-foreground">References</h2>
+          <ol className="list-decimal ml-6 space-y-2 text-xs text-foreground/80 font-mono leading-relaxed">
+            <li>Sobel, I., & Feldman, G. (1968). A 3×3 isotropic gradient operator for image processing. <em>Stanford Artificial Intelligence Project</em>.</li>
+            <li>Marr, D., & Hildreth, E. (1980). Theory of edge detection. <em>Proceedings of the Royal Society of London B</em>, 207, 187-217.</li>
+            <li>Collins, R. T., Lipton, A. J., & Kanade, T. (2000). Introduction to the special section on video surveillance. <em>IEEE TPAMI</em>, 22(8), 745-746.</li>
+            <li>Cooley, J. W., & Tukey, J. W. (1965). An algorithm for the machine calculation of complex Fourier series. <em>Mathematics of Computation</em>, 19(90), 297-301.</li>
+            <li>Rabiner, L. R., & Schafer, R. W. (1978). <em>Digital Processing of Speech Signals</em>. Prentice-Hall.</li>
+            <li>de Cheveigné, A., & Kawahara, H. (2002). YIN, a fundamental frequency estimator for speech and music. <em>JASA</em>, 111(4), 1917-1930.</li>
+            <li>Liu, W. et al. (2016). SSD: Single Shot MultiBox Detector. <em>ECCV</em>, 21-37.</li>
+            <li>Sandler, M. et al. (2018). MobileNetV2: Inverted Residuals and Linear Bottlenecks. <em>CVPR</em>, 4510-4520.</li>
+            <li>Gonzalez, R. C., & Woods, R. E. (2018). <em>Digital Image Processing</em> (4th ed.). Pearson.</li>
+          </ol>
+        </section>
+
+        {/* Footer */}
+        <div className="text-center text-[10px] font-mono text-muted-foreground border-t border-border pt-6">
+          <p>CSP111-THESIS 1 — Discussion on Algorithms, Mathematical Models, and Formulas</p>
+          <p>Multimodal Saliency Detection System v1.0</p>
+        </div>
+      </div>
+    </div>
+  );
+}
