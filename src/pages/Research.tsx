@@ -212,6 +212,8 @@ export default function Research() {
               </svg>
             </div>
           </div>
+
+          <UseCaseDiagram />
         </section>
 
         {/* ============================================================ */}
@@ -342,6 +344,8 @@ export default function Research() {
               </svg>
             </div>
           </div>
+
+          <DataFlowDiagram />
         </section>
 
         {/* ============================================================ */}
@@ -635,6 +639,8 @@ export default function Research() {
               </svg>
             </div>
           </div>
+
+          <ActivityDiagram />
         </section>
 
         {/* ============================================================ */}
