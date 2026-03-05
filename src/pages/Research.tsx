@@ -1450,6 +1450,8 @@ if (db > -15 && lowEnergy > 80 && lowEnergy > midEnergy * 1.5 && zcr < 0.15) {
               </div>
             </div>
           </div>
+
+          <StateDiagram />
         </section>
 
         {/* References */}
