@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom';
+import { UseCaseDiagram, DataFlowDiagram, ActivityDiagram, SequenceDiagram, ERDiagram, StateDiagram } from '@/components/research/ResearchDiagrams';
 
 export default function Research() {
   const navigate = useNavigate();
@@ -211,6 +212,8 @@ export default function Research() {
               </svg>
             </div>
           </div>
+
+          <UseCaseDiagram />
         </section>
 
         {/* ============================================================ */}
@@ -341,6 +344,8 @@ export default function Research() {
               </svg>
             </div>
           </div>
+
+          <DataFlowDiagram />
         </section>
 
         {/* ============================================================ */}
@@ -634,6 +639,8 @@ export default function Research() {
               </svg>
             </div>
           </div>
+
+          <ActivityDiagram />
         </section>
 
         {/* ============================================================ */}
@@ -945,6 +952,8 @@ export default function Research() {
               </svg>
             </div>
           </div>
+
+          <SequenceDiagram />
         </section>
 
         {/* ============================================================ */}
@@ -1148,6 +1157,8 @@ if (db > -15 && lowEnergy > 80 && lowEnergy > midEnergy * 1.5 && zcr < 0.15) {
               </svg>
             </div>
           </div>
+
+          <ERDiagram />
         </section>
 
         {/* ============================================================ */}
@@ -1439,6 +1450,8 @@ if (db > -15 && lowEnergy > 80 && lowEnergy > midEnergy * 1.5 && zcr < 0.15) {
               </div>
             </div>
           </div>
+
+          <StateDiagram />
         </section>
 
         {/* References */}
