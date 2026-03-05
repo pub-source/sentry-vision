@@ -952,6 +952,8 @@ export default function Research() {
               </svg>
             </div>
           </div>
+
+          <SequenceDiagram />
         </section>
 
         {/* ============================================================ */}
