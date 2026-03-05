@@ -1157,6 +1157,8 @@ if (db > -15 && lowEnergy > 80 && lowEnergy > midEnergy * 1.5 && zcr < 0.15) {
               </svg>
             </div>
           </div>
+
+          <ERDiagram />
         </section>
 
         {/* ============================================================ */}
