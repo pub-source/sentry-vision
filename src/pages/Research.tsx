@@ -1564,6 +1564,330 @@ if (db > -15 && lowEnergy > 80 && lowEnergy > midEnergy * 1.5 && zcr < 0.15) {
 
         </section>
 
+        {/* ============================================================ */}
+        {/* SYSTEM INTEGRATION MATRIX */}
+        {/* ============================================================ */}
+        <section className="space-y-6">
+          <div className="flex items-center gap-3 border-b border-border pb-3">
+            <span className="text-xs font-mono text-primary-foreground bg-primary px-2 py-1 rounded">★</span>
+            <h2 className="text-lg font-mono font-bold text-foreground">
+              System Integration Matrix — Context-Aware Detection Capabilities
+            </h2>
+          </div>
+
+          <p className="text-sm text-foreground/90 leading-relaxed">
+            The following table enumerates the six core detection domains of the system, detailing the 
+            specific sensors, algorithms, data sources, and output actions integrated for each context-aware 
+            capability. Each domain operates concurrently within the real-time processing pipeline.
+          </p>
+
+          {/* Integration Table */}
+          <div className="overflow-x-auto border border-border rounded-lg">
+            <table className="w-full text-xs font-mono">
+              <thead>
+                <tr className="bg-primary/10 border-b border-border">
+                  <th className="text-left px-3 py-2.5 text-primary font-bold w-[140px]">Detection Domain</th>
+                  <th className="text-left px-3 py-2.5 text-primary font-bold">Sensor / Input</th>
+                  <th className="text-left px-3 py-2.5 text-primary font-bold">Algorithm / Method</th>
+                  <th className="text-left px-3 py-2.5 text-primary font-bold">Key Parameters</th>
+                  <th className="text-left px-3 py-2.5 text-primary font-bold">Output / Action</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {/* 1. Impaired Vision Awareness */}
+                <tr className="bg-card hover:bg-accent/5 transition-colors">
+                  <td className="px-3 py-3 font-bold text-foreground align-top">
+                    <span className="inline-block bg-primary/20 text-primary px-1.5 py-0.5 rounded text-[10px] mb-1">1</span>
+                    <br />Impaired Vision Awareness
+                  </td>
+                  <td className="px-3 py-3 text-foreground/80 align-top">
+                    <ul className="space-y-1">
+                      <li>• Camera feed (WebRTC <code className="text-primary">getUserMedia</code>)</li>
+                      <li>• Audio stream (Web Audio API)</li>
+                    </ul>
+                  </td>
+                  <td className="px-3 py-3 text-foreground/80 align-top">
+                    <ul className="space-y-1">
+                      <li>• <strong>Saliency heatmap overlay</strong> — Sobel/Laplacian edge detection highlights regions of visual interest with color-coded intensity</li>
+                      <li>• <strong>Audio event sonification</strong> — classified events (speech, bang, clap) are labeled in real-time to supplement visual cues</li>
+                      <li>• <strong>High-contrast bounding boxes</strong> — COCO-SSD detections rendered with confidence-based color coding (cyan &gt; 80%, amber &gt; 50%, red ≤ 50%)</li>
+                      <li>• <strong>Attention score gauge</strong> — single 0–100 numeric readout aggregating all sensory data</li>
+                    </ul>
+                  </td>
+                  <td className="px-3 py-3 text-foreground/80 align-top">
+                    <ul className="space-y-1">
+                      <li>• Heatmap opacity: 0–100%</li>
+                      <li>• Saliency threshold τ</li>
+                      <li>• Mirror mode toggle</li>
+                      <li>• Quality: HD (640×480) / SD (320×240)</li>
+                    </ul>
+                  </td>
+                  <td className="px-3 py-3 text-foreground/80 align-top">
+                    <ul className="space-y-1">
+                      <li>• Real-time heatmap visualization on canvas</li>
+                      <li>• Audio event labels displayed in dashboard</li>
+                      <li>• Household alert when attention score exceeds threshold</li>
+                    </ul>
+                  </td>
+                </tr>
+
+                {/* 2. Fire Detection */}
+                <tr className="hover:bg-accent/5 transition-colors">
+                  <td className="px-3 py-3 font-bold text-foreground align-top">
+                    <span className="inline-block bg-destructive/20 text-destructive px-1.5 py-0.5 rounded text-[10px] mb-1">2</span>
+                    <br />Fire Detection
+                  </td>
+                  <td className="px-3 py-3 text-foreground/80 align-top">
+                    <ul className="space-y-1">
+                      <li>• Camera feed (RGB pixel data)</li>
+                      <li>• Microphone (audio energy bands)</li>
+                    </ul>
+                  </td>
+                  <td className="px-3 py-3 text-foreground/80 align-top">
+                    <ul className="space-y-1">
+                      <li>• <strong>Color-space thresholding</strong> — detects flame-like pixels by checking R &gt; 200, G ∈ [100, 200], B &lt; 100 in RGB space; sustained clusters trigger fire flag</li>
+                      <li>• <strong>Motion saliency spike</strong> — rapid, sustained high-motion regions (flickering) detected via frame differencing: |I(t) − I(t−1)| &gt; τ over consecutive frames</li>
+                      <li>• <strong>Audio bang/crackle detection</strong> — sudden high-energy events in low-frequency band (100–500 Hz) classified as potential fire-related sounds</li>
+                      <li>• <strong>Object detection cross-reference</strong> — COCO-SSD "fire hydrant" or anomalous saliency near known objects</li>
+                    </ul>
+                  </td>
+                  <td className="px-3 py-3 text-foreground/80 align-top">
+                    <ul className="space-y-1">
+                      <li>• Flame color thresholds (R, G, B ranges)</li>
+                      <li>• Consecutive frame count ≥ 5</li>
+                      <li>• Motion saliency score &gt; 70</li>
+                      <li>• Audio energy spike &gt; −20 dB</li>
+                    </ul>
+                  </td>
+                  <td className="px-3 py-3 text-foreground/80 align-top">
+                    <ul className="space-y-1">
+                      <li>• <span className="text-destructive font-bold">CRITICAL alert</span> pushed to all household members</li>
+                      <li>• Snapshot captured and stored in cloud</li>
+                      <li>• Emergency 911 prompt overlay triggered</li>
+                      <li>• Alert persisted to <code className="text-primary">alert_history</code> table</li>
+                    </ul>
+                  </td>
+                </tr>
+
+                {/* 3. Emotional Distress */}
+                <tr className="bg-card hover:bg-accent/5 transition-colors">
+                  <td className="px-3 py-3 font-bold text-foreground align-top">
+                    <span className="inline-block bg-warning/20 text-warning px-1.5 py-0.5 rounded text-[10px] mb-1">3</span>
+                    <br />Emotional Distress Detection
+                  </td>
+                  <td className="px-3 py-3 text-foreground/80 align-top">
+                    <ul className="space-y-1">
+                      <li>• Microphone (PCM audio buffer)</li>
+                      <li>• Camera feed (motion patterns)</li>
+                    </ul>
+                  </td>
+                  <td className="px-3 py-3 text-foreground/80 align-top">
+                    <ul className="space-y-1">
+                      <li>• <strong>Scream classification</strong> — high-frequency energy ratio (2000–8000 Hz band) combined with high ZCR (&gt; 0.4) and dB &gt; −25 identifies screaming events</li>
+                      <li>• <strong>Crying / sobbing pattern</strong> — periodic audio energy fluctuations (0.5–2 Hz modulation) in mid-frequency range with sustained duration &gt; 3 seconds</li>
+                      <li>• <strong>Wake word matching</strong> — user-configured emergency phrases (e.g., "help me", "tulungan") stored in <code className="text-primary">wake_words</code> table, matched via speech activity detection</li>
+                      <li>• <strong>Agitated motion</strong> — sustained high motion saliency (&gt; 60) combined with person detection indicates physical agitation</li>
+                    </ul>
+                  </td>
+                  <td className="px-3 py-3 text-foreground/80 align-top">
+                    <ul className="space-y-1">
+                      <li>• ZCR threshold: 0.4</li>
+                      <li>• High-freq energy ratio &gt; 0.6</li>
+                      <li>• Audio dB &gt; −25</li>
+                      <li>• Wake word confidence &gt; 0.7</li>
+                      <li>• Motion + person co-occurrence</li>
+                    </ul>
+                  </td>
+                  <td className="px-3 py-3 text-foreground/80 align-top">
+                    <ul className="space-y-1">
+                      <li>• <span className="text-destructive font-bold">HIGH/CRITICAL alert</span> based on severity</li>
+                      <li>• Wake word emergency triggers immediate 911 overlay</li>
+                      <li>• Alert log entry with audio event type</li>
+                      <li>• Notification to all household members</li>
+                    </ul>
+                  </td>
+                </tr>
+
+                {/* 4. Object Detection */}
+                <tr className="hover:bg-accent/5 transition-colors">
+                  <td className="px-3 py-3 font-bold text-foreground align-top">
+                    <span className="inline-block bg-secondary/40 text-secondary-foreground px-1.5 py-0.5 rounded text-[10px] mb-1">4</span>
+                    <br />Object Detection & Recognition
+                  </td>
+                  <td className="px-3 py-3 text-foreground/80 align-top">
+                    <ul className="space-y-1">
+                      <li>• Camera feed (video frames at 5 FPS detection rate)</li>
+                      <li>• TensorFlow.js runtime (WebGL backend)</li>
+                    </ul>
+                  </td>
+                  <td className="px-3 py-3 text-foreground/80 align-top">
+                    <ul className="space-y-1">
+                      <li>• <strong>COCO-SSD (MobileNetV2 + SSD)</strong> — pre-trained CNN identifies 80 object classes; system filters to 15 priority objects: person, bicycle, car, motorcycle, bus, truck, cat, dog, bird, horse, bottle, cup, fork, knife, spoon</li>
+                      <li>• <strong>Confidence filtering</strong> — minimum threshold of 0.4 eliminates low-confidence false positives</li>
+                      <li>• <strong>Bounding box rendering</strong> — detected objects drawn with color-coded confidence levels and label overlays</li>
+                      <li>• <strong>Priority-based alerting</strong> — dangerous objects (knife) or unexpected presences (person at unusual hour) trigger elevated alerts</li>
+                    </ul>
+                  </td>
+                  <td className="px-3 py-3 text-foreground/80 align-top">
+                    <ul className="space-y-1">
+                      <li>• Model: <code className="text-primary">lite_mobilenet_v2</code></li>
+                      <li>• Detection interval: 200ms</li>
+                      <li>• Min confidence: 0.4</li>
+                      <li>• Priority list: configurable</li>
+                      <li>• Object weight <em>O(t)</em> in fusion: 0.3</li>
+                    </ul>
+                  </td>
+                  <td className="px-3 py-3 text-foreground/80 align-top">
+                    <ul className="space-y-1">
+                      <li>• Labeled bounding boxes on live canvas</li>
+                      <li>• Object count badge (filtered/total)</li>
+                      <li>• Contributes 30% to attention score α(t)</li>
+                      <li>• Dangerous object → elevated alert severity</li>
+                    </ul>
+                  </td>
+                </tr>
+
+                {/* 5. Accurate Saliency Mapping */}
+                <tr className="bg-card hover:bg-accent/5 transition-colors">
+                  <td className="px-3 py-3 font-bold text-foreground align-top">
+                    <span className="inline-block bg-accent/30 text-accent-foreground px-1.5 py-0.5 rounded text-[10px] mb-1">5</span>
+                    <br />Accurate Saliency Mapping
+                  </td>
+                  <td className="px-3 py-3 text-foreground/80 align-top">
+                    <ul className="space-y-1">
+                      <li>• Camera feed (grayscale-converted frames)</li>
+                      <li>• Previous frame buffer (temporal reference)</li>
+                    </ul>
+                  </td>
+                  <td className="px-3 py-3 text-foreground/80 align-top">
+                    <ul className="space-y-1">
+                      <li>• <strong>Sobel edge detection</strong> — 3×3 gradient kernels compute G<sub>x</sub> and G<sub>y</sub>; magnitude G = √(G<sub>x</sub>² + G<sub>y</sub>²) identifies spatial edges and boundaries</li>
+                      <li>• <strong>Laplacian operator</strong> — second-order derivative ∇²I detects fine edges and texture boundaries using 4-neighbor kernel</li>
+                      <li>• <strong>Motion detection</strong> — temporal frame differencing |I(t) − I(t−1)| &gt; τ isolates moving regions from static background</li>
+                      <li>• <strong>Heatmap colorization</strong> — piecewise-linear mapping from grayscale saliency to blue→cyan→green→yellow→red color gradient</li>
+                      <li>• <strong>Score aggregation</strong> — mean pixel intensity normalized to 0–100 scale: S = min(100, ⌊(Σ val / N) × 100 / 255⌋)</li>
+                    </ul>
+                  </td>
+                  <td className="px-3 py-3 text-foreground/80 align-top">
+                    <ul className="space-y-1">
+                      <li>• Mode: sobel | laplacian | motion</li>
+                      <li>• Threshold τ: 1–100 (default 15)</li>
+                      <li>• Heatmap opacity: 0–100%</li>
+                      <li>• Saliency weight <em>S(t)</em> in fusion: 0.4</li>
+                    </ul>
+                  </td>
+                  <td className="px-3 py-3 text-foreground/80 align-top">
+                    <ul className="space-y-1">
+                      <li>• Real-time heatmap overlay on camera canvas</li>
+                      <li>• Separate grayscale + colored saliency panels</li>
+                      <li>• Saliency score badge (S:XX) on feed</li>
+                      <li>• Contributes 40% to attention score α(t)</li>
+                    </ul>
+                  </td>
+                </tr>
+
+                {/* 6. Incident Detection */}
+                <tr className="hover:bg-accent/5 transition-colors">
+                  <td className="px-3 py-3 font-bold text-foreground align-top">
+                    <span className="inline-block bg-destructive/30 text-destructive px-1.5 py-0.5 rounded text-[10px] mb-1">6</span>
+                    <br />Incident Detection & Response
+                  </td>
+                  <td className="px-3 py-3 text-foreground/80 align-top">
+                    <ul className="space-y-1">
+                      <li>• Fused attention score α(t)</li>
+                      <li>• Audio event classifier output</li>
+                      <li>• Object detection results</li>
+                      <li>• Wake word table (cloud DB)</li>
+                    </ul>
+                  </td>
+                  <td className="px-3 py-3 text-foreground/80 align-top">
+                    <ul className="space-y-1">
+                      <li>• <strong>Multimodal fusion</strong> — weighted combination α(t) = 0.4·S(t) + 0.3·A(t) + 0.3·O(t) with EMA smoothing α<sub>smooth</sub> = β·α(t) + (1−β)·α<sub>prev</sub></li>
+                      <li>• <strong>Threshold classification</strong> — LOW (α ≤ 25), MEDIUM (25 &lt; α ≤ 50), HIGH (50 &lt; α ≤ 75), CRITICAL (α &gt; 75)</li>
+                      <li>• <strong>Emergency bypass</strong> — scream, bang, or wake word detection immediately escalates to CRITICAL regardless of fusion score</li>
+                      <li>• <strong>Snapshot capture</strong> — canvas frame captured at alert time, stored to cloud storage with alert record</li>
+                      <li>• <strong>Household broadcast</strong> — real-time push to all members in the household via cloud database subscription</li>
+                    </ul>
+                  </td>
+                  <td className="px-3 py-3 text-foreground/80 align-top">
+                    <ul className="space-y-1">
+                      <li>• Fusion weights: S=0.4, A=0.3, O=0.3</li>
+                      <li>• EMA smoothing β = 0.3</li>
+                      <li>• Alert thresholds: 25/50/75</li>
+                      <li>• Emergency keywords: configurable</li>
+                      <li>• Snapshot resolution: 640×480</li>
+                    </ul>
+                  </td>
+                  <td className="px-3 py-3 text-foreground/80 align-top">
+                    <ul className="space-y-1">
+                      <li>• Severity-colored alert log entries</li>
+                      <li>• 911 emergency prompt on CRITICAL</li>
+                      <li>• Cloud-persisted alert history</li>
+                      <li>• Real-time notification to household</li>
+                      <li>• Exportable alert data (CSV/TXT)</li>
+                    </ul>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          {/* Integration Flow Summary */}
+          <div className="bg-card border border-border rounded-lg p-5 space-y-4">
+            <h3 className="text-sm font-mono font-bold text-primary">Integration Flow Summary</h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div className="bg-background border border-border rounded-md p-3">
+                <p className="text-[10px] font-mono text-primary font-bold mb-2">INPUT LAYER</p>
+                <div className="text-[11px] text-foreground/80 space-y-1">
+                  <p>• WebRTC Camera → RGB frames @ 30 FPS</p>
+                  <p>• Web Audio API → PCM buffer @ 44.1 kHz</p>
+                  <p>• Cloud DB → wake words, household config</p>
+                </div>
+              </div>
+              <div className="bg-background border border-border rounded-md p-3">
+                <p className="text-[10px] font-mono text-warning font-bold mb-2">PROCESSING LAYER</p>
+                <div className="text-[11px] text-foreground/80 space-y-1">
+                  <p>• Saliency Engine (Sobel/Laplacian/Motion)</p>
+                  <p>• Audio Classifier (ZCR, RMS, FFT bands)</p>
+                  <p>• COCO-SSD Object Detector (TF.js)</p>
+                  <p>• Fire pixel analyzer (RGB thresholds)</p>
+                  <p>• Distress pattern matcher (audio patterns)</p>
+                </div>
+              </div>
+              <div className="bg-background border border-border rounded-md p-3">
+                <p className="text-[10px] font-mono text-destructive font-bold mb-2">OUTPUT LAYER</p>
+                <div className="text-[11px] text-foreground/80 space-y-1">
+                  <p>• Fused attention score α(t) → 0–100</p>
+                  <p>• Severity classification → 4 levels</p>
+                  <p>• Alert broadcast → household members</p>
+                  <p>• Snapshot storage → cloud bucket</p>
+                  <p>• Emergency overlay → 911 prompt</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Cross-Domain Dependencies */}
+          <div className="bg-card border border-border rounded-lg p-5 space-y-3">
+            <h3 className="text-sm font-mono font-bold text-primary">Cross-Domain Dependencies</h3>
+            <div className="text-xs font-mono text-foreground/80 space-y-2">
+              <p>
+                <span className="text-primary font-bold">Fire + Saliency:</span> Sustained motion saliency spike (&gt;70) over 5+ consecutive frames in flame-colored regions confirms fire vs. transient motion.
+              </p>
+              <p>
+                <span className="text-primary font-bold">Distress + Audio + Objects:</span> Scream classification (audio) + person detection (COCO-SSD) + high motion (saliency) together escalate to CRITICAL with higher confidence than any single modality.
+              </p>
+              <p>
+                <span className="text-primary font-bold">Vision Impairment + All Modalities:</span> The heatmap overlay, audio labels, and bounding boxes collectively provide a multi-sensory augmented view for users with partial vision impairment.
+              </p>
+              <p>
+                <span className="text-primary font-bold">Incident + Cloud:</span> All detection domains feed into the unified fusion formula; cloud integration ensures household-wide awareness regardless of which device triggers the alert.
+              </p>
+            </div>
+          </div>
+
+        </section>
+
         {/* Footer */}
         <div className="text-center text-[10px] font-mono text-muted-foreground border-t border-border pt-6">
           <p>CSP111-THESIS 1 — Discussion on Algorithms, Mathematical Models, and Formulas</p>
