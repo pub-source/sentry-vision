@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { UseCaseDiagram, DataFlowDiagram, ActivityDiagram, SequenceDiagram, ERDiagram, StateDiagram } from '@/components/research/ResearchDiagrams';
+import { UseCaseDiagram, DataFlowDiagram, ActivityDiagram, SequenceDiagram, ERDiagram, StateDiagram, ConceptualFrameworkDiagram } from '@/components/research/ResearchDiagrams';
 
 export default function Research() {
   const navigate = useNavigate();
@@ -1468,6 +1468,100 @@ if (db > -15 && lowEnergy > 80 && lowEnergy > midEnergy * 1.5 && zcr < 0.15) {
             <li>Sandler, M. et al. (2018). MobileNetV2: Inverted Residuals and Linear Bottlenecks. <em>CVPR</em>, 4510-4520.</li>
             <li>Gonzalez, R. C., & Woods, R. E. (2018). <em>Digital Image Processing</em> (4th ed.). Pearson.</li>
           </ol>
+        </section>
+
+        {/* ============================================================ */}
+        {/* CONCEPTUAL FRAMEWORK */}
+        {/* ============================================================ */}
+        <section className="space-y-6">
+          <div className="flex items-center gap-3 border-b border-border pb-3">
+            <span className="text-xs font-mono text-primary-foreground bg-primary px-2 py-1 rounded">CF</span>
+            <h2 className="text-lg font-mono font-bold text-foreground">
+              Conceptual Framework
+            </h2>
+          </div>
+
+          <div className="space-y-4 text-sm text-foreground/90 leading-relaxed">
+            <p>
+              The conceptual framework presents the complete end-to-end methodological pipeline of the 
+              Multimodal Saliency Detection System. It follows a systematic 7-stage process from raw 
+              sensor data acquisition through intelligent decision-making and cloud-based notification, 
+              forming a continuous real-time processing loop operating at 30 frames per second.
+            </p>
+
+            <h3 className="text-base font-mono font-semibold text-primary">Stage Descriptions</h3>
+
+            <div className="space-y-3">
+              <div className="bg-card border border-border rounded-md p-3">
+                <p className="text-xs font-mono font-bold text-primary mb-1">Stage 1: Data Acquisition</p>
+                <p className="text-xs text-muted-foreground">
+                  Raw video frames are captured via the WebRTC <code>getUserMedia()</code> API at 30fps, 
+                  while audio is simultaneously streamed through the Web Audio API's <code>AudioContext</code> 
+                  at 44.1 kHz sample rate. Both streams are time-synchronized for multimodal fusion.
+                </p>
+              </div>
+
+              <div className="bg-card border border-border rounded-md p-3">
+                <p className="text-xs font-mono font-bold text-primary mb-1">Stage 2: Pre-processing</p>
+                <p className="text-xs text-muted-foreground">
+                  Video frames undergo RGB-to-grayscale conversion using the luminance formula 
+                  <code> I = 0.299R + 0.587G + 0.114B</code>. Audio buffers are windowed into analyzable 
+                  segments. Pixel data is extracted via Canvas API's <code>getImageData()</code> for direct 
+                  manipulation as <code>Uint8ClampedArray</code>.
+                </p>
+              </div>
+
+              <div className="bg-card border border-border rounded-md p-3">
+                <p className="text-xs font-mono font-bold text-accent mb-1">Stage 3: Feature Extraction</p>
+                <p className="text-xs text-muted-foreground">
+                  Three saliency computation modes extract visual features: Sobel (gradient magnitude), 
+                  Laplacian (second-order edges), and Motion (frame differencing). Audio features include 
+                  RMS energy, decibel level, zero-crossing rate (ZCR), and spectral band energy ratios 
+                  for speech/scream/bang classification.
+                </p>
+              </div>
+
+              <div className="bg-card border border-border rounded-md p-3">
+                <p className="text-xs font-mono font-bold text-accent mb-1">Stage 4: Object Detection</p>
+                <p className="text-xs text-muted-foreground">
+                  TensorFlow.js runs the COCO-SSD model (MobileNetV2 + Single Shot Detector) in the 
+                  browser to detect and classify objects across 80 categories. Priority objects such as 
+                  "person" and "knife" receive elevated attention weights in the fusion stage.
+                </p>
+              </div>
+
+              <div className="bg-card border border-border rounded-md p-3">
+                <p className="text-xs font-mono font-bold text-warning mb-1">Stage 5: Multimodal Fusion</p>
+                <p className="text-xs text-muted-foreground">
+                  The composite attention score <code>α(t) = 0.4·S(t) + 0.3·A(t) + 0.3·O(t)</code> merges 
+                  saliency (S), audio classification (A), and object detection (O) into a single 0–100 value. 
+                  Exponential Moving Average (EMA) smoothing with β=0.3 reduces temporal jitter.
+                </p>
+              </div>
+
+              <div className="bg-card border border-border rounded-md p-3">
+                <p className="text-xs font-mono font-bold text-destructive mb-1">Stage 6: Decision & Alerting</p>
+                <p className="text-xs text-muted-foreground">
+                  Threshold-based classification triggers alerts: α &gt; 75 = CRITICAL, α &gt; 50 = WARNING. 
+                  Emergency conditions (scream detection, bang detection, wake word match) bypass normal 
+                  thresholds and immediately trigger the 911 emergency prompt overlay.
+                </p>
+              </div>
+
+              <div className="bg-card border border-border rounded-md p-3">
+                <p className="text-xs font-mono font-bold text-destructive mb-1">Stage 7: Cloud & Notification</p>
+                <p className="text-xs text-muted-foreground">
+                  Alert events are persisted to the cloud database with timestamps, severity levels, and 
+                  optional snapshot URLs. All household members receive real-time notifications. Research 
+                  sessions can be exported as CSV data files or formatted TXT reports for academic analysis.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* The visual diagram */}
+          <ConceptualFrameworkDiagram />
+
         </section>
 
         {/* Footer */}
