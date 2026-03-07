@@ -842,163 +842,110 @@ function FrameworkArrow({ x1, y1, x2, y2 }: { x1: number; y1: number; x2: number
 }
 
 export function ConceptualFrameworkDiagram() {
-  const c1 = 'hsl(var(--primary))';
-  const c2 = 'hsl(var(--accent))';
-  const c3 = 'hsl(var(--warning))';
-  const c4 = 'hsl(var(--destructive))';
+  const stages = [
+    {
+      number: 1, title: 'Data Collection',
+      items: ['Camera video feed', 'Microphone audio', 'Device sensors', 'User preferences', 'Household settings'],
+    },
+    {
+      number: 2, title: 'Pre-processing',
+      items: ['Image resizing', 'Noise filtering', 'Audio normalization', 'Frame alignment', 'Data validation'],
+    },
+    {
+      number: 3, title: 'Feature Extraction',
+      items: ['Edge detection', 'Motion analysis', 'Audio energy levels', 'Speech patterns', 'Color analysis'],
+    },
+    {
+      number: 4, title: 'Detection Models',
+      items: ['Object recognition', 'Person detection', 'Sound classification', 'Anomaly detection', 'Priority scoring'],
+    },
+    {
+      number: 5, title: 'Multimodal Fusion',
+      items: ['Combine visual + audio', 'Weighted scoring', 'Temporal smoothing', 'Context awareness', 'Confidence rating'],
+    },
+    {
+      number: 6, title: 'Decision & Alerting',
+      items: ['Severity classification', 'Threshold evaluation', 'Alert generation', 'Emergency detection', 'User notification'],
+    },
+    {
+      number: 7, title: 'Output & Storage',
+      items: ['Real-time dashboard', 'Cloud storage', 'Alert history', 'Research export', 'Household sharing'],
+    },
+  ];
 
   return (
     <div className="bg-card border border-border rounded-md p-4">
       <p className="text-[10px] font-mono text-primary uppercase tracking-wider mb-3">
         Figure 7 — Conceptual Framework: Methodological Pipeline
       </p>
-      <div className="bg-background rounded-md p-6 border border-border overflow-x-auto">
-        <svg viewBox="0 0 1060 620" className="w-full max-w-5xl mx-auto" style={{ minWidth: '700px' }}>
-          
-          {/* Title */}
-          <text x="530" y="24" textAnchor="middle" className="fill-foreground text-[13px] font-mono font-bold">
-            Methodological Framework for Multimodal Saliency Detection System
-          </text>
+      <div className="bg-background rounded-md p-6 border border-border">
+        {/* Row 1: Steps 1-4 */}
+        <div className="flex flex-wrap justify-center items-start gap-2 mb-4">
+          {stages.slice(0, 4).map((stage, i) => (
+            <div key={stage.number} className="flex items-start gap-2">
+              <div className="flex flex-col items-center">
+                <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-bold font-mono">
+                  {stage.number}
+                </div>
+              </div>
+              <div className="border border-border rounded-lg p-3 w-44 bg-card">
+                <p className="text-[11px] font-mono font-bold text-foreground mb-2">{stage.title}</p>
+                <ul className="space-y-0.5">
+                  {stage.items.map((item, j) => (
+                    <li key={j} className="text-[9px] font-mono text-muted-foreground flex items-start gap-1">
+                      <span className="text-primary mt-0.5">•</span> {item}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              {i < 3 && (
+                <div className="flex items-center self-center text-muted-foreground text-lg font-mono">→</div>
+              )}
+            </div>
+          ))}
+        </div>
 
-          {/* ── ROW 1: Steps 1-4 ── */}
-          <FrameworkStep number={1} title="Data Acquisition" color={c1} x={10} y={60}
-            items={[
-              "Video capture (getUserMedia)",
-              "Audio stream (AudioContext)",
-              "Frame rate: 30 fps",
-              "Sample rate: 44.1 kHz",
-              "Sources: Webcam, USB cam"
-            ]}
-          />
+        {/* Arrow down */}
+        <div className="flex justify-end pr-20 mb-4">
+          <span className="text-muted-foreground text-lg font-mono">↓</span>
+        </div>
 
-          <FrameworkArrow x1={230} y1={120} x2={270} y2={120} />
+        {/* Row 2: Steps 5-7 (right to left) */}
+        <div className="flex flex-wrap justify-center items-start gap-2">
+          {stages.slice(4).reverse().map((stage, i) => (
+            <div key={stage.number} className="flex items-start gap-2">
+              {i > 0 && (
+                <div className="flex items-center self-center text-muted-foreground text-lg font-mono">←</div>
+              )}
+              <div className="flex flex-col items-center">
+                <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-bold font-mono">
+                  {stage.number}
+                </div>
+              </div>
+              <div className="border border-border rounded-lg p-3 w-44 bg-card">
+                <p className="text-[11px] font-mono font-bold text-foreground mb-2">{stage.title}</p>
+                <ul className="space-y-0.5">
+                  {stage.items.map((item, j) => (
+                    <li key={j} className="text-[9px] font-mono text-muted-foreground flex items-start gap-1">
+                      <span className="text-primary mt-0.5">•</span> {item}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          ))}
+        </div>
 
-          <FrameworkStep number={2} title="Pre-processing" color={c1} x={270} y={60}
-            items={[
-              "RGB → Grayscale conversion",
-              "Canvas pixel extraction",
-              "Audio buffer windowing",
-              "Frame differencing (motion)",
-              "Normalization & scaling"
-            ]}
-          />
-
-          <FrameworkArrow x1={490} y1={120} x2={530} y2={120} />
-
-          <FrameworkStep number={3} title="Feature Extraction" color={c2} x={530} y={60}
-            items={[
-              "Sobel gradient magnitude",
-              "Laplacian edge detection",
-              "Temporal motion vectors",
-              "RMS energy & dB level",
-              "Zero-crossing rate (ZCR)",
-              "Spectral band energy"
-            ]}
-          />
-
-          <FrameworkArrow x1={750} y1={128} x2={790} y2={128} />
-
-          <FrameworkStep number={4} title="Object Detection" color={c2} x={790} y={60}
-            items={[
-              "TensorFlow.js COCO-SSD",
-              "MobileNetV2 + SSD backbone",
-              "80-class recognition",
-              "Priority: person, knife",
-              "Bounding box + confidence"
-            ]}
-          />
-
-          {/* ── Connecting arrow from row 1 to row 2 ── */}
-          <FrameworkArrow x1={900} y1={180} x2={900} y2={310} />
-
-          {/* ── ROW 2: Steps 5-7 (right to left) ── */}
-          <FrameworkStep number={5} title="Multimodal Fusion" color={c3} x={790} y={310} width={220}
-            items={[
-              "α(t) = w₁·S + w₂·A + w₃·O",
-              "Weighted attention score",
-              "Saliency weight: w₁ = 0.4",
-              "Audio weight: w₂ = 0.3",
-              "Object weight: w₃ = 0.3",
-              "Temporal smoothing (EMA)"
-            ]}
-          />
-
-          <FrameworkArrow x1={790} y1={400} x2={750} y2={400} />
-
-          <FrameworkStep number={6} title="Decision & Alerting" color={c4} x={520} y={310} width={220}
-            items={[
-              "Threshold classification",
-              "α > 75: CRITICAL alert",
-              "α > 50: WARNING alert",
-              "Emergency wake word match",
-              "Scream / bang detection",
-              "911 emergency prompt"
-            ]}
-          />
-
-          <FrameworkArrow x1={520} y1={400} x2={480} y2={400} />
-
-          <FrameworkStep number={7} title="Cloud & Notification" color={c4} x={250} y={310} width={220}
-            items={[
-              "Alert history persistence",
-              "Household member notify",
-              "Real-time broadcast",
-              "Session data logging",
-              "Research CSV/TXT export",
-              "Snapshot URL storage"
-            ]}
-          />
-
-          {/* ── Feedback loop arrow from step 7 back to step 1 ── */}
-          <path d="M 360 440 L 360 560 L 120 560 L 120 180" 
-            className="stroke-muted-foreground" strokeWidth="1.5" fill="none" strokeDasharray="6,4" strokeLinecap="round"/>
-          <polygon points="120,180 115,192 125,192" className="fill-muted-foreground"/>
-          <text x="240" y="578" textAnchor="middle" className="fill-muted-foreground text-[8px] font-mono italic">
-            Continuous feedback loop — next frame cycle
-          </text>
-
-          {/* ── Legend ── */}
-          <rect x={10} y={470} width={200} height={110} rx="6" className="fill-card stroke-border" strokeWidth="1"/>
-          <text x={20} y={490} className="fill-foreground text-[9px] font-mono font-bold">LEGEND</text>
-          <rect x={20} y={500} width={12} height={12} rx="2" fill={c1}/>
-          <text x={38} y={510} className="fill-foreground text-[8px] font-mono">Input & Pre-processing</text>
-          <rect x={20} y={518} width={12} height={12} rx="2" fill={c2}/>
-          <text x={38} y={528} className="fill-foreground text-[8px] font-mono">Feature Extraction & Detection</text>
-          <rect x={20} y={536} width={12} height={12} rx="2" fill={c3}/>
-          <text x={38} y={546} className="fill-foreground text-[8px] font-mono">Fusion & Scoring</text>
-          <rect x={20} y={554} width={12} height={12} rx="2" fill={c4}/>
-          <text x={38} y={564} className="fill-foreground text-[8px] font-mono">Decision & Cloud Integration</text>
-
-          {/* ── Key equations box ── */}
-          <rect x={520} y={470} width={500} height={110} rx="6" className="fill-card stroke-border" strokeWidth="1"/>
-          <text x={530} y={490} className="fill-foreground text-[9px] font-mono font-bold">KEY EQUATIONS</text>
-          <text x={530} y={508} className="fill-foreground text-[8px] font-mono">
-            Grayscale: I(x,y) = 0.299R + 0.587G + 0.114B
-          </text>
-          <text x={530} y={524} className="fill-foreground text-[8px] font-mono">
-            Sobel Gradient: G = √(Gx² + Gy²)
-          </text>
-          <text x={530} y={540} className="fill-foreground text-[8px] font-mono">
-            Audio dB: L = 20·log₁₀(RMS / ref)
-          </text>
-          <text x={530} y={556} className="fill-foreground text-[8px] font-mono">
-            Attention Score: α(t) = 0.4·S(t) + 0.3·A(t) + 0.3·O(t)
-          </text>
-          <text x={530} y={572} className="fill-foreground text-[8px] font-mono">
-            EMA Smoothing: ᾱ(t) = β·α(t) + (1−β)·ᾱ(t−1),  β = 0.3
-          </text>
-
-          {/* Figure caption */}
-          <text x="530" y="610" textAnchor="middle" className="fill-muted-foreground text-[9px] font-mono font-bold">
-            Figure 7: Conceptual Framework — End-to-End Multimodal Saliency Detection Pipeline
-          </text>
-        </svg>
+        {/* Feedback loop */}
+        <div className="mt-4 pt-3 border-t border-dashed border-border">
+          <p className="text-[9px] font-mono text-muted-foreground text-center italic">
+            ↻ Continuous feedback loop — repeats every frame cycle
+          </p>
+        </div>
       </div>
       <p className="text-[9px] font-mono text-muted-foreground mt-2">
-        The Conceptual Framework illustrates the complete 7-stage methodological pipeline from raw sensor data acquisition 
-        through pre-processing, feature extraction, object detection, multimodal fusion, decision-making, and cloud-based 
-        notification. The dashed feedback arrow represents the continuous 30fps processing loop. Each stage maps directly 
-        to a system component in the implementation, ensuring traceability between theoretical design and working code.
+        The Conceptual Framework illustrates the complete 7-stage pipeline from data collection through 
+        pre-processing, feature extraction, detection, fusion, alerting, and output storage.
       </p>
     </div>
   );
