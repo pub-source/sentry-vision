@@ -171,12 +171,13 @@ export default function Auth() {
           try {
             const barcodes = await detector.detect(videoRef.current);
             if (barcodes.length > 0) {
-              let code = barcodes[0].rawValue;
-              // Handle both URL format and plain code
-              if (code.includes('/join/')) {
-                code = code.split('/join/').pop() || code;
+              const rawCode = barcodes[0].rawValue || '';
+              const normalizedCode = extractInviteCode(rawCode);
+              if (!normalizedCode) {
+                setError('Could not read a valid invite code from QR. Try again.');
+                return;
               }
-              setInviteCode(code);
+              setInviteCode(normalizedCode);
               setScanning(false);
               streamRef.current?.getTracks().forEach(t => t.stop());
               streamRef.current = null;
