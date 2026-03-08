@@ -144,12 +144,14 @@ export default function ThresholdView({ title, sourceCanvas, saliencyMode, thres
 
   return (
     <div className="relative bg-card rounded-md overflow-hidden border border-border panel-glow h-full">
-      <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between px-2 py-1 bg-gradient-to-b from-background/80 to-transparent">
-        <span className="text-[10px] font-mono text-primary uppercase tracking-wider">{title}</span>
-        <span className="text-[10px] font-mono text-accent px-1.5 py-0.5 rounded bg-secondary/80">
-          T:{threshold} | {pct}%
-        </span>
-      </div>
+      {title && (
+        <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between px-2 py-1 bg-gradient-to-b from-background/80 to-transparent">
+          <span className="text-[10px] font-mono text-primary uppercase tracking-wider">{title}</span>
+          <span className="text-[10px] font-mono text-accent px-1.5 py-0.5 rounded bg-secondary/80">
+            T:{threshold} | {pct}%
+          </span>
+        </div>
+      )}
       <canvas
         ref={canvasRef}
         width={320}
