@@ -439,8 +439,8 @@ export default function Index() {
             saliencyScore={globalSaliencyScore}
             decibel={audioFeatures.decibel}
             speechDetected={audioFeatures.speechDetected}
-            objectCount={mainCamera.objects.length}
-            fps={mainCamera.fps}
+            objectCount={cameras.reduce((sum, c) => sum + c.objects.length, 0)}
+            fps={cameras[0].fps}
             alerts={alerts}
             onToggleResearch={() => setResearchMode(p => !p)}
           />
