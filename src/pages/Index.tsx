@@ -69,7 +69,7 @@ export default function Index() {
 
   const handleStart = useCallback(async () => {
     await enumerateDevices();
-    loadModel(); // Start loading COCO-SSD model
+    loadModel();
     if (simulationMode) {
       setRunning(true);
       startAudio();
@@ -78,15 +78,87 @@ export default function Index() {
       await startAudio();
       setRunning(true);
     }
-  }, [simulationMode, quality, startCameras, startAudio, enumerateDevices, loadModel]);
+    // Create cloud session
+    if (user) {
+      const { data } = await supabase.from('detection_sessions').insert({
+        user_id: user.id,
+        saliency_mode: saliencyMode,
+      }).select('id').single();
+      if (data) {
+        sessionIdRef.current = data.id;
+        console.log('[Cloud] Session created:', data.id);
+      }
+    }
+  }, [simulationMode, quality, startCameras, startAudio, enumerateDevices, loadModel, user, saliencyMode]);
 
-  const handleStop = useCallback(() => {
+  // Flush buffers to cloud every 5s
+  useEffect(() => {
+    if (!running || !sessionIdRef.current) return;
+    const interval = window.setInterval(async () => {
+      const sessionId = sessionIdRef.current;
+      if (!sessionId) return;
+      
+      // Flush data points
+      if (dataBufferRef.current.length > 0) {
+        const batch = dataBufferRef.current.splice(0);
+        await supabase.from('detection_data').insert(batch);
+      }
+      // Flush objects
+      if (objectsBufferRef.current.length > 0) {
+        const batch = objectsBufferRef.current.splice(0);
+        await supabase.from('detected_objects_log').insert(batch);
+      }
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [running]);
+
+  // Collect data points every 500ms
+  useEffect(() => {
+    if (!running || !sessionIdRef.current) return;
+    const interval = window.setInterval(() => {
+      if (!sessionIdRef.current) return;
+      dataBufferRef.current.push({
+        session_id: sessionIdRef.current,
+        attention_score: attentionScore,
+        saliency_score: globalSaliencyScore,
+        decibel: audioFeatures.decibel,
+        speech_detected: audioFeatures.speechDetected,
+        object_count: cameras.reduce((sum, c) => sum + c.objects.length, 0),
+        objects_detected: cameras[0].objects.map(o => ({ label: o.label, confidence: o.confidence })),
+        audio_event: audioFeatures.audioEvent,
+        fps: cameras[0].fps,
+      });
+    }, 500);
+    return () => clearInterval(interval);
+  }, [running, attentionScore, globalSaliencyScore, audioFeatures, cameras]);
+
+  const handleStop = useCallback(async () => {
     setRunning(false);
     stopCameras();
     stopAudio();
+    // Finalize cloud session
+    if (sessionIdRef.current && user) {
+      // Flush remaining buffers
+      if (dataBufferRef.current.length > 0) {
+        await supabase.from('detection_data').insert(dataBufferRef.current.splice(0));
+      }
+      if (objectsBufferRef.current.length > 0) {
+        await supabase.from('detected_objects_log').insert(objectsBufferRef.current.splice(0));
+      }
+      await supabase.from('detection_sessions').update({
+        ended_at: new Date().toISOString(),
+        avg_attention: attentionScore,
+        max_attention: attentionScore,
+        avg_saliency: globalSaliencyScore,
+        total_objects_detected: cameras.reduce((sum, c) => sum + c.objects.length, 0),
+        total_alerts: alerts.length,
+      }).eq('id', sessionIdRef.current);
+      console.log('[Cloud] Session finalized:', sessionIdRef.current);
+      sessionIdRef.current = null;
+    }
     setAttentionScore(0);
     setGlobalSaliencyScore(0);
-  }, [stopCameras, stopAudio]);
+  }, [stopCameras, stopAudio, user, attentionScore, globalSaliencyScore, cameras, alerts]);
 
   const handleFpsUpdate = useCallback((cameraId: number, fps: number) => {
     updateCamera(cameraId, { fps });
