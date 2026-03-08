@@ -608,7 +608,6 @@ export default function Index() {
             mirror={mirror}
             heatmapOpacity={heatmapOpacity}
             simulationMode={simulationMode}
-            priorityObjects={priorityObjects}
             onStart={handleStart}
             onStop={handleStop}
             onSaliencyModeChange={setSaliencyMode}
@@ -620,7 +619,6 @@ export default function Index() {
             onToggleMirror={() => setMirror(p => !p)}
             onHeatmapOpacityChange={setHeatmapOpacity}
             onToggleSimulation={() => setSimulationMode(p => !p)}
-            onPriorityObjectsChange={setPriorityObjects}
             onExportCSV={exportCSV}
           />
 
