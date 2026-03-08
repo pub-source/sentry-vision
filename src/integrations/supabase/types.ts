@@ -244,6 +244,41 @@ export type Database = {
         }
         Relationships: []
       }
+      join_requests: {
+        Row: {
+          created_at: string
+          display_name: string
+          household_id: string
+          id: string
+          phone_number: string
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          display_name: string
+          household_id: string
+          id?: string
+          phone_number?: string
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string
+          household_id?: string
+          id?: string
+          phone_number?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "join_requests_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notification_log: {
         Row: {
           action_type: string
