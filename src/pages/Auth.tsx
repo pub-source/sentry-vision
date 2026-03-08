@@ -347,7 +347,7 @@ export default function Auth() {
                     <input
                       type="text"
                       value={inviteCode}
-                      onChange={e => setInviteCode(e.target.value)}
+                      onChange={e => setInviteCode(normalizeInviteCode(e.target.value))}
                       className="w-full bg-secondary border border-border rounded px-3 py-2 text-xs font-mono text-foreground text-center tracking-widest focus:outline-none focus:border-primary"
                       placeholder="abc12345"
                       maxLength={8}

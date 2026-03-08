@@ -147,15 +147,16 @@ export default function HouseholdPage() {
   const handleJoinHousehold = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError('');
-    if (!user || !displayName.trim() || !phoneNumber.trim() || !inviteCode.trim()) {
-      setFormError('All fields are required');
+    const normalizedCode = normalizeInviteCode(inviteCode);
+    if (!user || !displayName.trim() || !phoneNumber.trim() || normalizedCode.length !== 8) {
+      setFormError('All fields are required and invite code must be 8 characters');
       return;
     }
 
     const { data: hh } = await supabase
       .from('households')
       .select('id')
-      .eq('invite_code', inviteCode.trim())
+      .eq('invite_code', normalizedCode)
       .maybeSingle();
 
     if (!hh) { setFormError('Invalid invite code'); return; }
