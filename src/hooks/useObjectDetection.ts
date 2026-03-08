@@ -63,10 +63,10 @@ export function useObjectDetection() {
 
       console.log('[ObjectDetection] Detected class names:', predictions.map(p => p.class));
 
-      // Filter to only priority objects with sufficient confidence
+      // Filter to only priority objects with sufficient confidence (empty array = all)
       const filtered = predictions.filter(p =>
         p.score >= MIN_CONFIDENCE &&
-        priorityObjects.includes(p.class)
+        (priorityObjects.length === 0 || priorityObjects.includes(p.class))
       );
 
       console.log('[ObjectDetection] Filtered priority objects:', filtered.map(p => `${p.class}(${(p.score * 100).toFixed(0)}%)`));
