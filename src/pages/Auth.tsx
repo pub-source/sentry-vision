@@ -146,12 +146,37 @@ export default function Auth() {
     }
 
     setInviteCode(normalizedCode);
-    setSuccess(`Household "${hh.name}" found! Create your account to join.`);
-    sessionStorage.setItem('pending_invite_code', normalizedCode);
-    setMode('create');
+    setMatchedHousehold({ id: hh.id, name: hh.name });
+    setMode('join-name');
   };
 
-  const startQrScan = async () => {
+  const handleSubmitJoinRequest = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    if (!joinName.trim()) {
+      setError('Please enter your name');
+      return;
+    }
+    if (!matchedHousehold) {
+      setError('No household selected');
+      return;
+    }
+    setSubmitting(true);
+    const { error: insertErr } = await supabase
+      .from('join_requests')
+      .insert({
+        household_id: matchedHousehold.id,
+        display_name: joinName.trim(),
+        phone_number: joinPhone.trim(),
+        status: 'pending',
+      });
+    if (insertErr) {
+      setError(insertErr.message);
+    } else {
+      setMode('join-submitted');
+    }
+    setSubmitting(false);
+  };
     setScanning(true);
     setError('');
     try {
