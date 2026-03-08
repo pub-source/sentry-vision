@@ -36,7 +36,6 @@ export default function CameraFeed({
   saliencyMode,
   threshold,
   simulationMode,
-  priorityObjects,
   detectionStats,
   onFpsUpdate,
   onObjectsUpdate,

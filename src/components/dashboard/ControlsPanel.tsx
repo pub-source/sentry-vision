@@ -145,24 +145,10 @@ export default function ControlsPanel(props: ControlsPanelProps) {
         />
       </div>
 
-      {/* Priority Objects */}
-      <div className="space-y-1">
-        <span className="text-[10px] font-mono text-muted-foreground">Priority Objects</span>
-        <div className="flex flex-wrap gap-1 max-h-20 overflow-y-auto">
-          {DETECTABLE_OBJECTS.slice(0, 15).map(obj => (
-            <button
-              key={obj}
-              onClick={() => togglePriority(obj)}
-              className={`text-[9px] font-mono px-1.5 py-0.5 rounded border transition-all ${
-                priorityObjects.includes(obj)
-                  ? 'border-accent bg-accent/10 text-accent'
-                  : 'border-border text-muted-foreground'
-              }`}
-            >
-              {obj}
-            </button>
-          ))}
-        </div>
+      {/* Detection Mode */}
+      <div className="bg-secondary/30 rounded p-2">
+        <span className="text-[10px] font-mono text-primary">Detection: ALL OBJECTS</span>
+        <p className="text-[8px] font-mono text-muted-foreground mt-0.5">COCO-SSD detecting all 80 classes</p>
       </div>
 
       {/* Export */}
