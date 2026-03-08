@@ -1353,8 +1353,8 @@ export default function Research() {
                     <tr className="border-b border-border/50">
                       <td className="py-2 px-3">Single webcam</td>
                       <td className="py-2 px-3 text-accent">1 physical</td>
-                      <td className="py-2 px-3">CAM 1 captures, CAMs 2-4 process same frame</td>
-                      <td className="py-2 px-3">Full pipeline via frame sharing</td>
+                      <td className="py-2 px-3">CAM 1 captures, CAMs 2-6 process same frame</td>
+                      <td className="py-2 px-3">Full 6-pipeline via frame sharing</td>
                     </tr>
                     <tr>
                       <td className="py-2 px-3">Simulation</td>

@@ -1,5 +1,5 @@
 import type { SaliencyMode, QualityMode } from '@/types/dashboard';
-import { DETECTABLE_OBJECTS } from '@/types/dashboard';
+import { DETECTABLE_OBJECTS, DEFAULT_PRIORITY_OBJECTS } from '@/types/dashboard';
 
 interface ControlsPanelProps {
   running: boolean;
