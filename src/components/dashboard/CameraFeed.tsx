@@ -155,7 +155,7 @@ export default function CameraFeed({
         prevFrameRef.current = frameData;
 
         const score = computeSaliencyScore(saliencyData);
-        onSaliencyScoreUpdate(score);
+        onSaliencyScoreUpdate(camera.id, score);
 
         if (showHeatmap) {
           const heatmap = applyHeatmapColor(saliencyData);
