@@ -38,7 +38,9 @@ export default function Index() {
   const [mirror, setMirror] = useState(false);
   const [heatmapOpacity, setHeatmapOpacity] = useState(50);
   const [simulationMode, setSimulationMode] = useState(false);
-  const [priorityObjects, setPriorityObjects] = useState<string[]>(DEFAULT_PRIORITY_OBJECTS);
+  const sessionIdRef = useRef<string | null>(null);
+  const dataBufferRef = useRef<any[]>([]);
+  const objectsBufferRef = useRef<any[]>([]);
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [errors] = useState<string[]>([]);
   const [attentionScore, setAttentionScore] = useState(0);
