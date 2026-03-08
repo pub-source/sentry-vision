@@ -323,7 +323,6 @@ export default function Index() {
               saliencyMode={saliencyMode}
               threshold={threshold}
               simulationMode={simulationMode && running}
-              simulationMode={simulationMode && running}
               detectionStats={detectionStats}
               onFpsUpdate={handleFpsUpdate}
               onObjectsUpdate={handleObjectsUpdate}
