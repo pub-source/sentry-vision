@@ -121,25 +121,27 @@ export default function Auth() {
   const handleJoinWithCode = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    if (!inviteCode.trim()) {
-      setError('Enter an invite code');
+
+    const normalizedCode = normalizeInviteCode(inviteCode);
+    if (normalizedCode.length !== 8) {
+      setError('Invite code must be 8 characters');
       return;
     }
-    // Validate the invite code exists
+
     const { data: hh } = await supabase
       .from('households')
       .select('id, name')
-      .eq('invite_code', inviteCode.trim())
+      .eq('invite_code', normalizedCode)
       .maybeSingle();
 
     if (!hh) {
       setError('Invalid invite code. Ask your household admin for a valid code.');
       return;
     }
-    // Code is valid — proceed to create account with invite code stored
+
+    setInviteCode(normalizedCode);
     setSuccess(`Household "${hh.name}" found! Create your account to join.`);
-    // Store invite code in sessionStorage for after signup
-    sessionStorage.setItem('pending_invite_code', inviteCode.trim());
+    sessionStorage.setItem('pending_invite_code', normalizedCode);
     setMode('create');
   };
 
