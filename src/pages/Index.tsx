@@ -284,60 +284,176 @@ export default function Index() {
 
       {/* Main content */}
       <div className="flex h-[calc(100vh-41px)]">
-        {/* Left: 2x2 grid */}
+        {/* Left: Specialized camera grid + fusion */}
          <div className="flex-1 p-2 flex flex-col gap-2 overflow-y-auto">
-          {/* 4-Camera Grid */}
-          <div className="grid grid-cols-2 gap-2" style={{ minHeight: '60%' }}>
-            {cameras.map(cam => (
-              <CameraFeed
-                key={cam.id}
-                camera={cam}
-                mirror={mirror}
-                showBoundingBoxes={showBoundingBoxes}
-                showHeatmap={showHeatmap}
-                heatmapOpacity={heatmapOpacity}
+          {/* 4-Camera Specialized Grid */}
+          <div className="grid grid-cols-2 gap-2" style={{ minHeight: '55%' }}>
+            {/* CAM 1: Object Detection — Live feed with COCO-SSD bounding boxes */}
+            <CameraFeed
+              camera={cameras[0]}
+              mirror={mirror}
+              showBoundingBoxes={showBoundingBoxes}
+              showHeatmap={false}
+              heatmapOpacity={0}
+              saliencyMode={saliencyMode}
+              threshold={threshold}
+              simulationMode={simulationMode && running}
+              priorityObjects={priorityObjects}
+              detectionStats={detectionStats}
+              onFpsUpdate={handleFpsUpdate}
+              onObjectsUpdate={handleObjectsUpdate}
+              onSaliencyScoreUpdate={handleCameraSaliencyScore}
+              onFrameCapture={handleFrameCapture}
+              onDetectFrame={handleDetectFrame}
+            />
+
+            {/* CAM 2: Saliency Heatmap — Colored heat overlay */}
+            <div className="relative bg-card rounded-md overflow-hidden border border-border panel-glow">
+              <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between px-2 py-1 bg-gradient-to-b from-background/80 to-transparent">
+                <span className="text-[10px] font-mono text-primary uppercase tracking-wider">
+                  CAM 2 — Saliency Heatmap
+                </span>
+                <div className="flex items-center gap-2">
+                  <span className="text-[8px] font-mono px-1 py-0.5 rounded bg-accent/20 text-accent">SOBEL</span>
+                  <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded ${
+                    globalSaliencyScore > 60 ? 'bg-destructive/80 text-destructive-foreground' :
+                    globalSaliencyScore > 30 ? 'bg-warning/80 text-warning-foreground' :
+                    'bg-secondary/80 text-secondary-foreground'
+                  }`}>
+                    S:{globalSaliencyScore}
+                  </span>
+                </div>
+              </div>
+              <SaliencyView
+                title=""
+                sourceCanvas={sourceCanvas}
                 saliencyMode={saliencyMode}
                 threshold={threshold}
-                simulationMode={simulationMode && running}
-                priorityObjects={priorityObjects}
-                detectionStats={detectionStats}
-                onFpsUpdate={handleFpsUpdate}
-                onObjectsUpdate={handleObjectsUpdate}
-                onSaliencyScoreUpdate={handleCameraSaliencyScore}
-                onFrameCapture={cam.id === 1 ? handleFrameCapture : undefined}
-                onDetectFrame={handleDetectFrame}
+                colored={true}
+                active={running}
+                score={globalSaliencyScore}
+                onScoreUpdate={handleSaliencyViewScore}
               />
-            ))}
+            </div>
+
+            {/* CAM 3: Region Saliency — Grayscale edge/region map */}
+            <div className="relative bg-card rounded-md overflow-hidden border border-border panel-glow">
+              <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between px-2 py-1 bg-gradient-to-b from-background/80 to-transparent">
+                <span className="text-[10px] font-mono text-primary uppercase tracking-wider">
+                  CAM 3 — Region Saliency
+                </span>
+                <span className="text-[8px] font-mono px-1 py-0.5 rounded bg-info/20 text-info">GRAYSCALE</span>
+              </div>
+              <SaliencyView
+                title=""
+                sourceCanvas={sourceCanvas}
+                saliencyMode={saliencyMode}
+                threshold={threshold}
+                colored={false}
+                active={running}
+                score={globalSaliencyScore}
+              />
+            </div>
+
+            {/* CAM 4: Threshold / Superpixel Segmentation */}
+            <div className="relative bg-card rounded-md overflow-hidden border border-border panel-glow">
+              <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between px-2 py-1 bg-gradient-to-b from-background/80 to-transparent">
+                <span className="text-[10px] font-mono text-primary uppercase tracking-wider">
+                  CAM 4 — Threshold Segmentation
+                </span>
+                <span className="text-[8px] font-mono px-1 py-0.5 rounded bg-warning/20 text-warning">BINARY</span>
+              </div>
+              <ThresholdView
+                title=""
+                sourceCanvas={sourceCanvas}
+                saliencyMode={saliencyMode}
+                threshold={threshold}
+                active={running}
+              />
+            </div>
           </div>
 
-          {/* Saliency analysis strip */}
-          <div className="grid grid-cols-3 gap-2" style={{ minHeight: '25%' }}>
-            <SaliencyView
-              title="Saliency Output"
-              sourceCanvas={sourceCanvas}
-              saliencyMode={saliencyMode}
-              threshold={threshold}
-              colored={true}
-              active={running}
-              score={globalSaliencyScore}
-              onScoreUpdate={handleSaliencyViewScore}
-            />
-            <SaliencyView
-              title="Low-Fi Saliency"
-              sourceCanvas={sourceCanvas}
-              saliencyMode={saliencyMode}
-              threshold={threshold}
-              colored={false}
-              active={running}
-              score={globalSaliencyScore}
-            />
-            <ThresholdView
-              title="Threshold"
-              sourceCanvas={sourceCanvas}
-              saliencyMode={saliencyMode}
-              threshold={threshold}
-              active={running}
-            />
+          {/* Fusion Output Strip */}
+          <div className="bg-card rounded-md border border-primary/30 panel-glow p-3">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[10px] font-mono text-primary uppercase tracking-wider">
+                ⚡ Multimodal Fusion Output
+              </span>
+              <span className="text-[9px] font-mono text-muted-foreground">
+                α = 0.4×S + 0.3×A + 0.3×O
+              </span>
+            </div>
+            <div className="grid grid-cols-4 gap-2">
+              {/* CAM 1 contribution */}
+              <div className="bg-secondary/30 rounded p-2 space-y-1">
+                <p className="text-[9px] font-mono text-accent font-semibold">CAM 1 — Detection</p>
+                <p className="text-[8px] font-mono text-muted-foreground">Objects: {cameras[0].objects.length}</p>
+                <div className="h-1.5 bg-secondary/50 rounded overflow-hidden">
+                  <div className="h-full bg-primary rounded transition-all" style={{ width: `${Math.min(100, cameras[0].objects.length * 25)}%` }} />
+                </div>
+                <p className="text-[8px] font-mono text-foreground/70">
+                  O = {cameras[0].objects.length > 0
+                    ? cameras[0].objects.map(o => `${o.label}(${(o.confidence * 100).toFixed(0)}%)`).join(', ')
+                    : 'none'}
+                </p>
+              </div>
+              {/* CAM 2 contribution */}
+              <div className="bg-secondary/30 rounded p-2 space-y-1">
+                <p className="text-[9px] font-mono text-accent font-semibold">CAM 2 — Saliency</p>
+                <p className="text-[8px] font-mono text-muted-foreground">Score: {globalSaliencyScore}</p>
+                <div className="h-1.5 bg-secondary/50 rounded overflow-hidden">
+                  <div className={`h-full rounded transition-all ${
+                    globalSaliencyScore > 60 ? 'bg-destructive' : globalSaliencyScore > 30 ? 'bg-warning' : 'bg-success'
+                  }`} style={{ width: `${globalSaliencyScore}%` }} />
+                </div>
+                <p className="text-[8px] font-mono text-foreground/70">
+                  G = √(G<sub>x</sub>² + G<sub>y</sub>²) → {globalSaliencyScore}/100
+                </p>
+              </div>
+              {/* CAM 3 contribution */}
+              <div className="bg-secondary/30 rounded p-2 space-y-1">
+                <p className="text-[9px] font-mono text-accent font-semibold">CAM 3 — Region</p>
+                <p className="text-[8px] font-mono text-muted-foreground">Edge density</p>
+                <div className="h-1.5 bg-secondary/50 rounded overflow-hidden">
+                  <div className="h-full bg-info rounded transition-all" style={{ width: `${Math.min(100, globalSaliencyScore * 1.2)}%` }} />
+                </div>
+                <p className="text-[8px] font-mono text-foreground/70">
+                  Grayscale edge map
+                </p>
+              </div>
+              {/* CAM 4 contribution */}
+              <div className="bg-secondary/30 rounded p-2 space-y-1">
+                <p className="text-[9px] font-mono text-accent font-semibold">CAM 4 — Threshold</p>
+                <p className="text-[8px] font-mono text-muted-foreground">τ = {threshold}</p>
+                <div className="h-1.5 bg-secondary/50 rounded overflow-hidden">
+                  <div className="h-full bg-warning rounded transition-all" style={{ width: `${Math.min(100, threshold * 3)}%` }} />
+                </div>
+                <p className="text-[8px] font-mono text-foreground/70">
+                  Binary segmentation
+                </p>
+              </div>
+            </div>
+            {/* Combined score */}
+            <div className="mt-2 flex items-center gap-3 bg-secondary/20 rounded p-2">
+              <span className="text-[9px] font-mono text-muted-foreground">FUSED α =</span>
+              <span className={`text-sm font-mono font-bold ${
+                attentionScore > 70 ? 'text-destructive' : attentionScore > 40 ? 'text-warning' : 'text-success'
+              }`}>
+                {attentionScore}
+              </span>
+              <div className="flex-1 h-2 bg-secondary/50 rounded overflow-hidden">
+                <div className={`h-full rounded transition-all ${
+                  attentionScore > 70 ? 'bg-destructive' : attentionScore > 40 ? 'bg-warning' : 'bg-success'
+                }`} style={{ width: `${attentionScore}%` }} />
+              </div>
+              <span className={`text-[9px] font-mono px-1.5 py-0.5 rounded ${
+                attentionScore > 70 ? 'bg-destructive/20 text-destructive' :
+                attentionScore > 40 ? 'bg-warning/20 text-warning' :
+                'bg-success/20 text-success'
+              }`}>
+                {attentionScore > 70 ? 'ALERT' : attentionScore > 40 ? 'ELEVATED' : 'NORMAL'}
+              </span>
+            </div>
           </div>
 
           {/* Bottom: Timeline */}
