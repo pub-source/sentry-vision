@@ -282,14 +282,25 @@ export default function Index() {
               </button>
             </>
           )}
-          {!user && !authLoading && (
-            <button
-              onClick={() => navigate('/auth')}
-              className="text-[10px] font-mono text-primary hover:underline"
-            >
-              Sign In
-            </button>
-          )}
+          {!user && !authLoading && (() => {
+            const guest = sessionStorage.getItem('guest_member');
+            if (guest) {
+              const { name, household } = JSON.parse(guest);
+              return (
+                <span className="text-[10px] font-mono text-accent">
+                  👤 {name} • {household}
+                </span>
+              );
+            }
+            return (
+              <button
+                onClick={() => navigate('/auth')}
+                className="text-[10px] font-mono text-primary hover:underline"
+              >
+                Sign In
+              </button>
+            );
+          })()}
           <span className="text-[10px] font-mono text-muted-foreground">
             {new Date().toLocaleTimeString()}
           </span>
