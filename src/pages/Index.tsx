@@ -434,7 +434,48 @@ export default function Index() {
             </div>
           </div>
 
-          {/* Fusion Output Strip */}
+          {/* 4th row: Laplacian + Motion */}
+          <div className="grid grid-cols-2 gap-2">
+            {/* CAM 7: Laplacian Detection */}
+            <div className="relative bg-card rounded-md overflow-hidden border border-border panel-glow">
+              <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between px-2 py-1 bg-gradient-to-b from-background/80 to-transparent">
+                <span className="text-[10px] font-mono text-primary uppercase tracking-wider">
+                  CAM 7 — Laplacian Detection
+                </span>
+                <span className="text-[8px] font-mono px-1 py-0.5 rounded bg-accent/20 text-accent">∇²I</span>
+              </div>
+              <LaplacianView
+                sourceCanvas={sourceCanvas}
+                threshold={threshold}
+                active={running}
+              />
+              {!running && (
+                <div className="absolute inset-0 flex items-center justify-center bg-background/80">
+                  <span className="text-xs font-mono text-muted-foreground">OFFLINE</span>
+                </div>
+              )}
+            </div>
+
+            {/* CAM 8: Motion Detection */}
+            <div className="relative bg-card rounded-md overflow-hidden border border-border panel-glow">
+              <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between px-2 py-1 bg-gradient-to-b from-background/80 to-transparent">
+                <span className="text-[10px] font-mono text-primary uppercase tracking-wider">
+                  CAM 8 — Motion Detection
+                </span>
+                <span className="text-[8px] font-mono px-1 py-0.5 rounded bg-success/20 text-success">ΔI</span>
+              </div>
+              <MotionView
+                sourceCanvas={sourceCanvas}
+                threshold={threshold}
+                active={running}
+              />
+              {!running && (
+                <div className="absolute inset-0 flex items-center justify-center bg-background/80">
+                  <span className="text-xs font-mono text-muted-foreground">OFFLINE</span>
+                </div>
+              )}
+            </div>
+          </div>
           <div className="bg-card rounded-md border border-primary/30 panel-glow p-3">
             <div className="flex items-center justify-between mb-2">
               <span className="text-[10px] font-mono text-primary uppercase tracking-wider">
