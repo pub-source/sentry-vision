@@ -1297,7 +1297,7 @@ export default function Research() {
                   <p className="text-xs text-muted-foreground font-mono">
                     where w<sub>s</sub> = 0.4, w<sub>a</sub> = 0.3, w<sub>o</sub> = 0.3
                   </p>
-                  <div className="grid grid-cols-4 gap-2 text-left mt-3">
+                  <div className="grid grid-cols-3 gap-2 text-left mt-3">
                     <div className="bg-card rounded p-2 border border-border">
                       <p className="text-[8px] font-mono text-accent font-bold">CAM 1 → O(t)</p>
                       <p className="text-[8px] font-mono text-muted-foreground">What objects exist?</p>
@@ -1313,6 +1313,14 @@ export default function Research() {
                     <div className="bg-card rounded p-2 border border-border">
                       <p className="text-[8px] font-mono text-accent font-bold">CAM 4 → T(t)</p>
                       <p className="text-[8px] font-mono text-muted-foreground">Segments salient areas</p>
+                    </div>
+                    <div className="bg-card rounded p-2 border border-border">
+                      <p className="text-[8px] font-mono text-accent font-bold">CAM 5 → L(t)</p>
+                      <p className="text-[8px] font-mono text-muted-foreground">Low-fi region validation</p>
+                    </div>
+                    <div className="bg-card rounded p-2 border border-border">
+                      <p className="text-[8px] font-mono text-accent font-bold">CAM 6 → Shader(t)</p>
+                      <p className="text-[8px] font-mono text-muted-foreground">Object semantic mask</p>
                     </div>
                   </div>
                   <p className="text-xs text-muted-foreground font-mono mt-2">
