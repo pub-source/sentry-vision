@@ -1,13 +1,14 @@
 import { useState, useRef, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { Navigate, useNavigate } from 'react-router-dom';
+import { Navigate, useNavigate, useParams } from 'react-router-dom';
 
 type AuthMode = 'choose' | 'create' | 'join-qr' | 'login' | 'forgot';
 
 export default function Auth() {
   const { user, loading, signUp, signIn } = useAuth();
   const navigate = useNavigate();
+  const { code: urlCode } = useParams<{ code?: string }>();
   const [mode, setMode] = useState<AuthMode>('choose');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -20,6 +21,14 @@ export default function Auth() {
   const [scanning, setScanning] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
+
+  // Handle URL invite code from /join/:code route
+  useEffect(() => {
+    if (urlCode && !inviteCode) {
+      setInviteCode(urlCode);
+      setMode('join-qr');
+    }
+  }, [urlCode, inviteCode]);
 
   // Cleanup camera on unmount or mode change
   useEffect(() => {
