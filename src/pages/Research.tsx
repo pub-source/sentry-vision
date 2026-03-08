@@ -1165,12 +1165,26 @@ export default function Research() {
                       <td className="py-2 px-3">Region intensity map (0–255)</td>
                       <td className="py-2 px-3">R(t) — Region validation</td>
                     </tr>
-                    <tr>
+                    <tr className="border-b border-border/50">
                       <td className="py-2 px-3 text-accent font-bold">CAM 4</td>
                       <td className="py-2 px-3 font-semibold">Threshold Segmentation</td>
                       <td className="py-2 px-3">Binary threshold (τ) + superpixel</td>
                       <td className="py-2 px-3">Binary mask (salient/non-salient)</td>
                       <td className="py-2 px-3">T(t) — Segmentation mask</td>
+                    </tr>
+                    <tr className="border-b border-border/50 bg-primary/5">
+                      <td className="py-2 px-3 text-accent font-bold">CAM 5</td>
+                      <td className="py-2 px-3 font-semibold">Low-Fi Saliency</td>
+                      <td className="py-2 px-3">Block averaging (B×B superpixel)</td>
+                      <td className="py-2 px-3">Downsampled region mosaic</td>
+                      <td className="py-2 px-3">L(t) — Low-fidelity map</td>
+                    </tr>
+                    <tr>
+                      <td className="py-2 px-3 text-accent font-bold">CAM 6</td>
+                      <td className="py-2 px-3 font-semibold">Object Shader</td>
+                      <td className="py-2 px-3">Semantic mask + color remap</td>
+                      <td className="py-2 px-3">Red foreground / blue-gray background</td>
+                      <td className="py-2 px-3">Shader(t) — Object highlight mask</td>
                     </tr>
                   </tbody>
                 </table>
