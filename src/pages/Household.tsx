@@ -18,6 +18,15 @@ interface Member {
   user_id: string;
 }
 
+interface JoinRequest {
+  id: string;
+  household_id: string;
+  display_name: string;
+  phone_number: string;
+  status: string;
+  created_at: string;
+}
+
 interface WakeWord {
   id: string;
   phrase: string;
