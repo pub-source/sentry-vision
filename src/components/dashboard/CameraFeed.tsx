@@ -21,9 +21,9 @@ interface CameraFeedProps {
   simulationMode: boolean;
   priorityObjects: string[];
   detectionStats: DetectionStats;
-  onFpsUpdate: (fps: number) => void;
-  onObjectsUpdate: (objects: DetectedObject[]) => void;
-  onSaliencyScoreUpdate: (score: number) => void;
+  onFpsUpdate: (cameraId: number, fps: number) => void;
+  onObjectsUpdate: (cameraId: number, objects: DetectedObject[]) => void;
+  onSaliencyScoreUpdate: (cameraId: number, score: number) => void;
   onFrameCapture?: (canvas: HTMLCanvasElement) => void;
   onDetectFrame?: (video: HTMLVideoElement) => Promise<DetectedObject[]>;
 }
@@ -87,7 +87,7 @@ export default function CameraFeed({
         console.log('[CameraFeed] Detection loop running.');
         const objects = await onDetectFrame(video);
         detectedObjectsRef.current = objects;
-        onObjectsUpdate(objects);
+        onObjectsUpdate(camera.id, objects);
       }
     };
 
@@ -155,7 +155,7 @@ export default function CameraFeed({
         prevFrameRef.current = frameData;
 
         const score = computeSaliencyScore(saliencyData);
-        onSaliencyScoreUpdate(score);
+        onSaliencyScoreUpdate(camera.id, score);
 
         if (showHeatmap) {
           const heatmap = applyHeatmapColor(saliencyData);
@@ -212,7 +212,7 @@ export default function CameraFeed({
         }
 
         if (simulationMode && objects.length > 0) {
-          onObjectsUpdate(objects);
+          onObjectsUpdate(camera.id, objects);
         }
       }
 
@@ -223,7 +223,7 @@ export default function CameraFeed({
       fpsCountRef.current++;
       const now = Date.now();
       if (now - fpsTimeRef.current >= 1000) {
-        onFpsUpdate(fpsCountRef.current);
+        onFpsUpdate(camera.id, fpsCountRef.current);
         fpsCountRef.current = 0;
         fpsTimeRef.current = now;
       }
