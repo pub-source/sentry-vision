@@ -1,5 +1,4 @@
 import type { SaliencyMode, QualityMode } from '@/types/dashboard';
-import { DETECTABLE_OBJECTS } from '@/types/dashboard';
 
 interface ControlsPanelProps {
   running: boolean;
@@ -12,7 +11,6 @@ interface ControlsPanelProps {
   mirror: boolean;
   heatmapOpacity: number;
   simulationMode: boolean;
-  priorityObjects: string[];
   onStart: () => void;
   onStop: () => void;
   onSaliencyModeChange: (mode: SaliencyMode) => void;
@@ -24,27 +22,18 @@ interface ControlsPanelProps {
   onToggleMirror: () => void;
   onHeatmapOpacityChange: (v: number) => void;
   onToggleSimulation: () => void;
-  onPriorityObjectsChange: (objects: string[]) => void;
   onExportCSV: () => void;
 }
 
 export default function ControlsPanel(props: ControlsPanelProps) {
   const {
     running, saliencyMode, threshold, showBoundingBoxes, showHeatmap, showAlerts,
-    quality, mirror, heatmapOpacity, simulationMode, priorityObjects,
+    quality, mirror, heatmapOpacity, simulationMode,
     onStart, onStop, onSaliencyModeChange, onThresholdChange,
     onToggleBoundingBoxes, onToggleHeatmap, onToggleAlerts,
     onQualityChange, onToggleMirror, onHeatmapOpacityChange,
-    onToggleSimulation, onPriorityObjectsChange, onExportCSV,
+    onToggleSimulation, onExportCSV,
   } = props;
-
-  const togglePriority = (obj: string) => {
-    onPriorityObjectsChange(
-      priorityObjects.includes(obj)
-        ? priorityObjects.filter(o => o !== obj)
-        : [...priorityObjects, obj]
-    );
-  };
 
   return (
     <div className="bg-card rounded-md border border-border panel-glow p-3 space-y-3">
