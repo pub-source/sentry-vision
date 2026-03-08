@@ -1,5 +1,4 @@
 import type { SaliencyMode, QualityMode } from '@/types/dashboard';
-import { DETECTABLE_OBJECTS } from '@/types/dashboard';
 
 interface ControlsPanelProps {
   running: boolean;
@@ -12,7 +11,6 @@ interface ControlsPanelProps {
   mirror: boolean;
   heatmapOpacity: number;
   simulationMode: boolean;
-  priorityObjects: string[];
   onStart: () => void;
   onStop: () => void;
   onSaliencyModeChange: (mode: SaliencyMode) => void;
@@ -24,27 +22,18 @@ interface ControlsPanelProps {
   onToggleMirror: () => void;
   onHeatmapOpacityChange: (v: number) => void;
   onToggleSimulation: () => void;
-  onPriorityObjectsChange: (objects: string[]) => void;
   onExportCSV: () => void;
 }
 
 export default function ControlsPanel(props: ControlsPanelProps) {
   const {
     running, saliencyMode, threshold, showBoundingBoxes, showHeatmap, showAlerts,
-    quality, mirror, heatmapOpacity, simulationMode, priorityObjects,
+    quality, mirror, heatmapOpacity, simulationMode,
     onStart, onStop, onSaliencyModeChange, onThresholdChange,
     onToggleBoundingBoxes, onToggleHeatmap, onToggleAlerts,
     onQualityChange, onToggleMirror, onHeatmapOpacityChange,
-    onToggleSimulation, onPriorityObjectsChange, onExportCSV,
+    onToggleSimulation, onExportCSV,
   } = props;
-
-  const togglePriority = (obj: string) => {
-    onPriorityObjectsChange(
-      priorityObjects.includes(obj)
-        ? priorityObjects.filter(o => o !== obj)
-        : [...priorityObjects, obj]
-    );
-  };
 
   return (
     <div className="bg-card rounded-md border border-border panel-glow p-3 space-y-3">
@@ -156,24 +145,10 @@ export default function ControlsPanel(props: ControlsPanelProps) {
         />
       </div>
 
-      {/* Priority Objects */}
-      <div className="space-y-1">
-        <span className="text-[10px] font-mono text-muted-foreground">Priority Objects</span>
-        <div className="flex flex-wrap gap-1 max-h-20 overflow-y-auto">
-          {DETECTABLE_OBJECTS.slice(0, 15).map(obj => (
-            <button
-              key={obj}
-              onClick={() => togglePriority(obj)}
-              className={`text-[9px] font-mono px-1.5 py-0.5 rounded border transition-all ${
-                priorityObjects.includes(obj)
-                  ? 'border-accent bg-accent/10 text-accent'
-                  : 'border-border text-muted-foreground'
-              }`}
-            >
-              {obj}
-            </button>
-          ))}
-        </div>
+      {/* Detection Mode */}
+      <div className="bg-secondary/30 rounded p-2">
+        <span className="text-[10px] font-mono text-primary">Detection: ALL OBJECTS</span>
+        <p className="text-[8px] font-mono text-muted-foreground mt-0.5">COCO-SSD detecting all 80 classes</p>
       </div>
 
       {/* Export */}
