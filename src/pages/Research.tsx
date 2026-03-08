@@ -541,104 +541,146 @@ export default function Research() {
           {/* Section 3 Visual: Algorithm Flowchart */}
           <div className="bg-card border border-border rounded-md p-4">
             <p className="text-[10px] font-mono text-primary uppercase tracking-wider mb-3">
-              Figure 3.1 — Main Processing Loop Flowchart
+              Figure 3.1 — Main Processing Loop Flowchart (User → Function → Output)
             </p>
             <div className="bg-background rounded-md p-6 border border-border overflow-x-auto">
-              <svg viewBox="0 0 700 700" className="w-full max-w-2xl mx-auto" style={{ minWidth: '400px' }}>
+              <svg viewBox="0 0 860 760" className="w-full max-w-4xl mx-auto" style={{ minWidth: '600px' }}>
+                {/* Column headers */}
+                <rect x="10" y="5" width="200" height="22" rx="4" className="fill-primary/10 stroke-primary/30" strokeWidth="1"/>
+                <text x="110" y="20" textAnchor="middle" className="fill-primary text-[9px] font-mono font-bold">USER ACTION</text>
+                <rect x="230" y="5" width="360" height="22" rx="4" className="fill-accent/10 stroke-accent/30" strokeWidth="1"/>
+                <text x="410" y="20" textAnchor="middle" className="fill-accent text-[9px] font-mono font-bold">FUNCTION / PROCESS</text>
+                <rect x="610" y="5" width="240" height="22" rx="4" className="fill-info/10 stroke-info/30" strokeWidth="1"/>
+                <text x="730" y="20" textAnchor="middle" className="fill-info text-[9px] font-mono font-bold">OUTPUT</text>
+
                 {/* Start */}
-                <ellipse cx="350" cy="30" rx="60" ry="20" className="fill-primary/20 stroke-primary" strokeWidth="1.5"/>
-                <text x="350" y="35" textAnchor="middle" className="fill-primary text-[9px] font-mono">START</text>
-                <line x1="350" y1="50" x2="350" y2="75" className="stroke-primary" strokeWidth="1" markerEnd="url(#arrowFlow)"/>
+                <ellipse cx="110" cy="55" rx="50" ry="16" className="fill-primary/20 stroke-primary" strokeWidth="1.5"/>
+                <text x="110" y="59" textAnchor="middle" className="fill-primary text-[8px] font-mono font-bold">START</text>
+                <line x1="110" y1="71" x2="110" y2="95" className="stroke-primary" strokeWidth="1" markerEnd="url(#arrowF)"/>
 
-                {/* Capture */}
-                <rect x="270" y="75" width="160" height="35" rx="4" className="fill-card stroke-border" strokeWidth="1"/>
-                <text x="350" y="97" textAnchor="middle" className="fill-foreground text-[8px] font-mono">Capture Frame V(t) + Audio A(t)</text>
-                <line x1="350" y1="110" x2="350" y2="135" className="stroke-primary" strokeWidth="1" markerEnd="url(#arrowFlow)"/>
+                {/* User: Start Monitoring */}
+                <rect x="25" y="95" width="170" height="35" rx="4" className="fill-primary/10 stroke-primary" strokeWidth="1"/>
+                <text x="110" y="117" textAnchor="middle" className="fill-foreground text-[8px] font-mono">User: Start Monitoring</text>
+                <line x1="195" y1="112" x2="280" y2="112" className="stroke-accent" strokeWidth="1" markerEnd="url(#arrowF)"/>
 
-                {/* Grayscale */}
-                <rect x="270" y="135" width="160" height="35" rx="4" className="fill-card stroke-border" strokeWidth="1"/>
-                <text x="350" y="157" textAnchor="middle" className="fill-foreground text-[8px] font-mono">Convert V(t) to Grayscale</text>
-                <line x1="350" y1="170" x2="350" y2="200" className="stroke-primary" strokeWidth="1" markerEnd="url(#arrowFlow)"/>
+                {/* Function: Capture Frame + Audio */}
+                <rect x="280" y="95" width="200" height="35" rx="4" className="fill-accent/10 stroke-accent" strokeWidth="1"/>
+                <text x="380" y="112" textAnchor="middle" className="fill-foreground text-[8px] font-mono">Capture Frame V(t) + Audio A(t)</text>
+                <line x1="380" y1="130" x2="380" y2="155" className="stroke-accent" strokeWidth="1" markerEnd="url(#arrowF)"/>
+
+                {/* Function: Grayscale */}
+                <rect x="280" y="155" width="200" height="35" rx="4" className="fill-accent/10 stroke-accent" strokeWidth="1"/>
+                <text x="380" y="177" textAnchor="middle" className="fill-foreground text-[8px] font-mono">Convert V(t) to Grayscale</text>
+                <line x1="380" y1="190" x2="380" y2="220" className="stroke-accent" strokeWidth="1" markerEnd="url(#arrowF)"/>
+
+                {/* Output: Grayscale frame */}
+                <line x1="480" y1="172" x2="625" y2="172" className="stroke-info" strokeWidth="1" markerEnd="url(#arrowF)"/>
+                <rect x="625" y="155" width="170" height="35" rx="4" className="fill-info/10 stroke-info" strokeWidth="1"/>
+                <text x="710" y="172" textAnchor="middle" className="fill-foreground text-[7px] font-mono">I(x,y) Grayscale Image</text>
+                <text x="710" y="183" textAnchor="middle" className="fill-muted-foreground text-[6px] font-mono">0.299R + 0.587G + 0.114B</text>
 
                 {/* Mode Decision */}
-                <polygon points="350,200 430,235 350,270 270,235" className="fill-accent/10 stroke-accent" strokeWidth="1.5"/>
-                <text x="350" y="232" textAnchor="middle" className="fill-accent text-[8px] font-mono">Mode?</text>
+                <polygon points="380,220 445,250 380,280 315,250" className="fill-accent/10 stroke-accent" strokeWidth="1.5"/>
+                <text x="380" y="254" textAnchor="middle" className="fill-accent text-[8px] font-mono">Mode?</text>
 
                 {/* Three branches */}
-                <line x1="270" y1="235" x2="130" y2="235" className="stroke-accent" strokeWidth="1"/>
-                <line x1="130" y1="235" x2="130" y2="290" className="stroke-accent" strokeWidth="1" markerEnd="url(#arrowFlow)"/>
-                <text x="200" y="228" textAnchor="middle" className="fill-accent text-[7px] font-mono">Sobel</text>
+                <line x1="315" y1="250" x2="260" y2="250" className="stroke-accent" strokeWidth="1"/>
+                <line x1="260" y1="250" x2="260" y2="300" className="stroke-accent" strokeWidth="1" markerEnd="url(#arrowF)"/>
+                <text x="270" y="285" className="fill-accent text-[7px] font-mono">Sobel</text>
 
-                <line x1="350" y1="270" x2="350" y2="290" className="stroke-accent" strokeWidth="1" markerEnd="url(#arrowFlow)"/>
-                <text x="370" y="285" className="fill-accent text-[7px] font-mono">Laplacian</text>
+                <line x1="380" y1="280" x2="380" y2="300" className="stroke-accent" strokeWidth="1" markerEnd="url(#arrowF)"/>
+                <text x="395" y="295" className="fill-accent text-[7px] font-mono">Laplacian</text>
 
-                <line x1="430" y1="235" x2="570" y2="235" className="stroke-accent" strokeWidth="1"/>
-                <line x1="570" y1="235" x2="570" y2="290" className="stroke-accent" strokeWidth="1" markerEnd="url(#arrowFlow)"/>
-                <text x="500" y="228" textAnchor="middle" className="fill-accent text-[7px] font-mono">Motion</text>
+                <line x1="445" y1="250" x2="500" y2="250" className="stroke-accent" strokeWidth="1"/>
+                <line x1="500" y1="250" x2="500" y2="300" className="stroke-accent" strokeWidth="1" markerEnd="url(#arrowF)"/>
+                <text x="492" y="285" className="fill-accent text-[7px] font-mono">Motion</text>
 
                 {/* Processing boxes */}
-                <rect x="55" y="290" width="150" height="40" rx="4" className="fill-accent/10 stroke-accent" strokeWidth="1"/>
-                <text x="130" y="307" textAnchor="middle" className="fill-foreground text-[7px] font-mono">Apply Sobel 3x3</text>
-                <text x="130" y="320" textAnchor="middle" className="fill-muted-foreground text-[6px] font-mono">G = √(Gx² + Gy²)</text>
+                <rect x="210" y="300" width="100" height="40" rx="4" className="fill-accent/10 stroke-accent" strokeWidth="1"/>
+                <text x="260" y="318" textAnchor="middle" className="fill-foreground text-[7px] font-mono">3×3 Sobel</text>
+                <text x="260" y="332" textAnchor="middle" className="fill-muted-foreground text-[6px] font-mono">G = √(Gx²+Gy²)</text>
 
-                <rect x="275" y="290" width="150" height="40" rx="4" className="fill-accent/10 stroke-accent" strokeWidth="1"/>
-                <text x="350" y="307" textAnchor="middle" className="fill-foreground text-[7px] font-mono">Apply Laplacian 3x3</text>
-                <text x="350" y="320" textAnchor="middle" className="fill-muted-foreground text-[6px] font-mono">L = Σneighbors − 4·center</text>
+                <rect x="330" y="300" width="100" height="40" rx="4" className="fill-accent/10 stroke-accent" strokeWidth="1"/>
+                <text x="380" y="318" textAnchor="middle" className="fill-foreground text-[7px] font-mono">Laplacian</text>
+                <text x="380" y="332" textAnchor="middle" className="fill-muted-foreground text-[6px] font-mono">∇²I = ΣN − 4·I</text>
 
-                <rect x="495" y="290" width="150" height="40" rx="4" className="fill-accent/10 stroke-accent" strokeWidth="1"/>
-                <text x="570" y="307" textAnchor="middle" className="fill-foreground text-[7px] font-mono">Frame Diff |I(t)−I(t−1)|</text>
-                <text x="570" y="320" textAnchor="middle" className="fill-muted-foreground text-[6px] font-mono">Temporal derivative</text>
+                <rect x="450" y="300" width="100" height="40" rx="4" className="fill-accent/10 stroke-accent" strokeWidth="1"/>
+                <text x="500" y="318" textAnchor="middle" className="fill-foreground text-[7px] font-mono">Frame Diff</text>
+                <text x="500" y="332" textAnchor="middle" className="fill-muted-foreground text-[6px] font-mono">|I(t)−I(t−1)|</text>
 
                 {/* Merge */}
-                <line x1="130" y1="330" x2="130" y2="370" className="stroke-accent" strokeWidth="1"/>
-                <line x1="350" y1="330" x2="350" y2="370" className="stroke-accent" strokeWidth="1"/>
-                <line x1="570" y1="330" x2="570" y2="370" className="stroke-accent" strokeWidth="1"/>
-                <line x1="130" y1="370" x2="570" y2="370" className="stroke-primary" strokeWidth="1"/>
-                <line x1="350" y1="370" x2="350" y2="395" className="stroke-primary" strokeWidth="1" markerEnd="url(#arrowFlow)"/>
+                <line x1="260" y1="340" x2="260" y2="360" className="stroke-accent" strokeWidth="1"/>
+                <line x1="380" y1="340" x2="380" y2="360" className="stroke-accent" strokeWidth="1"/>
+                <line x1="500" y1="340" x2="500" y2="360" className="stroke-accent" strokeWidth="1"/>
+                <line x1="260" y1="360" x2="500" y2="360" className="stroke-accent" strokeWidth="1.5"/>
+                <line x1="380" y1="360" x2="380" y2="385" className="stroke-accent" strokeWidth="1" markerEnd="url(#arrowF)"/>
 
                 {/* Threshold */}
-                <polygon points="350,395 420,420 350,445 280,420" className="fill-warning/10 stroke-warning" strokeWidth="1.5"/>
-                <text x="350" y="418" textAnchor="middle" className="fill-warning text-[7px] font-mono">mag {">"} τ ?</text>
+                <polygon points="380,385 445,415 380,445 315,415" className="fill-warning/10 stroke-warning" strokeWidth="1.2"/>
+                <text x="380" y="412" textAnchor="middle" className="fill-warning text-[7px] font-mono">pixel {'>'} τ?</text>
 
-                <line x1="420" y1="420" x2="480" y2="420" className="stroke-primary" strokeWidth="1"/>
-                <text x="450" y="414" className="fill-foreground text-[7px] font-mono">Yes</text>
-                <rect x="480" y="405" width="100" height="30" rx="4" className="fill-primary/10 stroke-primary" strokeWidth="1"/>
-                <text x="530" y="424" textAnchor="middle" className="fill-foreground text-[7px] font-mono">Mark as salient</text>
+                <line x1="445" y1="415" x2="625" y2="415" className="stroke-primary" strokeWidth="1" markerEnd="url(#arrowF)"/>
+                <text x="520" y="408" textAnchor="middle" className="fill-primary text-[7px] font-mono">Yes</text>
+                <rect x="625" y="398" width="170" height="35" rx="4" className="fill-info/10 stroke-info" strokeWidth="1"/>
+                <text x="710" y="415" textAnchor="middle" className="fill-foreground text-[7px] font-mono">S(t) — Saliency Map</text>
+                <text x="710" y="427" textAnchor="middle" className="fill-muted-foreground text-[6px] font-mono">+ Heatmap colorization</text>
 
-                <line x1="280" y1="420" x2="220" y2="420" className="stroke-muted-foreground" strokeWidth="1"/>
-                <text x="250" y="414" className="fill-muted-foreground text-[7px] font-mono">No</text>
-                <rect x="120" y="405" width="100" height="30" rx="4" className="fill-muted/30 stroke-border" strokeWidth="1"/>
-                <text x="170" y="424" textAnchor="middle" className="fill-muted-foreground text-[7px] font-mono">Suppress (=0)</text>
+                <line x1="315" y1="415" x2="280" y2="415" className="stroke-muted-foreground" strokeWidth="1"/>
+                <text x="290" y="408" textAnchor="middle" className="fill-muted-foreground text-[7px] font-mono">No</text>
+                <text x="260" y="418" textAnchor="middle" className="fill-muted-foreground text-[7px] font-mono">Suppress=0</text>
 
-                {/* Continue to audio + fusion */}
-                <line x1="350" y1="445" x2="350" y2="475" className="stroke-primary" strokeWidth="1" markerEnd="url(#arrowFlow)"/>
+                {/* Object Detection */}
+                <line x1="380" y1="445" x2="380" y2="475" className="stroke-accent" strokeWidth="1" markerEnd="url(#arrowF)"/>
+                <rect x="280" y="475" width="200" height="35" rx="4" className="fill-warning/10 stroke-warning" strokeWidth="1"/>
+                <text x="380" y="492" textAnchor="middle" className="fill-foreground text-[8px] font-mono">COCO-SSD Object Detection</text>
+                <text x="380" y="503" textAnchor="middle" className="fill-muted-foreground text-[6px] font-mono">O(t) bounding boxes + labels</text>
+                <line x1="480" y1="492" x2="625" y2="492" className="stroke-info" strokeWidth="1" markerEnd="url(#arrowF)"/>
+                <rect x="625" y="475" width="170" height="35" rx="4" className="fill-info/10 stroke-info" strokeWidth="1"/>
+                <text x="710" y="492" textAnchor="middle" className="fill-foreground text-[7px] font-mono">O(t) Detected Objects</text>
+                <text x="710" y="503" textAnchor="middle" className="fill-muted-foreground text-[6px] font-mono">person, knife, etc.</text>
 
-                <rect x="260" y="475" width="180" height="35" rx="4" className="fill-info/10 stroke-info" strokeWidth="1"/>
-                <text x="350" y="492" textAnchor="middle" className="fill-foreground text-[8px] font-mono">Classify Audio Event E(t)</text>
-                <text x="350" y="503" textAnchor="middle" className="fill-muted-foreground text-[6px] font-mono">FFT + ZCR + Band Energy</text>
-                <line x1="350" y1="510" x2="350" y2="535" className="stroke-primary" strokeWidth="1" markerEnd="url(#arrowFlow)"/>
+                {/* Audio Classification */}
+                <line x1="380" y1="510" x2="380" y2="540" className="stroke-accent" strokeWidth="1" markerEnd="url(#arrowF)"/>
+                <rect x="280" y="540" width="200" height="35" rx="4" className="fill-info/10 stroke-info" strokeWidth="1"/>
+                <text x="380" y="557" textAnchor="middle" className="fill-foreground text-[8px] font-mono">Classify Audio Event E(t)</text>
+                <text x="380" y="568" textAnchor="middle" className="fill-muted-foreground text-[6px] font-mono">FFT + ZCR + Band Energy</text>
+                <line x1="480" y1="557" x2="625" y2="557" className="stroke-info" strokeWidth="1" markerEnd="url(#arrowF)"/>
+                <rect x="625" y="540" width="170" height="35" rx="4" className="fill-info/10 stroke-info" strokeWidth="1"/>
+                <text x="710" y="557" textAnchor="middle" className="fill-foreground text-[7px] font-mono">E(t) Audio Event</text>
+                <text x="710" y="568" textAnchor="middle" className="fill-muted-foreground text-[6px] font-mono">bang / clap / scream / speech</text>
 
-                <rect x="260" y="535" width="180" height="35" rx="4" className="fill-destructive/10 stroke-destructive" strokeWidth="1"/>
-                <text x="350" y="552" textAnchor="middle" className="fill-foreground text-[8px] font-mono">Fuse: α(t) = S + audio boost</text>
-                <text x="350" y="563" textAnchor="middle" className="fill-muted-foreground text-[6px] font-mono">Attention score [0-100]</text>
-                <line x1="350" y1="570" x2="350" y2="595" className="stroke-primary" strokeWidth="1" markerEnd="url(#arrowFlow)"/>
+                {/* Fusion */}
+                <line x1="380" y1="575" x2="380" y2="605" className="stroke-accent" strokeWidth="1" markerEnd="url(#arrowF)"/>
+                <rect x="280" y="605" width="200" height="35" rx="4" className="fill-destructive/10 stroke-destructive" strokeWidth="1.5"/>
+                <text x="380" y="622" textAnchor="middle" className="fill-destructive text-[8px] font-mono font-bold">Fuse: α(t) = S + audio boost</text>
+                <text x="380" y="633" textAnchor="middle" className="fill-muted-foreground text-[6px] font-mono">Attention score [0-100]</text>
+                <line x1="480" y1="622" x2="625" y2="622" className="stroke-info" strokeWidth="1" markerEnd="url(#arrowF)"/>
+                <rect x="625" y="605" width="170" height="35" rx="4" className="fill-destructive/10 stroke-destructive" strokeWidth="1"/>
+                <text x="710" y="622" textAnchor="middle" className="fill-destructive text-[7px] font-mono font-bold">α(t) Attention Score</text>
+                <text x="710" y="633" textAnchor="middle" className="fill-muted-foreground text-[6px] font-mono">∈ [0, 100]</text>
 
                 {/* Alert decision */}
-                <polygon points="350,595 420,625 350,655 280,625" className="fill-destructive/10 stroke-destructive" strokeWidth="1.5"/>
-                <text x="350" y="622" textAnchor="middle" className="fill-destructive text-[7px] font-mono">α {">"} alert</text>
-                <text x="350" y="635" textAnchor="middle" className="fill-destructive text-[7px] font-mono">threshold?</text>
+                <line x1="380" y1="640" x2="380" y2="665" className="stroke-destructive" strokeWidth="1" markerEnd="url(#arrowF)"/>
+                <polygon points="380,665 445,695 380,725 315,695" className="fill-destructive/10 stroke-destructive" strokeWidth="1.5"/>
+                <text x="380" y="692" textAnchor="middle" className="fill-destructive text-[8px] font-mono">α {'>'} alert</text>
+                <text x="380" y="705" textAnchor="middle" className="fill-destructive text-[7px] font-mono">threshold?</text>
 
-                <line x1="420" y1="625" x2="530" y2="625" className="stroke-destructive" strokeWidth="1"/>
-                <text x="470" y="618" className="fill-destructive text-[7px] font-mono">Yes</text>
-                <rect x="530" y="610" width="120" height="30" rx="4" className="fill-destructive/20 stroke-destructive" strokeWidth="1"/>
-                <text x="590" y="629" textAnchor="middle" className="fill-destructive text-[8px] font-mono">TRIGGER ALERT</text>
+                <line x1="445" y1="695" x2="625" y2="695" className="stroke-destructive" strokeWidth="1" markerEnd="url(#arrowF)"/>
+                <text x="520" y="688" className="fill-destructive text-[7px] font-mono">Yes</text>
+                <rect x="625" y="678" width="170" height="35" rx="4" className="fill-destructive/20 stroke-destructive" strokeWidth="1.5"/>
+                <text x="710" y="695" textAnchor="middle" className="fill-destructive text-[8px] font-mono font-bold">TRIGGER ALERT</text>
+                <text x="710" y="707" textAnchor="middle" className="fill-muted-foreground text-[6px] font-mono">SMS + Push + Snapshot</text>
 
-                <line x1="350" y1="655" x2="350" y2="680" className="stroke-primary" strokeWidth="1" markerEnd="url(#arrowFlow)"/>
-                <ellipse cx="350" cy="690" rx="60" ry="15" className="fill-primary/20 stroke-primary" strokeWidth="1.5"/>
-                <text x="350" y="694" textAnchor="middle" className="fill-primary text-[8px] font-mono">NEXT FRAME →</text>
+                {/* No → loop */}
+                <line x1="380" y1="725" x2="380" y2="745" className="stroke-primary" strokeWidth="1" markerEnd="url(#arrowF)"/>
+                <ellipse cx="380" cy="752" rx="50" ry="12" className="fill-primary/20 stroke-primary" strokeWidth="1.5"/>
+                <text x="380" y="756" textAnchor="middle" className="fill-primary text-[7px] font-mono">NEXT FRAME →</text>
+
+                {/* User sees results */}
+                <line x1="625" y1="622" x2="625" y2="622" className="stroke-info" strokeWidth="1"/>
 
                 <defs>
-                  <marker id="arrowFlow" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+                  <marker id="arrowF" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
                     <polygon points="0 0, 8 3, 0 6" className="fill-primary"/>
                   </marker>
                 </defs>
