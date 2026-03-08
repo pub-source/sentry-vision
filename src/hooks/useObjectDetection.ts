@@ -3,13 +3,7 @@ import * as cocoSsd from '@tensorflow-models/coco-ssd';
 import '@tensorflow/tfjs';
 import type { DetectedObject } from '@/types/dashboard';
 
-const PRIORITY_OBJECTS = [
-  'person', 'bicycle', 'car', 'motorcycle', 'bus', 'truck',
-  'cat', 'dog', 'bird', 'horse',
-  'bottle', 'cup', 'fork', 'knife', 'spoon',
-];
-
-const MIN_CONFIDENCE = 0.4;
+const MIN_CONFIDENCE = 0.3;
 
 interface DetectionStats {
   totalDetected: number;
