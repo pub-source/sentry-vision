@@ -87,7 +87,7 @@ export default function CameraFeed({
         console.log('[CameraFeed] Detection loop running.');
         const objects = await onDetectFrame(video);
         detectedObjectsRef.current = objects;
-        onObjectsUpdate(objects);
+        onObjectsUpdate(camera.id, objects);
       }
     };
 
