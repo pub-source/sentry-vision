@@ -71,6 +71,9 @@ export default function Auth() {
     setEmail('');
     setPassword('');
     setInviteCode('');
+    setJoinName('');
+    setJoinPhone('');
+    setMatchedHousehold(null);
     setScanning(false);
   };
 
