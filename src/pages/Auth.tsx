@@ -449,20 +449,18 @@ export default function Auth() {
     );
   }
 
-  // Join - Submitted confirmation
-  if (mode === 'join-submitted') {
+  // Join - Submitted, waiting for admin approval with realtime
+  if (mode === 'join-submitted' && joinRequestId) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <div className="w-full max-w-sm space-y-6">
           {renderHeader()}
-          <div className="bg-card rounded-md border border-border panel-glow p-5 space-y-4 text-center">
-            <div className="text-3xl">✅</div>
-            <p className="text-xs font-mono text-primary font-bold">Request Submitted!</p>
-            <p className="text-[10px] font-mono text-muted-foreground">
-              Your request to join has been sent to the household admin. They will review and accept or reject your request.
-            </p>
-            <button onClick={() => { clearState(); setMode('choose'); }} className="w-full text-[10px] font-mono text-muted-foreground hover:text-primary transition-colors">← Back to start</button>
-          </div>
+          <JoinWaitingScreen
+            requestId={joinRequestId}
+            householdName={matchedHousehold?.name || ''}
+            memberName={joinName}
+            onBack={() => { clearState(); setMode('choose'); }}
+          />
         </div>
       </div>
     );
