@@ -285,28 +285,33 @@ export default function Index() {
       {/* Main content */}
       <div className="flex h-[calc(100vh-41px)]">
         {/* Left: 2x2 grid */}
-        <div className="flex-1 p-2 flex flex-col gap-2 overflow-y-auto">
-          <div className="grid grid-cols-2 gap-2 flex-1">
-            {/* Panel 1: Camera Feed */}
-            <CameraFeed
-              camera={mainCamera}
-              mirror={mirror}
-              showBoundingBoxes={showBoundingBoxes}
-              showHeatmap={showHeatmap}
-              heatmapOpacity={heatmapOpacity}
-              saliencyMode={saliencyMode}
-              threshold={threshold}
-              simulationMode={simulationMode && running}
-              priorityObjects={priorityObjects}
-              detectionStats={detectionStats}
-              onFpsUpdate={handleFpsUpdate}
-              onObjectsUpdate={handleObjectsUpdate}
-              onSaliencyScoreUpdate={handleCameraSaliencyScore}
-              onFrameCapture={handleFrameCapture}
-              onDetectFrame={handleDetectFrame}
-            />
+         <div className="flex-1 p-2 flex flex-col gap-2 overflow-y-auto">
+          {/* 4-Camera Grid */}
+          <div className="grid grid-cols-2 gap-2" style={{ minHeight: '60%' }}>
+            {cameras.map(cam => (
+              <CameraFeed
+                key={cam.id}
+                camera={cam}
+                mirror={mirror}
+                showBoundingBoxes={showBoundingBoxes}
+                showHeatmap={showHeatmap}
+                heatmapOpacity={heatmapOpacity}
+                saliencyMode={saliencyMode}
+                threshold={threshold}
+                simulationMode={simulationMode && running}
+                priorityObjects={priorityObjects}
+                detectionStats={detectionStats}
+                onFpsUpdate={handleFpsUpdate}
+                onObjectsUpdate={handleObjectsUpdate}
+                onSaliencyScoreUpdate={handleCameraSaliencyScore}
+                onFrameCapture={cam.id === 1 ? handleFrameCapture : undefined}
+                onDetectFrame={handleDetectFrame}
+              />
+            ))}
+          </div>
 
-            {/* Panel 2: Saliency Output (Colored Heatmap) */}
+          {/* Saliency analysis strip */}
+          <div className="grid grid-cols-3 gap-2" style={{ minHeight: '25%' }}>
             <SaliencyView
               title="Saliency Output"
               sourceCanvas={sourceCanvas}
@@ -317,8 +322,6 @@ export default function Index() {
               score={globalSaliencyScore}
               onScoreUpdate={handleSaliencyViewScore}
             />
-
-            {/* Panel 3: Low-Fi Saliency (Grayscale) */}
             <SaliencyView
               title="Low-Fi Saliency"
               sourceCanvas={sourceCanvas}
@@ -328,8 +331,6 @@ export default function Index() {
               active={running}
               score={globalSaliencyScore}
             />
-
-            {/* Panel 4: Threshold Binary View */}
             <ThresholdView
               title="Threshold"
               sourceCanvas={sourceCanvas}
