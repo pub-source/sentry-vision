@@ -195,8 +195,9 @@ export default function Index() {
     URL.revokeObjectURL(url);
   }, [alerts]);
 
-  // Use only camera 1 for feed
-  const mainCamera = cameras[0];
+  // Active camera count for layout
+  const activeCameras = cameras.filter(c => c.active || (simulationMode && running));
+  const maxSaliencyCamera = cameras.reduce((max, c) => c.saliencyScore > max.saliencyScore ? c : max, cameras[0]);
 
   // Emergency 911 overlay
   if (showEmergency) {
