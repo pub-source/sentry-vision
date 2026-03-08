@@ -392,7 +392,27 @@ export default function HouseholdPage() {
               </div>
             </div>
 
-            {/* Wake Words & Phrases */}
+            {/* Pending Join Requests */}
+            {joinRequests.length > 0 && (
+              <div className="bg-card rounded-md border border-accent/30 panel-glow p-4 space-y-2">
+                <span className="text-[10px] font-mono text-accent uppercase tracking-wider">Pending Requests ({joinRequests.length})</span>
+                <div className="space-y-1.5">
+                  {joinRequests.map(req => (
+                    <div key={req.id} className="flex items-center justify-between bg-secondary/50 rounded px-3 py-2">
+                      <div>
+                        <span className="text-xs font-mono text-foreground">{req.display_name}</span>
+                        {req.phone_number && <span className="text-[10px] font-mono text-muted-foreground ml-2">{req.phone_number}</span>}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button onClick={() => handleAcceptJoinRequest(req)} className="text-[10px] font-mono text-primary border border-primary/30 px-2 py-1 rounded hover:bg-primary/10">✓ Accept</button>
+                        <button onClick={() => handleRejectJoinRequest(req.id)} className="text-[10px] font-mono text-destructive border border-destructive/30 px-2 py-1 rounded hover:bg-destructive/10">✕ Reject</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <div className="bg-card rounded-md border border-border panel-glow p-4 space-y-3">
               <div className="flex items-center justify-between">
                 <span className="text-[10px] font-mono text-primary uppercase tracking-wider">Wake Words & Phrases</span>
