@@ -298,9 +298,9 @@ export default function Index() {
       <div className="flex h-[calc(100vh-41px)]">
         {/* Left: Specialized camera grid + fusion */}
          <div className="flex-1 p-2 flex flex-col gap-2 overflow-y-auto">
-          {/* 4-Camera Specialized Grid */}
-          <div className="grid grid-cols-2 gap-2" style={{ minHeight: '55%' }}>
-            {/* CAM 1: Object Detection — Live feed with COCO-SSD bounding boxes */}
+          {/* Top row: 2 cameras */}
+          <div className="grid grid-cols-2 gap-2">
+            {/* CAM 1: Object Detection */}
             <CameraFeed
               camera={cameras[0]}
               mirror={mirror}
@@ -319,7 +319,7 @@ export default function Index() {
               onDetectFrame={handleDetectFrame}
             />
 
-            {/* CAM 2: Saliency Heatmap — Colored heat overlay */}
+            {/* CAM 2: Saliency Heatmap */}
             <div className="relative bg-card rounded-md overflow-hidden border border-border panel-glow">
               <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between px-2 py-1 bg-gradient-to-b from-background/80 to-transparent">
                 <span className="text-[10px] font-mono text-primary uppercase tracking-wider">
@@ -347,8 +347,11 @@ export default function Index() {
                 onScoreUpdate={handleSaliencyViewScore}
               />
             </div>
+          </div>
 
-            {/* CAM 3: Region Saliency — Grayscale edge/region map */}
+          {/* Middle row: 2 cameras */}
+          <div className="grid grid-cols-2 gap-2">
+            {/* CAM 3: Region Saliency */}
             <div className="relative bg-card rounded-md overflow-hidden border border-border panel-glow">
               <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between px-2 py-1 bg-gradient-to-b from-background/80 to-transparent">
                 <span className="text-[10px] font-mono text-primary uppercase tracking-wider">
@@ -367,7 +370,7 @@ export default function Index() {
               />
             </div>
 
-            {/* CAM 4: Threshold / Superpixel Segmentation */}
+            {/* CAM 4: Threshold Segmentation */}
             <div className="relative bg-card rounded-md overflow-hidden border border-border panel-glow">
               <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between px-2 py-1 bg-gradient-to-b from-background/80 to-transparent">
                 <span className="text-[10px] font-mono text-primary uppercase tracking-wider">
@@ -382,6 +385,50 @@ export default function Index() {
                 threshold={threshold}
                 active={running}
               />
+            </div>
+          </div>
+
+          {/* Bottom row: 2 new cameras */}
+          <div className="grid grid-cols-2 gap-2">
+            {/* CAM 5: Low-Fi Region Saliency */}
+            <div className="relative bg-card rounded-md overflow-hidden border border-border panel-glow">
+              <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between px-2 py-1 bg-gradient-to-b from-background/80 to-transparent">
+                <span className="text-[10px] font-mono text-primary uppercase tracking-wider">
+                  CAM 5 — Low-Fi Saliency
+                </span>
+                <span className="text-[8px] font-mono px-1 py-0.5 rounded bg-secondary/40 text-foreground/70">SUPERPIXEL</span>
+              </div>
+              <LowFiView
+                sourceCanvas={sourceCanvas}
+                saliencyMode={saliencyMode}
+                threshold={threshold}
+                active={running}
+              />
+              {!running && (
+                <div className="absolute inset-0 flex items-center justify-center bg-background/80">
+                  <span className="text-xs font-mono text-muted-foreground">OFFLINE</span>
+                </div>
+              )}
+            </div>
+
+            {/* CAM 6: Object Shader */}
+            <div className="relative bg-card rounded-md overflow-hidden border border-border panel-glow">
+              <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between px-2 py-1 bg-gradient-to-b from-background/80 to-transparent">
+                <span className="text-[10px] font-mono text-primary uppercase tracking-wider">
+                  CAM 6 — Object Shader
+                </span>
+                <span className="text-[8px] font-mono px-1 py-0.5 rounded bg-destructive/20 text-destructive">MASK</span>
+              </div>
+              <ObjectShaderView
+                sourceCanvas={sourceCanvas}
+                objects={cameras[0].objects}
+                active={running}
+              />
+              {!running && (
+                <div className="absolute inset-0 flex items-center justify-center bg-background/80">
+                  <span className="text-xs font-mono text-muted-foreground">OFFLINE</span>
+                </div>
+              )}
             </div>
           </div>
 
