@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { UseCaseDiagram, DataFlowDiagram, ActivityDiagram, SequenceDiagram, ERDiagram, StateDiagram, ConceptualFrameworkDiagram } from '@/components/research/ResearchDiagrams';
+import CloudDataPanel from '@/components/research/CloudDataPanel';
 import saliencyExamples from '@/assets/saliency-examples.png';
 import camOriginal1 from '@/assets/camera-detect-original-1.jpg';
 import camOriginal2 from '@/assets/camera-detect-original-2.jpg';
