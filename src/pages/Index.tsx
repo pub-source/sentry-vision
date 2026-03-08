@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import CameraFeed from '@/components/dashboard/CameraFeed';
 import SaliencyView from '@/components/dashboard/SaliencyView';
 import ThresholdView from '@/components/dashboard/ThresholdView';
+import LowFiView from '@/components/dashboard/LowFiView';
+import ObjectShaderView from '@/components/dashboard/ObjectShaderView';
 import AudioMeter from '@/components/dashboard/AudioMeter';
 import AlertLog from '@/components/dashboard/AlertLog';
 import ControlsPanel from '@/components/dashboard/ControlsPanel';
@@ -296,9 +298,9 @@ export default function Index() {
       <div className="flex h-[calc(100vh-41px)]">
         {/* Left: Specialized camera grid + fusion */}
          <div className="flex-1 p-2 flex flex-col gap-2 overflow-y-auto">
-          {/* 4-Camera Specialized Grid */}
-          <div className="grid grid-cols-2 gap-2" style={{ minHeight: '55%' }}>
-            {/* CAM 1: Object Detection — Live feed with COCO-SSD bounding boxes */}
+          {/* Top row: 2 cameras */}
+          <div className="grid grid-cols-2 gap-2">
+            {/* CAM 1: Object Detection */}
             <CameraFeed
               camera={cameras[0]}
               mirror={mirror}
@@ -317,7 +319,7 @@ export default function Index() {
               onDetectFrame={handleDetectFrame}
             />
 
-            {/* CAM 2: Saliency Heatmap — Colored heat overlay */}
+            {/* CAM 2: Saliency Heatmap */}
             <div className="relative bg-card rounded-md overflow-hidden border border-border panel-glow">
               <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between px-2 py-1 bg-gradient-to-b from-background/80 to-transparent">
                 <span className="text-[10px] font-mono text-primary uppercase tracking-wider">
@@ -345,8 +347,11 @@ export default function Index() {
                 onScoreUpdate={handleSaliencyViewScore}
               />
             </div>
+          </div>
 
-            {/* CAM 3: Region Saliency — Grayscale edge/region map */}
+          {/* Middle row: 2 cameras */}
+          <div className="grid grid-cols-2 gap-2">
+            {/* CAM 3: Region Saliency */}
             <div className="relative bg-card rounded-md overflow-hidden border border-border panel-glow">
               <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between px-2 py-1 bg-gradient-to-b from-background/80 to-transparent">
                 <span className="text-[10px] font-mono text-primary uppercase tracking-wider">
@@ -365,7 +370,7 @@ export default function Index() {
               />
             </div>
 
-            {/* CAM 4: Threshold / Superpixel Segmentation */}
+            {/* CAM 4: Threshold Segmentation */}
             <div className="relative bg-card rounded-md overflow-hidden border border-border panel-glow">
               <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between px-2 py-1 bg-gradient-to-b from-background/80 to-transparent">
                 <span className="text-[10px] font-mono text-primary uppercase tracking-wider">
@@ -383,6 +388,50 @@ export default function Index() {
             </div>
           </div>
 
+          {/* Bottom row: 2 new cameras */}
+          <div className="grid grid-cols-2 gap-2">
+            {/* CAM 5: Low-Fi Region Saliency */}
+            <div className="relative bg-card rounded-md overflow-hidden border border-border panel-glow">
+              <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between px-2 py-1 bg-gradient-to-b from-background/80 to-transparent">
+                <span className="text-[10px] font-mono text-primary uppercase tracking-wider">
+                  CAM 5 — Low-Fi Saliency
+                </span>
+                <span className="text-[8px] font-mono px-1 py-0.5 rounded bg-secondary/40 text-foreground/70">SUPERPIXEL</span>
+              </div>
+              <LowFiView
+                sourceCanvas={sourceCanvas}
+                saliencyMode={saliencyMode}
+                threshold={threshold}
+                active={running}
+              />
+              {!running && (
+                <div className="absolute inset-0 flex items-center justify-center bg-background/80">
+                  <span className="text-xs font-mono text-muted-foreground">OFFLINE</span>
+                </div>
+              )}
+            </div>
+
+            {/* CAM 6: Object Shader */}
+            <div className="relative bg-card rounded-md overflow-hidden border border-border panel-glow">
+              <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between px-2 py-1 bg-gradient-to-b from-background/80 to-transparent">
+                <span className="text-[10px] font-mono text-primary uppercase tracking-wider">
+                  CAM 6 — Object Shader
+                </span>
+                <span className="text-[8px] font-mono px-1 py-0.5 rounded bg-destructive/20 text-destructive">MASK</span>
+              </div>
+              <ObjectShaderView
+                sourceCanvas={sourceCanvas}
+                objects={cameras[0].objects}
+                active={running}
+              />
+              {!running && (
+                <div className="absolute inset-0 flex items-center justify-center bg-background/80">
+                  <span className="text-xs font-mono text-muted-foreground">OFFLINE</span>
+                </div>
+              )}
+            </div>
+          </div>
+
           {/* Fusion Output Strip */}
           <div className="bg-card rounded-md border border-primary/30 panel-glow p-3">
             <div className="flex items-center justify-between mb-2">
@@ -393,54 +442,62 @@ export default function Index() {
                 α = 0.4×S + 0.3×A + 0.3×O
               </span>
             </div>
-            <div className="grid grid-cols-4 gap-2">
+            <div className="grid grid-cols-6 gap-2">
               {/* CAM 1 contribution */}
               <div className="bg-secondary/30 rounded p-2 space-y-1">
-                <p className="text-[9px] font-mono text-accent font-semibold">CAM 1 — Detection</p>
-                <p className="text-[8px] font-mono text-muted-foreground">Objects: {cameras[0].objects.length}</p>
+                <p className="text-[9px] font-mono text-accent font-semibold">CAM 1</p>
+                <p className="text-[8px] font-mono text-muted-foreground">Detection</p>
                 <div className="h-1.5 bg-secondary/50 rounded overflow-hidden">
                   <div className="h-full bg-primary rounded transition-all" style={{ width: `${Math.min(100, cameras[0].objects.length * 25)}%` }} />
                 </div>
-                <p className="text-[8px] font-mono text-foreground/70">
-                  O = {cameras[0].objects.length > 0
-                    ? cameras[0].objects.map(o => `${o.label}(${(o.confidence * 100).toFixed(0)}%)`).join(', ')
-                    : 'none'}
-                </p>
+                <p className="text-[7px] font-mono text-foreground/70">{cameras[0].objects.length} obj</p>
               </div>
-              {/* CAM 2 contribution */}
+              {/* CAM 2 */}
               <div className="bg-secondary/30 rounded p-2 space-y-1">
-                <p className="text-[9px] font-mono text-accent font-semibold">CAM 2 — Saliency</p>
-                <p className="text-[8px] font-mono text-muted-foreground">Score: {globalSaliencyScore}</p>
+                <p className="text-[9px] font-mono text-accent font-semibold">CAM 2</p>
+                <p className="text-[8px] font-mono text-muted-foreground">Heatmap</p>
                 <div className="h-1.5 bg-secondary/50 rounded overflow-hidden">
                   <div className={`h-full rounded transition-all ${
                     globalSaliencyScore > 60 ? 'bg-destructive' : globalSaliencyScore > 30 ? 'bg-warning' : 'bg-success'
                   }`} style={{ width: `${globalSaliencyScore}%` }} />
                 </div>
-                <p className="text-[8px] font-mono text-foreground/70">
-                  G = √(G<sub>x</sub>² + G<sub>y</sub>²) → {globalSaliencyScore}/100
-                </p>
+                <p className="text-[7px] font-mono text-foreground/70">S:{globalSaliencyScore}</p>
               </div>
-              {/* CAM 3 contribution */}
+              {/* CAM 3 */}
               <div className="bg-secondary/30 rounded p-2 space-y-1">
-                <p className="text-[9px] font-mono text-accent font-semibold">CAM 3 — Region</p>
-                <p className="text-[8px] font-mono text-muted-foreground">Edge density</p>
+                <p className="text-[9px] font-mono text-accent font-semibold">CAM 3</p>
+                <p className="text-[8px] font-mono text-muted-foreground">Region</p>
                 <div className="h-1.5 bg-secondary/50 rounded overflow-hidden">
                   <div className="h-full bg-info rounded transition-all" style={{ width: `${Math.min(100, globalSaliencyScore * 1.2)}%` }} />
                 </div>
-                <p className="text-[8px] font-mono text-foreground/70">
-                  Grayscale edge map
-                </p>
+                <p className="text-[7px] font-mono text-foreground/70">Edge map</p>
               </div>
-              {/* CAM 4 contribution */}
+              {/* CAM 4 */}
               <div className="bg-secondary/30 rounded p-2 space-y-1">
-                <p className="text-[9px] font-mono text-accent font-semibold">CAM 4 — Threshold</p>
-                <p className="text-[8px] font-mono text-muted-foreground">τ = {threshold}</p>
+                <p className="text-[9px] font-mono text-accent font-semibold">CAM 4</p>
+                <p className="text-[8px] font-mono text-muted-foreground">Threshold</p>
                 <div className="h-1.5 bg-secondary/50 rounded overflow-hidden">
                   <div className="h-full bg-warning rounded transition-all" style={{ width: `${Math.min(100, threshold * 3)}%` }} />
                 </div>
-                <p className="text-[8px] font-mono text-foreground/70">
-                  Binary segmentation
-                </p>
+                <p className="text-[7px] font-mono text-foreground/70">τ={threshold}</p>
+              </div>
+              {/* CAM 5 */}
+              <div className="bg-secondary/30 rounded p-2 space-y-1">
+                <p className="text-[9px] font-mono text-accent font-semibold">CAM 5</p>
+                <p className="text-[8px] font-mono text-muted-foreground">Low-Fi</p>
+                <div className="h-1.5 bg-secondary/50 rounded overflow-hidden">
+                  <div className="h-full bg-secondary rounded transition-all" style={{ width: `${Math.min(100, globalSaliencyScore * 0.8)}%` }} />
+                </div>
+                <p className="text-[7px] font-mono text-foreground/70">Superpixel</p>
+              </div>
+              {/* CAM 6 */}
+              <div className="bg-secondary/30 rounded p-2 space-y-1">
+                <p className="text-[9px] font-mono text-accent font-semibold">CAM 6</p>
+                <p className="text-[8px] font-mono text-muted-foreground">Shader</p>
+                <div className="h-1.5 bg-secondary/50 rounded overflow-hidden">
+                  <div className="h-full bg-destructive rounded transition-all" style={{ width: `${Math.min(100, cameras[0].objects.length * 30)}%` }} />
+                </div>
+                <p className="text-[7px] font-mono text-foreground/70">Mask</p>
               </div>
             </div>
             {/* Combined score */}
