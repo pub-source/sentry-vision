@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { UseCaseDiagram, DataFlowDiagram, ActivityDiagram, SequenceDiagram, ERDiagram, StateDiagram, ConceptualFrameworkDiagram } from '@/components/research/ResearchDiagrams';
+import saliencyExamples from '@/assets/saliency-examples.png';
 
 export default function Research() {
   const navigate = useNavigate();
@@ -876,6 +877,160 @@ export default function Research() {
                 <p>v ∈ [192, 255]: R=255, G=255-4t, B=0 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;→ <span className="text-destructive">Yellow → Red</span></p>
               </div>
               <p className="text-muted-foreground mt-2">Alpha: α = min(255, v + 50) if v {'>'} 10, else α = 0</p>
+            </div>
+
+            {/* Saliency Detection Visual Examples */}
+            <h3 className="text-base font-mono font-semibold text-primary">4.8.1 Saliency Detection Heatmap Examples</h3>
+            <p>
+              The following figure demonstrates how different saliency detection methods transform original images
+              into saliency maps. Each column represents a progressively different detection approach — from 
+              edge-based (Sobel/Laplacian) to region-based saliency highlighting the most visually prominent areas.
+            </p>
+            <div className="bg-card border border-border rounded-md p-4">
+              <p className="text-[10px] font-mono text-primary uppercase tracking-wider mb-3">
+                Figure 4.2 — Saliency Map Generation Pipeline: Original → Edge Detection → Region Saliency → Heatmap Output
+              </p>
+              <div className="bg-background rounded-md p-4 border border-border">
+                <img 
+                  src={saliencyExamples} 
+                  alt="Saliency detection examples showing original images transformed through edge detection, region-based saliency, and heatmap visualization across car, flower, poppy, and person subjects"
+                  className="w-full rounded-md"
+                  loading="lazy"
+                />
+              </div>
+              <div className="mt-3 grid grid-cols-4 gap-2 text-center">
+                <div className="bg-secondary/30 rounded p-2">
+                  <p className="text-[9px] font-mono text-primary font-semibold">Column 1</p>
+                  <p className="text-[8px] font-mono text-muted-foreground">Original RGB</p>
+                </div>
+                <div className="bg-secondary/30 rounded p-2">
+                  <p className="text-[9px] font-mono text-primary font-semibold">Column 2</p>
+                  <p className="text-[8px] font-mono text-muted-foreground">Edge Saliency (Sobel)</p>
+                </div>
+                <div className="bg-secondary/30 rounded p-2">
+                  <p className="text-[9px] font-mono text-primary font-semibold">Column 3</p>
+                  <p className="text-[8px] font-mono text-muted-foreground">Region Saliency</p>
+                </div>
+                <div className="bg-secondary/30 rounded p-2">
+                  <p className="text-[9px] font-mono text-primary font-semibold">Column 4</p>
+                  <p className="text-[8px] font-mono text-muted-foreground">Fine-Grained Map</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Heatmap Gradient Bar */}
+            <div className="bg-card border border-border rounded-md p-4">
+              <p className="text-[10px] font-mono text-primary uppercase tracking-wider mb-3">
+                Figure 4.3 — Heatmap Color Gradient Scale
+              </p>
+              <div className="bg-background rounded-md p-4 border border-border">
+                <div className="h-8 rounded-md w-full" style={{
+                  background: 'linear-gradient(to right, hsl(220, 80%, 30%), hsl(195, 90%, 45%), hsl(160, 70%, 45%), hsl(80, 80%, 50%), hsl(50, 95%, 50%), hsl(30, 95%, 50%), hsl(0, 80%, 50%))'
+                }} />
+                <div className="flex justify-between mt-2">
+                  <span className="text-[8px] font-mono text-info">Low Saliency (0)</span>
+                  <span className="text-[8px] font-mono text-primary">Medium (128)</span>
+                  <span className="text-[8px] font-mono text-destructive">High Saliency (255)</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Superpixel-based Saliency Formulas */}
+            <h3 className="text-base font-mono font-semibold text-primary">4.8.2 Region-Based Saliency Computation</h3>
+            <p>
+              Beyond pixel-level edge detection, region-based saliency uses <strong>superpixel decomposition</strong> to 
+              compute area and boundary features. This approach groups pixels into perceptually meaningful regions 
+              and measures their distinctiveness relative to the full image.
+            </p>
+
+            <div className="bg-card border border-primary/30 rounded-md p-5 space-y-6">
+              {/* Area formula */}
+              <div className="text-center space-y-2">
+                <p className="text-[10px] font-mono text-accent uppercase tracking-wider">Superpixel Area via Geodesic Distance</p>
+                <p className="font-mono text-base text-primary font-bold">
+                  Area(p) = Σ<sub>i=1</sub><sup>k</sup> exp(−d²<sub>geo</sub>(p, pᵢ) / 2σ²) = Σ<sub>i=1</sub><sup>k</sup> A(p, pᵢ)
+                </p>
+                <p className="text-xs text-muted-foreground font-mono">
+                  where σ ≈ 10 (experimentally determined), k = number of superpixels
+                </p>
+              </div>
+
+              {/* Geodesic distance */}
+              <div className="text-center border-t border-border pt-4 space-y-2">
+                <p className="text-[10px] font-mono text-accent uppercase tracking-wider">Geodesic Distance Between Superpixels</p>
+                <p className="font-mono text-base text-primary font-bold">
+                  d<sub>geo</sub>(p, q) = min<sub>p=p₁,p₂,...,pₙ=q</sub> Σ<sub>j=1</sub><sup>n-1</sup> d<sub>app</sub>(pⱼ, pⱼ₊₁)
+                </p>
+                <p className="text-xs text-muted-foreground font-mono max-w-lg mx-auto">
+                  d<sub>app</sub>(p, q) is the Euclidean distance between feature vectors of superpixels p and q. 
+                  The geodesic distance is computed as the minimum cost path through the superpixel adjacency graph.
+                </p>
+              </div>
+
+              {/* Boundary length */}
+              <div className="text-center border-t border-border pt-4 space-y-2">
+                <p className="text-[10px] font-mono text-accent uppercase tracking-wider">Boundary Length Contribution</p>
+                <p className="font-mono text-base text-primary font-bold">
+                  length(p) = Σ<sub>i=1</sub><sup>N</sup> A(p, pᵢ) · δ(pᵢ ∈ image boundary)
+                </p>
+                <p className="text-xs text-muted-foreground font-mono max-w-lg mx-auto">
+                  where δ = 1 for superpixels on the image boundary and 0 otherwise. 
+                  Superpixels in homogeneous regions have small d<sub>geo</sub>, making A(p,q) ≈ 1.
+                </p>
+              </div>
+
+              {/* Final saliency from regions */}
+              <div className="text-center border-t border-border pt-4 space-y-2">
+                <p className="text-[10px] font-mono text-accent uppercase tracking-wider">Region Saliency Score</p>
+                <p className="font-mono text-base text-primary font-bold">
+                  Sal(p) = 1 − exp(−length(p)² / 2σ<sub>l</sub>²) · (1 / Area(p))
+                </p>
+                <p className="text-xs text-muted-foreground font-mono max-w-lg mx-auto">
+                  Regions with small area (compact, distinctive) and low boundary contribution (not background) 
+                  receive higher saliency scores, emphasizing foreground objects.
+                </p>
+              </div>
+            </div>
+
+            {/* Per-mode calculation summary table */}
+            <h3 className="text-base font-mono font-semibold text-primary">4.8.3 Saliency Mode Calculation Summary</h3>
+            <div className="bg-card border border-border rounded-md overflow-hidden">
+              <table className="w-full text-xs font-mono">
+                <thead>
+                  <tr className="bg-primary/10 border-b border-border">
+                    <th className="text-left p-3 text-primary">Mode</th>
+                    <th className="text-left p-3 text-primary">Kernel / Method</th>
+                    <th className="text-left p-3 text-primary">Formula</th>
+                    <th className="text-left p-3 text-primary">Complexity</th>
+                  </tr>
+                </thead>
+                <tbody className="text-foreground/80">
+                  <tr className="border-b border-border">
+                    <td className="p-3 text-accent font-semibold">Sobel</td>
+                    <td className="p-3">3×3 gradient kernels</td>
+                    <td className="p-3">G = √(Gx² + Gy²)</td>
+                    <td className="p-3 text-muted-foreground">O(W × H × 9)</td>
+                  </tr>
+                  <tr className="border-b border-border">
+                    <td className="p-3 text-accent font-semibold">Laplacian</td>
+                    <td className="p-3">3×3 second derivative</td>
+                    <td className="p-3">∇²I = ΣN(4) − 4·I(x,y)</td>
+                    <td className="p-3 text-muted-foreground">O(W × H × 5)</td>
+                  </tr>
+                  <tr className="border-b border-border">
+                    <td className="p-3 text-accent font-semibold">Motion</td>
+                    <td className="p-3">Frame differencing</td>
+                    <td className="p-3">D = |I(t) − I(t−1)|</td>
+                    <td className="p-3 text-muted-foreground">O(W × H)</td>
+                  </tr>
+                  <tr>
+                    <td className="p-3 text-accent font-semibold">Region</td>
+                    <td className="p-3">Superpixel geodesic</td>
+                    <td className="p-3">Sal(p) = f(Area, length)</td>
+                    <td className="p-3 text-muted-foreground">O(k² · log k)</td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
 
             <h3 className="text-base font-mono font-semibold text-primary">4.9 Constraints & Boundaries</h3>
