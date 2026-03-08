@@ -177,6 +177,8 @@ export default function Auth() {
     }
     setSubmitting(false);
   };
+
+  const startQrScan = async () => {
     setScanning(true);
     setError('');
     try {
