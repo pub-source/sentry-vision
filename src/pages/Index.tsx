@@ -442,54 +442,62 @@ export default function Index() {
                 α = 0.4×S + 0.3×A + 0.3×O
               </span>
             </div>
-            <div className="grid grid-cols-4 gap-2">
+            <div className="grid grid-cols-6 gap-2">
               {/* CAM 1 contribution */}
               <div className="bg-secondary/30 rounded p-2 space-y-1">
-                <p className="text-[9px] font-mono text-accent font-semibold">CAM 1 — Detection</p>
-                <p className="text-[8px] font-mono text-muted-foreground">Objects: {cameras[0].objects.length}</p>
+                <p className="text-[9px] font-mono text-accent font-semibold">CAM 1</p>
+                <p className="text-[8px] font-mono text-muted-foreground">Detection</p>
                 <div className="h-1.5 bg-secondary/50 rounded overflow-hidden">
                   <div className="h-full bg-primary rounded transition-all" style={{ width: `${Math.min(100, cameras[0].objects.length * 25)}%` }} />
                 </div>
-                <p className="text-[8px] font-mono text-foreground/70">
-                  O = {cameras[0].objects.length > 0
-                    ? cameras[0].objects.map(o => `${o.label}(${(o.confidence * 100).toFixed(0)}%)`).join(', ')
-                    : 'none'}
-                </p>
+                <p className="text-[7px] font-mono text-foreground/70">{cameras[0].objects.length} obj</p>
               </div>
-              {/* CAM 2 contribution */}
+              {/* CAM 2 */}
               <div className="bg-secondary/30 rounded p-2 space-y-1">
-                <p className="text-[9px] font-mono text-accent font-semibold">CAM 2 — Saliency</p>
-                <p className="text-[8px] font-mono text-muted-foreground">Score: {globalSaliencyScore}</p>
+                <p className="text-[9px] font-mono text-accent font-semibold">CAM 2</p>
+                <p className="text-[8px] font-mono text-muted-foreground">Heatmap</p>
                 <div className="h-1.5 bg-secondary/50 rounded overflow-hidden">
                   <div className={`h-full rounded transition-all ${
                     globalSaliencyScore > 60 ? 'bg-destructive' : globalSaliencyScore > 30 ? 'bg-warning' : 'bg-success'
                   }`} style={{ width: `${globalSaliencyScore}%` }} />
                 </div>
-                <p className="text-[8px] font-mono text-foreground/70">
-                  G = √(G<sub>x</sub>² + G<sub>y</sub>²) → {globalSaliencyScore}/100
-                </p>
+                <p className="text-[7px] font-mono text-foreground/70">S:{globalSaliencyScore}</p>
               </div>
-              {/* CAM 3 contribution */}
+              {/* CAM 3 */}
               <div className="bg-secondary/30 rounded p-2 space-y-1">
-                <p className="text-[9px] font-mono text-accent font-semibold">CAM 3 — Region</p>
-                <p className="text-[8px] font-mono text-muted-foreground">Edge density</p>
+                <p className="text-[9px] font-mono text-accent font-semibold">CAM 3</p>
+                <p className="text-[8px] font-mono text-muted-foreground">Region</p>
                 <div className="h-1.5 bg-secondary/50 rounded overflow-hidden">
                   <div className="h-full bg-info rounded transition-all" style={{ width: `${Math.min(100, globalSaliencyScore * 1.2)}%` }} />
                 </div>
-                <p className="text-[8px] font-mono text-foreground/70">
-                  Grayscale edge map
-                </p>
+                <p className="text-[7px] font-mono text-foreground/70">Edge map</p>
               </div>
-              {/* CAM 4 contribution */}
+              {/* CAM 4 */}
               <div className="bg-secondary/30 rounded p-2 space-y-1">
-                <p className="text-[9px] font-mono text-accent font-semibold">CAM 4 — Threshold</p>
-                <p className="text-[8px] font-mono text-muted-foreground">τ = {threshold}</p>
+                <p className="text-[9px] font-mono text-accent font-semibold">CAM 4</p>
+                <p className="text-[8px] font-mono text-muted-foreground">Threshold</p>
                 <div className="h-1.5 bg-secondary/50 rounded overflow-hidden">
                   <div className="h-full bg-warning rounded transition-all" style={{ width: `${Math.min(100, threshold * 3)}%` }} />
                 </div>
-                <p className="text-[8px] font-mono text-foreground/70">
-                  Binary segmentation
-                </p>
+                <p className="text-[7px] font-mono text-foreground/70">τ={threshold}</p>
+              </div>
+              {/* CAM 5 */}
+              <div className="bg-secondary/30 rounded p-2 space-y-1">
+                <p className="text-[9px] font-mono text-accent font-semibold">CAM 5</p>
+                <p className="text-[8px] font-mono text-muted-foreground">Low-Fi</p>
+                <div className="h-1.5 bg-secondary/50 rounded overflow-hidden">
+                  <div className="h-full bg-secondary rounded transition-all" style={{ width: `${Math.min(100, globalSaliencyScore * 0.8)}%` }} />
+                </div>
+                <p className="text-[7px] font-mono text-foreground/70">Superpixel</p>
+              </div>
+              {/* CAM 6 */}
+              <div className="bg-secondary/30 rounded p-2 space-y-1">
+                <p className="text-[9px] font-mono text-accent font-semibold">CAM 6</p>
+                <p className="text-[8px] font-mono text-muted-foreground">Shader</p>
+                <div className="h-1.5 bg-secondary/50 rounded overflow-hidden">
+                  <div className="h-full bg-destructive rounded transition-all" style={{ width: `${Math.min(100, cameras[0].objects.length * 30)}%` }} />
+                </div>
+                <p className="text-[7px] font-mono text-foreground/70">Mask</p>
               </div>
             </div>
             {/* Combined score */}
