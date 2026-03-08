@@ -2420,6 +2420,174 @@ if (db > -15 && lowEnergy > 80 && lowEnergy > midEnergy * 1.5 && zcr < 0.15) {
 
         </section>
 
+        {/* ============================================================ */}
+        {/* SECTION: CAM 5 & CAM 6 COMPUTATION FORMULAS */}
+        {/* ============================================================ */}
+        <section className="space-y-6">
+          <div className="flex items-center gap-3 border-b border-border pb-3">
+            <span className="text-xs font-mono text-primary-foreground bg-primary px-2 py-1 rounded">CAM</span>
+            <h2 className="text-lg font-mono font-bold text-foreground">
+              CAM 5 & CAM 6 — Specialized Processing Formulas
+            </h2>
+          </div>
+
+          {/* CAM 5: Low-Fi Superpixel */}
+          <div className="space-y-4 text-sm text-foreground/90 leading-relaxed">
+            <h3 className="text-base font-mono font-semibold text-primary">CAM 5 — Low-Fi Region Saliency (Superpixel Decomposition)</h3>
+            <p>
+              CAM 5 implements a <strong>block-averaging superpixel decomposition</strong> that reduces the saliency map into 
+              coarse, uniform blocks. This simplification exposes dominant salient regions while eliminating high-frequency 
+              noise, making it effective for rapid large-area scanning.
+            </p>
+
+            <div className="bg-card border border-border rounded-md p-4 font-mono text-xs space-y-3">
+              <p className="text-primary font-semibold">Algorithm: Block-Averaged Saliency</p>
+              <div className="space-y-2 text-foreground/80">
+                <p>Given saliency map S(x,y) and block size B:</p>
+                <div className="bg-secondary/50 rounded p-3 space-y-1">
+                  <p className="text-accent">1. Apply edge detection: E(x,y) = Sobel(Grayscale(V(t)))</p>
+                  <p className="text-accent">2. For each block (i,j) where i∈[0, W/B), j∈[0, H/B):</p>
+                  <p className="ml-4">L(i,j) = (1/B²) × Σ<sub>x=iB</sub><sup>(i+1)B-1</sup> Σ<sub>y=jB</sub><sup>(j+1)B-1</sup> E(x,y)</p>
+                  <p className="text-accent">3. Fill block pixels: ∀(x,y) ∈ Block(i,j) → P(x,y) = L(i,j)</p>
+                </div>
+                <p className="text-muted-foreground mt-2">
+                  Block size B = 6px (configurable). Output is a coarse grayscale representation where each 
+                  6×6 block shares a uniform intensity equal to the mean saliency of its constituent pixels.
+                </p>
+              </div>
+            </div>
+
+            <div className="bg-card border border-border rounded-md p-4 font-mono text-xs space-y-2">
+              <p className="text-primary font-semibold">Complexity Analysis</p>
+              <div className="text-foreground/80 space-y-1">
+                <p>• <span className="text-accent">Time:</span> O(W × H) — single pass over all pixels with block accumulation</p>
+                <p>• <span className="text-accent">Space:</span> O(W × H) — output canvas of same dimensions</p>
+                <p>• <span className="text-accent">Block reduction:</span> (W/B) × (H/B) superpixels = ~97% fewer independent regions (B=6)</p>
+                <p>• <span className="text-accent">Purpose:</span> Noise suppression + rapid visual scanning of dominant salient areas</p>
+              </div>
+            </div>
+
+            <h3 className="text-base font-mono font-semibold text-primary mt-6">CAM 6 — Object Shader (Detection-Guided Color Masking)</h3>
+            <p>
+              CAM 6 implements a <strong>detection-guided shader</strong> that overlays detected object regions with 
+              a red tint mask while desaturating the background into blue-gray tones. This creates a visual separation 
+              between "areas of interest" (detected objects) and the ambient scene.
+            </p>
+
+            <div className="bg-card border border-border rounded-md p-4 font-mono text-xs space-y-3">
+              <p className="text-primary font-semibold">Algorithm: Object-Masked Color Shader</p>
+              <div className="space-y-2 text-foreground/80">
+                <p>Given frame V(t) and detected objects O = &#123;(label, bbox, conf)&#125;:</p>
+                <div className="bg-secondary/50 rounded p-3 space-y-1">
+                  <p className="text-accent">1. Copy source frame to output canvas</p>
+                  <p className="text-accent">2. Create object mask M(x,y):</p>
+                  <p className="ml-4">M(x,y) = 1 if (x,y) ∈ any bbox ∈ O, else 0</p>
+                  <p className="text-accent">3. For each pixel (x,y):</p>
+                  <p className="ml-4 text-destructive">
+                    If M(x,y) = 1: R' = R × 0.3 + 200, G' = G × 0.2, B' = B × 0.2
+                  </p>
+                  <p className="ml-4 text-info">
+                    If M(x,y) = 0: Gray = 0.299R + 0.587G + 0.114B
+                  </p>
+                  <p className="ml-8 text-info">
+                    R' = Gray × 0.7, G' = Gray × 0.8, B' = Gray × 1.0
+                  </p>
+                </div>
+                <p className="text-muted-foreground mt-2">
+                  The red tint formula (R×0.3+200) ensures detected regions are visibly highlighted regardless 
+                  of original brightness. The blue-gray desaturation of the background maintains spatial context 
+                  while de-emphasizing non-interesting regions.
+                </p>
+              </div>
+            </div>
+
+            <div className="bg-card border border-border rounded-md p-4 font-mono text-xs space-y-2">
+              <p className="text-primary font-semibold">Complexity Analysis</p>
+              <div className="text-foreground/80 space-y-1">
+                <p>• <span className="text-accent">Time:</span> O(W × H + N × A) where N = object count, A = average bbox area</p>
+                <p>• <span className="text-accent">Space:</span> O(W × H) — mask array + output canvas</p>
+                <p>• <span className="text-accent">Mask construction:</span> O(N × A) — iterate bounding box pixels for each detection</p>
+                <p>• <span className="text-accent">Color transform:</span> O(W × H) — per-pixel conditional shader</p>
+                <p>• <span className="text-accent">Purpose:</span> Visual attention guidance — immediately identifies "what was detected and where"</p>
+              </div>
+            </div>
+
+            {/* Combined 6-camera formula */}
+            <h3 className="text-base font-mono font-semibold text-primary mt-6">6-Camera Fusion Architecture</h3>
+            <div className="bg-card border border-border rounded-md p-4 font-mono text-xs space-y-3">
+              <p className="text-primary font-semibold">Complete Camera Specialization Matrix</p>
+              <div className="overflow-x-auto">
+                <table className="w-full text-[10px] font-mono border-collapse">
+                  <thead>
+                    <tr className="border-b border-border text-muted-foreground">
+                      <th className="text-left p-2">Camera</th>
+                      <th className="text-left p-2">Function</th>
+                      <th className="text-left p-2">Algorithm</th>
+                      <th className="text-left p-2">Output</th>
+                    </tr>
+                  </thead>
+                  <tbody className="text-foreground/80">
+                    <tr className="border-b border-border/30">
+                      <td className="p-2 text-accent">CAM 1</td>
+                      <td className="p-2">Object Detection</td>
+                      <td className="p-2">COCO-SSD (all 80 classes)</td>
+                      <td className="p-2">Bounding boxes + labels</td>
+                    </tr>
+                    <tr className="border-b border-border/30">
+                      <td className="p-2 text-accent">CAM 2</td>
+                      <td className="p-2">Saliency Heatmap</td>
+                      <td className="p-2">Sobel + HSL color mapping</td>
+                      <td className="p-2">Colored heat overlay</td>
+                    </tr>
+                    <tr className="border-b border-border/30">
+                      <td className="p-2 text-accent">CAM 3</td>
+                      <td className="p-2">Region Saliency</td>
+                      <td className="p-2">Grayscale edge density</td>
+                      <td className="p-2">Edge validation map</td>
+                    </tr>
+                    <tr className="border-b border-border/30">
+                      <td className="p-2 text-accent">CAM 4</td>
+                      <td className="p-2">Threshold Segmentation</td>
+                      <td className="p-2">Binary threshold mask</td>
+                      <td className="p-2">Segmented regions</td>
+                    </tr>
+                    <tr className="border-b border-border/30">
+                      <td className="p-2 text-accent">CAM 5</td>
+                      <td className="p-2">Low-Fi Saliency</td>
+                      <td className="p-2">Block-average superpixel (B=6)</td>
+                      <td className="p-2">Coarse region map</td>
+                    </tr>
+                    <tr>
+                      <td className="p-2 text-accent">CAM 6</td>
+                      <td className="p-2">Object Shader</td>
+                      <td className="p-2">Detection-guided color mask</td>
+                      <td className="p-2">Red-tinted object overlay</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ============================================================ */}
+        {/* SECTION: CLOUD DETECTION DATA */}
+        {/* ============================================================ */}
+        <section className="space-y-6">
+          <div className="flex items-center gap-3 border-b border-border pb-3">
+            <span className="text-xs font-mono text-primary-foreground bg-primary px-2 py-1 rounded">DATA</span>
+            <h2 className="text-lg font-mono font-bold text-foreground">
+              Cloud Detection Data — Research Sessions
+            </h2>
+          </div>
+          <p className="text-sm text-muted-foreground">
+            All detection sessions are automatically saved to cloud storage. Each session captures time-series 
+            data points (attention, saliency, audio, objects) at 2Hz, along with individual object detection logs 
+            from all 80 COCO-SSD classes.
+          </p>
+          <CloudDataPanel />
+        </section>
+
         {/* Footer */}
         <div className="text-center text-[10px] font-mono text-muted-foreground border-t border-border pt-6">
           <p>CSP111-THESIS 1 — Discussion on Algorithms, Mathematical Models, and Formulas</p>
