@@ -246,6 +246,7 @@ export type Database = {
       }
       wake_words: {
         Row: {
+          action_type: string
           created_at: string
           created_by: string | null
           household_id: string
@@ -254,6 +255,7 @@ export type Database = {
           phrase: string
         }
         Insert: {
+          action_type?: string
           created_at?: string
           created_by?: string | null
           household_id: string
@@ -262,6 +264,7 @@ export type Database = {
           phrase: string
         }
         Update: {
+          action_type?: string
           created_at?: string
           created_by?: string | null
           household_id?: string
