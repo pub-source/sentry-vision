@@ -1118,67 +1118,164 @@ export default function Research() {
               </div>
             </div>
 
-            {/* Multi-Camera Processing Architecture */}
-            <h3 className="text-base font-mono font-semibold text-primary">4.8.3 Multi-Camera Parallel Processing Architecture</h3>
+            {/* Multi-Camera Specialized Architecture */}
+            <h3 className="text-base font-mono font-semibold text-primary">4.8.3 Specialized Multi-Camera Architecture</h3>
             <p>
-              The system processes all 4 camera feeds <strong>independently and in parallel</strong>. Each camera 
-              maintains its own saliency computation pipeline, object detection loop, and score aggregation. 
-              The global attention score is derived from the maximum saliency across all cameras combined with 
-              audio features.
+              Unlike traditional multi-camera systems that replicate identical processing across all feeds, 
+              this system assigns each camera a <strong>unique specialized function</strong>. The four cameras 
+              operate as a coordinated pipeline where each contributes a distinct analytical layer, and their 
+              outputs are fused into a single precision attention score.
             </p>
 
+            {/* Camera Specialization Table */}
+            <div className="bg-card border border-border rounded-md p-4 space-y-3">
+              <p className="text-[10px] font-mono text-primary uppercase tracking-wider">
+                Figure 4.5 — Camera Specialization Matrix
+              </p>
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse font-mono text-xs">
+                  <thead>
+                    <tr className="border-b border-border">
+                      <th className="text-left py-2 px-3 text-primary">Camera</th>
+                      <th className="text-left py-2 px-3 text-primary">Function</th>
+                      <th className="text-left py-2 px-3 text-primary">Algorithm</th>
+                      <th className="text-left py-2 px-3 text-primary">Output</th>
+                      <th className="text-left py-2 px-3 text-primary">Contribution</th>
+                    </tr>
+                  </thead>
+                  <tbody className="text-foreground/80">
+                    <tr className="border-b border-border/50 bg-primary/5">
+                      <td className="py-2 px-3 text-accent font-bold">CAM 1</td>
+                      <td className="py-2 px-3 font-semibold">Object Detection</td>
+                      <td className="py-2 px-3">COCO-SSD (MobileNet v2)</td>
+                      <td className="py-2 px-3">Bounding boxes + class labels</td>
+                      <td className="py-2 px-3">O(t) — Object weight for fusion</td>
+                    </tr>
+                    <tr className="border-b border-border/50">
+                      <td className="py-2 px-3 text-accent font-bold">CAM 2</td>
+                      <td className="py-2 px-3 font-semibold">Saliency Heatmap</td>
+                      <td className="py-2 px-3">Sobel/Laplacian edge + colormap</td>
+                      <td className="py-2 px-3">Colored heat overlay (blue→red)</td>
+                      <td className="py-2 px-3">S(t) — Visual saliency score</td>
+                    </tr>
+                    <tr className="border-b border-border/50">
+                      <td className="py-2 px-3 text-accent font-bold">CAM 3</td>
+                      <td className="py-2 px-3 font-semibold">Region Saliency</td>
+                      <td className="py-2 px-3">Grayscale edge density map</td>
+                      <td className="py-2 px-3">Region intensity map (0–255)</td>
+                      <td className="py-2 px-3">R(t) — Region validation</td>
+                    </tr>
+                    <tr>
+                      <td className="py-2 px-3 text-accent font-bold">CAM 4</td>
+                      <td className="py-2 px-3 font-semibold">Threshold Segmentation</td>
+                      <td className="py-2 px-3">Binary threshold (τ) + superpixel</td>
+                      <td className="py-2 px-3">Binary mask (salient/non-salient)</td>
+                      <td className="py-2 px-3">T(t) — Segmentation mask</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Per-Camera Formulas */}
             <div className="bg-card border border-primary/30 rounded-md p-5 space-y-6">
-              {/* Per-camera pipeline */}
-              <div className="text-center space-y-2">
-                <p className="text-[10px] font-mono text-accent uppercase tracking-wider">Per-Camera Processing Pipeline (30 FPS)</p>
-                <p className="font-mono text-sm text-primary font-bold">
-                  For each camera c ∈ &#123;1, 2, 3, 4&#125;:
-                </p>
+              {/* CAM 1 */}
+              <div className="space-y-2">
+                <p className="text-[10px] font-mono text-accent uppercase tracking-wider">CAM 1 — Object Detection Pipeline</p>
                 <div className="font-mono text-xs text-foreground/80 space-y-1 text-left max-w-lg mx-auto">
-                  <p>1. V<sub>c</sub>(t) ← getUserMedia(deviceId<sub>c</sub>) <span className="text-muted-foreground">// Capture frame</span></p>
-                  <p>2. G<sub>c</sub>(t) ← grayscale(V<sub>c</sub>(t)) <span className="text-muted-foreground">// Convert to luminance</span></p>
-                  <p>3. S<sub>c</sub>(t) ← saliency(G<sub>c</sub>(t), mode, τ) <span className="text-muted-foreground">// Sobel/Laplacian/Motion</span></p>
-                  <p>4. O<sub>c</sub>(t) ← COCO-SSD(V<sub>c</sub>(t)) ∩ P <span className="text-muted-foreground">// Detect priority objects</span></p>
-                  <p>5. score<sub>c</sub> ← computeSaliencyScore(S<sub>c</sub>(t)) <span className="text-muted-foreground">// Normalize to [0,100]</span></p>
+                  <p>1. V(t) ← getUserMedia(deviceId<sub>1</sub>) <span className="text-muted-foreground">// Capture RGB frame</span></p>
+                  <p>2. predictions ← COCO-SSD.detect(V(t)) <span className="text-muted-foreground">// Run inference</span></p>
+                  <p>3. O(t) ← &#123;p ∈ predictions | p.score ≥ C<sub>min</sub> ∧ p.class ∈ P&#125;</p>
+                  <p>4. ∀ obj ∈ O(t): drawBoundingBox(obj.bbox, colorByConfidence(obj.score))</p>
                 </div>
-              </div>
-
-              {/* Global aggregation */}
-              <div className="text-center border-t border-border pt-4 space-y-2">
-                <p className="text-[10px] font-mono text-accent uppercase tracking-wider">Global Score Aggregation</p>
-                <p className="font-mono text-base text-primary font-bold">
-                  S<sub>global</sub>(t) = max(S<sub>1</sub>(t), S<sub>2</sub>(t), S<sub>3</sub>(t), S<sub>4</sub>(t))
-                </p>
-                <p className="text-xs text-muted-foreground font-mono">
-                  The maximum saliency across all active cameras represents the most urgent visual event.
+                <p className="text-center font-mono text-sm text-primary font-bold mt-2">
+                  O<sub>weight</sub>(t) = Σ<sub>i</sub> confidence<sub>i</sub> × priority(class<sub>i</sub>)
                 </p>
               </div>
 
-              {/* Attention fusion */}
-              <div className="text-center border-t border-border pt-4 space-y-2">
-                <p className="text-[10px] font-mono text-accent uppercase tracking-wider">Multimodal Attention Fusion</p>
-                <p className="font-mono text-base text-primary font-bold">
-                  α(t) = S<sub>global</sub>(t) + 20 · δ<sub>speech</sub>(t) + max(0, (dB(t) + 30) × 0.5)
-                </p>
-                <p className="text-xs text-muted-foreground font-mono max-w-lg mx-auto">
-                  where δ<sub>speech</sub> ∈ &#123;0, 1&#125; is the speech detection flag, and dB(t) is the current
-                  audio level in decibels. The attention score is clamped to [0, 100].
-                </p>
-              </div>
-
-              {/* Alert triggering */}
-              <div className="text-center border-t border-border pt-4 space-y-2">
-                <p className="text-[10px] font-mono text-accent uppercase tracking-wider">Per-Camera Alert Logic</p>
+              {/* CAM 2 */}
+              <div className="border-t border-border pt-4 space-y-2">
+                <p className="text-[10px] font-mono text-accent uppercase tracking-wider">CAM 2 — Saliency Heatmap Computation</p>
                 <div className="font-mono text-xs text-foreground/80 space-y-1 text-left max-w-lg mx-auto">
-                  <p>∀ c ∈ &#123;1..4&#125;, ∀ obj ∈ O<sub>c</sub>(t):</p>
-                  <p className="ml-4">if obj.label = "person" ∧ obj.confidence {'>'} 0.7 → ALERT(medium, c)</p>
-                  <p className="ml-4">if obj.label ∈ P ∧ obj.label ≠ "person" → ALERT(high, c)</p>
-                  <p className="mt-2">if δ<sub>speech</sub>(t) = 1 ∧ S<sub>c</sub>(t) {'>'} 50 → ALERT(critical, c) + SNAPSHOT</p>
+                  <p>1. G(t) ← 0.299R + 0.587G + 0.114B <span className="text-muted-foreground">// Luminance conversion</span></p>
+                  <p>2. G<sub>x</sub> = K<sub>x</sub> * G(t), &nbsp; G<sub>y</sub> = K<sub>y</sub> * G(t) <span className="text-muted-foreground">// Sobel convolution</span></p>
+                  <p>3. M(x,y) = √(G<sub>x</sub>² + G<sub>y</sub>²) <span className="text-muted-foreground">// Edge magnitude</span></p>
+                  <p>4. H(x,y) = colormap(M(x,y)) <span className="text-muted-foreground">// Blue→Cyan→Green→Yellow→Red</span></p>
+                </div>
+                <p className="text-center font-mono text-sm text-primary font-bold mt-2">
+                  S(t) = min(100, ⌊(Σ M(x,y) / N) × 100 / 255⌋)
+                </p>
+              </div>
+
+              {/* CAM 3 */}
+              <div className="border-t border-border pt-4 space-y-2">
+                <p className="text-[10px] font-mono text-accent uppercase tracking-wider">CAM 3 — Region Saliency (Grayscale)</p>
+                <div className="font-mono text-xs text-foreground/80 space-y-1 text-left max-w-lg mx-auto">
+                  <p>1. Same grayscale + edge computation as CAM 2</p>
+                  <p>2. Output as raw grayscale (no colormap) <span className="text-muted-foreground">// Preserves intensity precision</span></p>
+                  <p>3. Serves as <strong>validation layer</strong> — confirms saliency without color bias</p>
+                  <p>4. Edge density ρ(t) = |&#123;(x,y) | M(x,y) {'>'} τ&#125;| / N</p>
+                </div>
+                <p className="text-center font-mono text-sm text-primary font-bold mt-2">
+                  R(t) = ρ(t) × 100 <span className="text-xs text-muted-foreground font-normal ml-2">// % of pixels above threshold</span>
+                </p>
+              </div>
+
+              {/* CAM 4 */}
+              <div className="border-t border-border pt-4 space-y-2">
+                <p className="text-[10px] font-mono text-accent uppercase tracking-wider">CAM 4 — Threshold Segmentation</p>
+                <div className="font-mono text-xs text-foreground/80 space-y-1 text-left max-w-lg mx-auto">
+                  <p>1. Compute edge magnitude M(x,y) (Sobel or Laplacian)</p>
+                  <p>2. Apply binary threshold:</p>
+                  <p className="ml-4">B(x,y) = &#123; <span className="text-accent">CYAN</span> if M(x,y) {'>'} τ, &nbsp; <span className="text-muted-foreground">BLACK</span> otherwise &#125;</p>
+                  <p>3. Count: above = |&#123;B = CYAN&#125;|, &nbsp; below = |&#123;B = BLACK&#125;|</p>
+                  <p>4. Segmentation ratio = above / (above + below) × 100%</p>
+                </div>
+                <p className="text-center font-mono text-sm text-primary font-bold mt-2">
+                  T(t) = |&#123;M(x,y) {'>'} τ&#125;| / N × 100
+                </p>
+              </div>
+
+              {/* Fusion */}
+              <div className="border-t-2 border-primary/50 pt-4 space-y-3">
+                <p className="text-[10px] font-mono text-primary uppercase tracking-wider font-bold">⚡ Multimodal Fusion — Combining All 4 Cameras</p>
+                <p className="text-xs text-foreground/80">
+                  The final attention score combines the specialized outputs from all four cameras with the 
+                  audio analysis module. Each camera contributes its unique analytical perspective:
+                </p>
+                <div className="bg-secondary/20 rounded-md p-4 text-center space-y-3">
+                  <p className="font-mono text-base text-primary font-bold">
+                    α(t) = w<sub>s</sub> · S(t) + w<sub>a</sub> · A(t) + w<sub>o</sub> · O<sub>weight</sub>(t)
+                  </p>
+                  <p className="text-xs text-muted-foreground font-mono">
+                    where w<sub>s</sub> = 0.4, w<sub>a</sub> = 0.3, w<sub>o</sub> = 0.3
+                  </p>
+                  <div className="grid grid-cols-4 gap-2 text-left mt-3">
+                    <div className="bg-card rounded p-2 border border-border">
+                      <p className="text-[8px] font-mono text-accent font-bold">CAM 1 → O(t)</p>
+                      <p className="text-[8px] font-mono text-muted-foreground">What objects exist?</p>
+                    </div>
+                    <div className="bg-card rounded p-2 border border-border">
+                      <p className="text-[8px] font-mono text-accent font-bold">CAM 2 → S(t)</p>
+                      <p className="text-[8px] font-mono text-muted-foreground">Where is visual interest?</p>
+                    </div>
+                    <div className="bg-card rounded p-2 border border-border">
+                      <p className="text-[8px] font-mono text-accent font-bold">CAM 3 → R(t)</p>
+                      <p className="text-[8px] font-mono text-muted-foreground">Validates saliency regions</p>
+                    </div>
+                    <div className="bg-card rounded p-2 border border-border">
+                      <p className="text-[8px] font-mono text-accent font-bold">CAM 4 → T(t)</p>
+                      <p className="text-[8px] font-mono text-muted-foreground">Segments salient areas</p>
+                    </div>
+                  </div>
+                  <p className="text-xs text-muted-foreground font-mono mt-2">
+                    Alert triggers when α(t) {'>'} 60 (ELEVATED) or α(t) {'>'} 70 (CRITICAL)
+                  </p>
                 </div>
               </div>
             </div>
 
-            {/* Stream Cloning */}
+            {/* Stream Management */}
             <div className="bg-card border border-border rounded-md p-4 space-y-3">
               <p className="text-[10px] font-mono text-primary uppercase tracking-wider">Camera Stream Management</p>
               <div className="overflow-x-auto">
@@ -1186,35 +1283,29 @@ export default function Research() {
                   <thead>
                     <tr className="border-b border-border">
                       <th className="text-left py-2 px-3 text-primary">Scenario</th>
-                      <th className="text-left py-2 px-3 text-primary">Cameras Available</th>
+                      <th className="text-left py-2 px-3 text-primary">Cameras</th>
                       <th className="text-left py-2 px-3 text-primary">Behavior</th>
-                      <th className="text-left py-2 px-3 text-primary">CPU Load</th>
+                      <th className="text-left py-2 px-3 text-primary">Specialization</th>
                     </tr>
                   </thead>
                   <tbody className="text-foreground/80">
                     <tr className="border-b border-border/50">
                       <td className="py-2 px-3">Full hardware</td>
                       <td className="py-2 px-3 text-accent">4 physical</td>
-                      <td className="py-2 px-3">Each camera → unique stream</td>
-                      <td className="py-2 px-3">4× pipeline</td>
+                      <td className="py-2 px-3">Each camera → unique device</td>
+                      <td className="py-2 px-3">All 4 specialized pipelines active</td>
                     </tr>
                     <tr className="border-b border-border/50">
                       <td className="py-2 px-3">Single webcam</td>
                       <td className="py-2 px-3 text-accent">1 physical</td>
-                      <td className="py-2 px-3">Primary cloned to remaining 3 panels</td>
-                      <td className="py-2 px-3">4× pipeline (shared source)</td>
-                    </tr>
-                    <tr className="border-b border-border/50">
-                      <td className="py-2 px-3">No camera</td>
-                      <td className="py-2 px-3 text-accent">0 physical</td>
-                      <td className="py-2 px-3">Simulation mode (procedural noise)</td>
-                      <td className="py-2 px-3">4× synthetic render</td>
+                      <td className="py-2 px-3">CAM 1 captures, CAMs 2-4 process same frame</td>
+                      <td className="py-2 px-3">Full pipeline via frame sharing</td>
                     </tr>
                     <tr>
-                      <td className="py-2 px-3">Mixed</td>
-                      <td className="py-2 px-3 text-accent">2-3 physical</td>
-                      <td className="py-2 px-3">Available devices + clone primary for rest</td>
-                      <td className="py-2 px-3">4× pipeline</td>
+                      <td className="py-2 px-3">Simulation</td>
+                      <td className="py-2 px-3 text-accent">0 physical</td>
+                      <td className="py-2 px-3">Procedural noise as input</td>
+                      <td className="py-2 px-3">All pipelines on synthetic data</td>
                     </tr>
                   </tbody>
                 </table>

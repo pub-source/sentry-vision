@@ -70,16 +70,18 @@ export default function SaliencyView({ title, sourceCanvas, saliencyMode, thresh
 
   return (
     <div className="relative bg-card rounded-md overflow-hidden border border-border panel-glow h-full">
-      <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between px-2 py-1 bg-gradient-to-b from-background/80 to-transparent">
-        <span className="text-[10px] font-mono text-primary uppercase tracking-wider">{title}</span>
-        <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded ${
-          score > 60 ? 'bg-destructive/80 text-destructive-foreground' :
-          score > 30 ? 'bg-warning/80 text-warning-foreground' :
-          'bg-secondary/80 text-secondary-foreground'
-        }`}>
-          {score}%
-        </span>
-      </div>
+      {title && (
+        <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between px-2 py-1 bg-gradient-to-b from-background/80 to-transparent">
+          <span className="text-[10px] font-mono text-primary uppercase tracking-wider">{title}</span>
+          <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded ${
+            score > 60 ? 'bg-destructive/80 text-destructive-foreground' :
+            score > 30 ? 'bg-warning/80 text-warning-foreground' :
+            'bg-secondary/80 text-secondary-foreground'
+          }`}>
+            {score}%
+          </span>
+        </div>
+      )}
       <canvas
         ref={canvasRef}
         width={320}
