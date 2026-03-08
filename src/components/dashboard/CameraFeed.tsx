@@ -19,6 +19,7 @@ interface CameraFeedProps {
   saliencyMode: SaliencyMode;
   threshold: number;
   simulationMode: boolean;
+  priorityObjects: string[];
   detectionStats: DetectionStats;
   onFpsUpdate: (cameraId: number, fps: number) => void;
   onObjectsUpdate: (cameraId: number, objects: DetectedObject[]) => void;
@@ -36,6 +37,7 @@ export default function CameraFeed({
   saliencyMode,
   threshold,
   simulationMode,
+  priorityObjects,
   detectionStats,
   onFpsUpdate,
   onObjectsUpdate,

@@ -16,8 +16,8 @@ import { useAudioAnalysis } from '@/hooks/useAudioAnalysis';
 import { useObjectDetection } from '@/hooks/useObjectDetection';
 import { useAuth } from '@/hooks/useAuth';
 import { useHousehold } from '@/hooks/useHousehold';
-import { supabase } from '@/integrations/supabase/client';
 import type { SaliencyMode, QualityMode, Alert, DetectedObject } from '@/types/dashboard';
+import { DEFAULT_PRIORITY_OBJECTS } from '@/types/dashboard';
 
 export default function Index() {
   const { user, loading: authLoading, signOut } = useAuth();
@@ -38,9 +38,7 @@ export default function Index() {
   const [mirror, setMirror] = useState(false);
   const [heatmapOpacity, setHeatmapOpacity] = useState(50);
   const [simulationMode, setSimulationMode] = useState(false);
-  const sessionIdRef = useRef<string | null>(null);
-  const dataBufferRef = useRef<any[]>([]);
-  const objectsBufferRef = useRef<any[]>([]);
+  const [priorityObjects, setPriorityObjects] = useState<string[]>(DEFAULT_PRIORITY_OBJECTS);
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [errors] = useState<string[]>([]);
   const [attentionScore, setAttentionScore] = useState(0);
@@ -69,7 +67,7 @@ export default function Index() {
 
   const handleStart = useCallback(async () => {
     await enumerateDevices();
-    loadModel();
+    loadModel(); // Start loading COCO-SSD model
     if (simulationMode) {
       setRunning(true);
       startAudio();
@@ -78,87 +76,15 @@ export default function Index() {
       await startAudio();
       setRunning(true);
     }
-    // Create cloud session
-    if (user) {
-      const { data } = await supabase.from('detection_sessions').insert({
-        user_id: user.id,
-        saliency_mode: saliencyMode,
-      }).select('id').single();
-      if (data) {
-        sessionIdRef.current = data.id;
-        console.log('[Cloud] Session created:', data.id);
-      }
-    }
-  }, [simulationMode, quality, startCameras, startAudio, enumerateDevices, loadModel, user, saliencyMode]);
+  }, [simulationMode, quality, startCameras, startAudio, enumerateDevices, loadModel]);
 
-  // Flush buffers to cloud every 5s
-  useEffect(() => {
-    if (!running || !sessionIdRef.current) return;
-    const interval = window.setInterval(async () => {
-      const sessionId = sessionIdRef.current;
-      if (!sessionId) return;
-      
-      // Flush data points
-      if (dataBufferRef.current.length > 0) {
-        const batch = dataBufferRef.current.splice(0);
-        await supabase.from('detection_data').insert(batch);
-      }
-      // Flush objects
-      if (objectsBufferRef.current.length > 0) {
-        const batch = objectsBufferRef.current.splice(0);
-        await supabase.from('detected_objects_log').insert(batch);
-      }
-    }, 5000);
-    return () => clearInterval(interval);
-  }, [running]);
-
-  // Collect data points every 500ms
-  useEffect(() => {
-    if (!running || !sessionIdRef.current) return;
-    const interval = window.setInterval(() => {
-      if (!sessionIdRef.current) return;
-      dataBufferRef.current.push({
-        session_id: sessionIdRef.current,
-        attention_score: attentionScore,
-        saliency_score: globalSaliencyScore,
-        decibel: audioFeatures.decibel,
-        speech_detected: audioFeatures.speechDetected,
-        object_count: cameras.reduce((sum, c) => sum + c.objects.length, 0),
-        objects_detected: cameras[0].objects.map(o => ({ label: o.label, confidence: o.confidence })),
-        audio_event: audioFeatures.audioEvent,
-        fps: cameras[0].fps,
-      });
-    }, 500);
-    return () => clearInterval(interval);
-  }, [running, attentionScore, globalSaliencyScore, audioFeatures, cameras]);
-
-  const handleStop = useCallback(async () => {
+  const handleStop = useCallback(() => {
     setRunning(false);
     stopCameras();
     stopAudio();
-    // Finalize cloud session
-    if (sessionIdRef.current && user) {
-      // Flush remaining buffers
-      if (dataBufferRef.current.length > 0) {
-        await supabase.from('detection_data').insert(dataBufferRef.current.splice(0));
-      }
-      if (objectsBufferRef.current.length > 0) {
-        await supabase.from('detected_objects_log').insert(objectsBufferRef.current.splice(0));
-      }
-      await supabase.from('detection_sessions').update({
-        ended_at: new Date().toISOString(),
-        avg_attention: attentionScore,
-        max_attention: attentionScore,
-        avg_saliency: globalSaliencyScore,
-        total_objects_detected: cameras.reduce((sum, c) => sum + c.objects.length, 0),
-        total_alerts: alerts.length,
-      }).eq('id', sessionIdRef.current);
-      console.log('[Cloud] Session finalized:', sessionIdRef.current);
-      sessionIdRef.current = null;
-    }
     setAttentionScore(0);
     setGlobalSaliencyScore(0);
-  }, [stopCameras, stopAudio, user, attentionScore, globalSaliencyScore, cameras, alerts]);
+  }, [stopCameras, stopAudio]);
 
   const handleFpsUpdate = useCallback((cameraId: number, fps: number) => {
     updateCamera(cameraId, { fps });
@@ -166,26 +92,15 @@ export default function Index() {
 
   const handleObjectsUpdate = useCallback((cameraId: number, objects: DetectedObject[]) => {
     updateCamera(cameraId, { objects });
-    // Alert for any detected object
     objects.forEach(obj => {
       if (obj.label === 'person' && obj.confidence > 0.7) {
         addAlert('Person detected', 'medium', cameraId);
-      } else if (obj.confidence > 0.6) {
-        addAlert(`${obj.label} detected (${(obj.confidence * 100).toFixed(0)}%)`, 'low', cameraId);
+      }
+      if (priorityObjects.includes(obj.label) && obj.label !== 'person') {
+        addAlert(`Priority: ${obj.label} detected`, 'high', cameraId);
       }
     });
-    // Buffer objects for cloud save
-    if (sessionIdRef.current) {
-      objects.forEach(obj => {
-        objectsBufferRef.current.push({
-          session_id: sessionIdRef.current,
-          label: obj.label,
-          confidence: obj.confidence,
-          bbox: obj.bbox,
-        });
-      });
-    }
-  }, [updateCamera, addAlert]);
+  }, [updateCamera, addAlert, priorityObjects]);
 
   const handleCameraSaliencyScore = useCallback((cameraId: number, score: number) => {
     updateCamera(cameraId, { saliencyScore: score });
@@ -270,8 +185,8 @@ export default function Index() {
   }, []);
 
   const handleDetectFrame = useCallback(async (video: HTMLVideoElement): Promise<DetectedObject[]> => {
-    return detect(video);
-  }, [detect]);
+    return detect(video, priorityObjects);
+  }, [detect, priorityObjects]);
 
   const handleFrameCapture = useCallback((canvas: HTMLCanvasElement) => {
     setSourceCanvas(prev => prev === canvas ? prev : canvas);
@@ -395,6 +310,7 @@ export default function Index() {
               saliencyMode={saliencyMode}
               threshold={threshold}
               simulationMode={simulationMode && running}
+              priorityObjects={priorityObjects}
               detectionStats={detectionStats}
               onFpsUpdate={handleFpsUpdate}
               onObjectsUpdate={handleObjectsUpdate}
@@ -679,6 +595,7 @@ export default function Index() {
             mirror={mirror}
             heatmapOpacity={heatmapOpacity}
             simulationMode={simulationMode}
+            priorityObjects={priorityObjects}
             onStart={handleStart}
             onStop={handleStop}
             onSaliencyModeChange={setSaliencyMode}
@@ -690,6 +607,7 @@ export default function Index() {
             onToggleMirror={() => setMirror(p => !p)}
             onHeatmapOpacityChange={setHeatmapOpacity}
             onToggleSimulation={() => setSimulationMode(p => !p)}
+            onPriorityObjectsChange={setPriorityObjects}
             onExportCSV={exportCSV}
           />
 

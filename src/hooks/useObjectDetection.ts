@@ -3,7 +3,13 @@ import * as cocoSsd from '@tensorflow-models/coco-ssd';
 import '@tensorflow/tfjs';
 import type { DetectedObject } from '@/types/dashboard';
 
-const MIN_CONFIDENCE = 0.3;
+const PRIORITY_OBJECTS = [
+  'person', 'bicycle', 'car', 'motorcycle', 'bus', 'truck',
+  'cat', 'dog', 'bird', 'horse',
+  'bottle', 'cup', 'fork', 'knife', 'spoon',
+];
+
+const MIN_CONFIDENCE = 0.4;
 
 interface DetectionStats {
   totalDetected: number;
@@ -42,10 +48,12 @@ export function useObjectDetection() {
 
   const detect = useCallback(async (
     source: HTMLVideoElement | HTMLCanvasElement,
+    priorityObjects: string[] = PRIORITY_OBJECTS,
   ): Promise<DetectedObject[]> => {
     const model = modelRef.current;
     if (!model || detectingRef.current) return [];
 
+    // Check if video is ready
     if (source instanceof HTMLVideoElement && source.readyState < 2) return [];
 
     detectingRef.current = true;
@@ -53,9 +61,15 @@ export function useObjectDetection() {
       const predictions = await model.detect(source);
       const totalDetected = predictions.length;
 
-      const filtered = predictions.filter(p => p.score >= MIN_CONFIDENCE);
+      console.log('[ObjectDetection] Detected class names:', predictions.map(p => p.class));
 
-      console.log('[ObjectDetection] All detected:', filtered.map(p => `${p.class}(${(p.score * 100).toFixed(0)}%)`));
+      // Filter to only priority objects with sufficient confidence
+      const filtered = predictions.filter(p =>
+        p.score >= MIN_CONFIDENCE &&
+        priorityObjects.includes(p.class)
+      );
+
+      console.log('[ObjectDetection] Filtered priority objects:', filtered.map(p => `${p.class}(${(p.score * 100).toFixed(0)}%)`));
 
       setStats(prev => ({
         ...prev,
