@@ -5,6 +5,8 @@ import SaliencyView from '@/components/dashboard/SaliencyView';
 import ThresholdView from '@/components/dashboard/ThresholdView';
 import LowFiView from '@/components/dashboard/LowFiView';
 import ObjectShaderView from '@/components/dashboard/ObjectShaderView';
+import LaplacianView from '@/components/dashboard/LaplacianView';
+import MotionView from '@/components/dashboard/MotionView';
 import AudioMeter from '@/components/dashboard/AudioMeter';
 import AlertLog from '@/components/dashboard/AlertLog';
 import ControlsPanel from '@/components/dashboard/ControlsPanel';
