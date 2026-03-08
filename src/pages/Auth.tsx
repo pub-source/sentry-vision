@@ -71,6 +71,18 @@ export default function Auth() {
     setScanning(false);
   };
 
+  const normalizeInviteCode = (value: string) =>
+    value.trim().toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 8);
+
+  const extractInviteCode = (rawValue: string) => {
+    const raw = rawValue.trim();
+    const joinMatch = raw.match(/\/join\/([a-z0-9]{8})/i);
+    if (joinMatch?.[1]) {
+      return normalizeInviteCode(joinMatch[1]);
+    }
+    return normalizeInviteCode(raw);
+  };
+
   const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
