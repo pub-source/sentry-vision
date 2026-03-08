@@ -163,17 +163,20 @@ export default function Auth() {
       return;
     }
     setSubmitting(true);
-    const { error: insertErr } = await supabase
+    const { data: inserted, error: insertErr } = await supabase
       .from('join_requests')
       .insert({
         household_id: matchedHousehold.id,
         display_name: joinName.trim(),
         phone_number: joinPhone.trim(),
         status: 'pending',
-      });
-    if (insertErr) {
-      setError(insertErr.message);
+      })
+      .select('id')
+      .single();
+    if (insertErr || !inserted) {
+      setError(insertErr?.message || 'Failed to submit request');
     } else {
+      setJoinRequestId(inserted.id);
       setMode('join-submitted');
     }
     setSubmitting(false);
