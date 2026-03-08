@@ -1285,9 +1285,9 @@ export default function Research() {
 
               {/* Fusion */}
               <div className="border-t-2 border-primary/50 pt-4 space-y-3">
-                <p className="text-[10px] font-mono text-primary uppercase tracking-wider font-bold">⚡ Multimodal Fusion — Combining All 4 Cameras</p>
+                <p className="text-[10px] font-mono text-primary uppercase tracking-wider font-bold">⚡ Multimodal Fusion — Combining All 6 Cameras</p>
                 <p className="text-xs text-foreground/80">
-                  The final attention score combines the specialized outputs from all four cameras with the 
+                  The final attention score combines the specialized outputs from all six cameras with the 
                   audio analysis module. Each camera contributes its unique analytical perspective:
                 </p>
                 <div className="bg-secondary/20 rounded-md p-4 text-center space-y-3">
