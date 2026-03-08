@@ -217,6 +217,15 @@ export default function HouseholdPage() {
   };
 
   const handleAcceptJoinRequest = async (req: JoinRequest) => {
+    // Add to household members
+    await supabase.from('household_members').insert({
+      household_id: req.household_id,
+      display_name: req.display_name,
+      phone_number: req.phone_number || '',
+      is_admin: false,
+      user_id: null,
+    });
+    // Mark request as accepted
     await supabase.from('join_requests').update({ status: 'accepted' }).eq('id', req.id);
     fetchHousehold();
   };

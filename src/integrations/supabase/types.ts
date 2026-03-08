@@ -190,7 +190,7 @@ export type Database = {
           id: string
           is_admin: boolean
           phone_number: string
-          user_id: string
+          user_id: string | null
         }
         Insert: {
           created_at?: string
@@ -199,7 +199,7 @@ export type Database = {
           id?: string
           is_admin?: boolean
           phone_number: string
-          user_id: string
+          user_id?: string | null
         }
         Update: {
           created_at?: string
@@ -208,7 +208,7 @@ export type Database = {
           id?: string
           is_admin?: boolean
           phone_number?: string
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: [
           {
