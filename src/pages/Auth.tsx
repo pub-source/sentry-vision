@@ -25,8 +25,11 @@ export default function Auth() {
   // Handle URL invite code from /join/:code route
   useEffect(() => {
     if (urlCode && !inviteCode) {
-      setInviteCode(urlCode);
-      setMode('join-qr');
+      const normalized = normalizeInviteCode(urlCode);
+      if (normalized) {
+        setInviteCode(normalized);
+        setMode('join-qr');
+      }
     }
   }, [urlCode, inviteCode]);
 
@@ -68,6 +71,18 @@ export default function Auth() {
     setScanning(false);
   };
 
+  const normalizeInviteCode = (value: string) =>
+    value.trim().toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 8);
+
+  const extractInviteCode = (rawValue: string) => {
+    const raw = rawValue.trim();
+    const joinMatch = raw.match(/\/join\/([a-z0-9]{8})/i);
+    if (joinMatch?.[1]) {
+      return normalizeInviteCode(joinMatch[1]);
+    }
+    return normalizeInviteCode(raw);
+  };
+
   const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -106,25 +121,27 @@ export default function Auth() {
   const handleJoinWithCode = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    if (!inviteCode.trim()) {
-      setError('Enter an invite code');
+
+    const normalizedCode = normalizeInviteCode(inviteCode);
+    if (normalizedCode.length !== 8) {
+      setError('Invite code must be 8 characters');
       return;
     }
-    // Validate the invite code exists
+
     const { data: hh } = await supabase
       .from('households')
       .select('id, name')
-      .eq('invite_code', inviteCode.trim())
+      .eq('invite_code', normalizedCode)
       .maybeSingle();
 
     if (!hh) {
       setError('Invalid invite code. Ask your household admin for a valid code.');
       return;
     }
-    // Code is valid — proceed to create account with invite code stored
+
+    setInviteCode(normalizedCode);
     setSuccess(`Household "${hh.name}" found! Create your account to join.`);
-    // Store invite code in sessionStorage for after signup
-    sessionStorage.setItem('pending_invite_code', inviteCode.trim());
+    sessionStorage.setItem('pending_invite_code', normalizedCode);
     setMode('create');
   };
 
@@ -154,12 +171,13 @@ export default function Auth() {
           try {
             const barcodes = await detector.detect(videoRef.current);
             if (barcodes.length > 0) {
-              let code = barcodes[0].rawValue;
-              // Handle both URL format and plain code
-              if (code.includes('/join/')) {
-                code = code.split('/join/').pop() || code;
+              const rawCode = barcodes[0].rawValue || '';
+              const normalizedCode = extractInviteCode(rawCode);
+              if (!normalizedCode) {
+                setError('Could not read a valid invite code from QR. Try again.');
+                return;
               }
-              setInviteCode(code);
+              setInviteCode(normalizedCode);
               setScanning(false);
               streamRef.current?.getTracks().forEach(t => t.stop());
               streamRef.current = null;
@@ -329,7 +347,7 @@ export default function Auth() {
                     <input
                       type="text"
                       value={inviteCode}
-                      onChange={e => setInviteCode(e.target.value)}
+                      onChange={e => setInviteCode(normalizeInviteCode(e.target.value))}
                       className="w-full bg-secondary border border-border rounded px-3 py-2 text-xs font-mono text-foreground text-center tracking-widest focus:outline-none focus:border-primary"
                       placeholder="abc12345"
                       maxLength={8}

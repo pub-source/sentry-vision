@@ -52,6 +52,9 @@ export default function HouseholdPage() {
   const [showEmergency, setShowEmergency] = useState(false);
   const [showQr, setShowQr] = useState(false);
 
+  const normalizeInviteCode = (value: string) =>
+    value.trim().toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 8);
+
   const fetchHousehold = useCallback(async () => {
     if (!user) return;
     setLoadingData(true);
@@ -90,7 +93,7 @@ export default function HouseholdPage() {
       const pendingCode = sessionStorage.getItem('pending_invite_code');
       if (pendingCode) {
         setMode('join');
-        setInviteCode(pendingCode);
+        setInviteCode(normalizeInviteCode(pendingCode));
         sessionStorage.removeItem('pending_invite_code');
       }
       setTab('setup');
@@ -144,15 +147,16 @@ export default function HouseholdPage() {
   const handleJoinHousehold = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError('');
-    if (!user || !displayName.trim() || !phoneNumber.trim() || !inviteCode.trim()) {
-      setFormError('All fields are required');
+    const normalizedCode = normalizeInviteCode(inviteCode);
+    if (!user || !displayName.trim() || !phoneNumber.trim() || normalizedCode.length !== 8) {
+      setFormError('All fields are required and invite code must be 8 characters');
       return;
     }
 
     const { data: hh } = await supabase
       .from('households')
       .select('id')
-      .eq('invite_code', inviteCode.trim())
+      .eq('invite_code', normalizedCode)
       .maybeSingle();
 
     if (!hh) { setFormError('Invalid invite code'); return; }
@@ -284,7 +288,7 @@ export default function HouseholdPage() {
               {mode === 'join' && (
                 <div className="space-y-1">
                   <label className="text-[10px] font-mono text-muted-foreground">Invite Code</label>
-                  <input type="text" value={inviteCode} onChange={e => setInviteCode(e.target.value)} className="w-full bg-secondary border border-border rounded px-3 py-2 text-xs font-mono text-foreground text-center tracking-widest focus:outline-none focus:border-primary" placeholder="abc12345" required />
+                  <input type="text" value={inviteCode} onChange={e => setInviteCode(normalizeInviteCode(e.target.value))} className="w-full bg-secondary border border-border rounded px-3 py-2 text-xs font-mono text-foreground text-center tracking-widest focus:outline-none focus:border-primary" placeholder="abc12345" required />
                 </div>
               )}
 
