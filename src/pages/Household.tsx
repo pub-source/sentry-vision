@@ -40,6 +40,7 @@ export default function HouseholdPage() {
   const [household, setHousehold] = useState<Household | null>(null);
   const [members, setMembers] = useState<Member[]>([]);
   const [wakeWords, setWakeWords] = useState<WakeWord[]>([]);
+  const [joinRequests, setJoinRequests] = useState<JoinRequest[]>([]);
   const [tab, setTab] = useState<'setup' | 'manage'>('setup');
   const [loadingData, setLoadingData] = useState(true);
 
