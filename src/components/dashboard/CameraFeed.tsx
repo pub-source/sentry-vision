@@ -21,9 +21,9 @@ interface CameraFeedProps {
   simulationMode: boolean;
   priorityObjects: string[];
   detectionStats: DetectionStats;
-  onFpsUpdate: (fps: number) => void;
-  onObjectsUpdate: (objects: DetectedObject[]) => void;
-  onSaliencyScoreUpdate: (score: number) => void;
+  onFpsUpdate: (cameraId: number, fps: number) => void;
+  onObjectsUpdate: (cameraId: number, objects: DetectedObject[]) => void;
+  onSaliencyScoreUpdate: (cameraId: number, score: number) => void;
   onFrameCapture?: (canvas: HTMLCanvasElement) => void;
   onDetectFrame?: (video: HTMLVideoElement) => Promise<DetectedObject[]>;
 }
