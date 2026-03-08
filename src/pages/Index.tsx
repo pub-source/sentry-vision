@@ -176,7 +176,7 @@ export default function Index() {
         addAlert('Person + loud speech = HIGH ATTENTION', 'critical', 1, snapId);
       }
     }
-  }, [audioFeatures, addAlert, updateCamera, sourceCanvas, logAlert, wakeWords]);
+  }, [audioFeatures, addAlert, updateCamera, sourceCanvas, logAlert, wakeWords, cameras]);
 
   const handleSaliencyViewScore = useCallback((score: number) => {
     setGlobalSaliencyScore(score);
