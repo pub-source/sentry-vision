@@ -1165,12 +1165,26 @@ export default function Research() {
                       <td className="py-2 px-3">Region intensity map (0–255)</td>
                       <td className="py-2 px-3">R(t) — Region validation</td>
                     </tr>
-                    <tr>
+                    <tr className="border-b border-border/50">
                       <td className="py-2 px-3 text-accent font-bold">CAM 4</td>
                       <td className="py-2 px-3 font-semibold">Threshold Segmentation</td>
                       <td className="py-2 px-3">Binary threshold (τ) + superpixel</td>
                       <td className="py-2 px-3">Binary mask (salient/non-salient)</td>
                       <td className="py-2 px-3">T(t) — Segmentation mask</td>
+                    </tr>
+                    <tr className="border-b border-border/50 bg-primary/5">
+                      <td className="py-2 px-3 text-accent font-bold">CAM 5</td>
+                      <td className="py-2 px-3 font-semibold">Low-Fi Saliency</td>
+                      <td className="py-2 px-3">Block averaging (B×B superpixel)</td>
+                      <td className="py-2 px-3">Downsampled region mosaic</td>
+                      <td className="py-2 px-3">L(t) — Low-fidelity map</td>
+                    </tr>
+                    <tr>
+                      <td className="py-2 px-3 text-accent font-bold">CAM 6</td>
+                      <td className="py-2 px-3 font-semibold">Object Shader</td>
+                      <td className="py-2 px-3">Semantic mask + color remap</td>
+                      <td className="py-2 px-3">Red foreground / blue-gray background</td>
+                      <td className="py-2 px-3">Shader(t) — Object highlight mask</td>
                     </tr>
                   </tbody>
                 </table>
@@ -1236,11 +1250,44 @@ export default function Research() {
                 </p>
               </div>
 
+              {/* CAM 5 */}
+              <div className="border-t border-border pt-4 space-y-2">
+                <p className="text-[10px] font-mono text-accent uppercase tracking-wider">CAM 5 — Low-Fi Superpixel Saliency</p>
+                <div className="font-mono text-xs text-foreground/80 space-y-1 text-left max-w-lg mx-auto">
+                  <p>1. Compute saliency map S(x,y) using edge detection (Sobel/Laplacian)</p>
+                  <p>2. Partition image into blocks of size B×B (default B=6)</p>
+                  <p>3. For each block (i,j):</p>
+                  <p className="ml-4">μ<sub>ij</sub> = (1/B²) Σ<sub>x∈block</sub> Σ<sub>y∈block</sub> S(x,y) <span className="text-muted-foreground">// Block average</span></p>
+                  <p>4. Fill entire block with averaged value → superpixel mosaic</p>
+                  <p>5. Result: Downsampled region map preserving salient structure</p>
+                </div>
+                <p className="text-center font-mono text-sm text-primary font-bold mt-2">
+                  L(i,j) = ⌊(1/B²) Σ S(x,y)⌋ <span className="text-xs text-muted-foreground font-normal ml-2">// Low-fidelity region average</span>
+                </p>
+              </div>
+
+              {/* CAM 6 */}
+              <div className="border-t border-border pt-4 space-y-2">
+                <p className="text-[10px] font-mono text-accent uppercase tracking-wider">CAM 6 — Object Shader (Semantic Masking)</p>
+                <div className="font-mono text-xs text-foreground/80 space-y-1 text-left max-w-lg mx-auto">
+                  <p>1. For each detected object o<sub>i</sub> ∈ O(t) with bbox (x, y, w, h):</p>
+                  <p className="ml-4">Define region R<sub>i</sub> = &#123;(px, py) | x ≤ px ≤ x+w ∧ y ≤ py ≤ y+h&#125;</p>
+                  <p>2. For pixels inside any R<sub>i</sub> (foreground):</p>
+                  <p className="ml-4">F(px,py) = 0.3×R + 200, &nbsp; 0.2×G, &nbsp; 0.2×B <span className="text-muted-foreground">// Red tint overlay</span></p>
+                  <p>3. For background pixels (outside all R<sub>i</sub>):</p>
+                  <p className="ml-4">B(px,py) = 0.3×lum + 30, &nbsp; 0.3×lum + 40, &nbsp; 0.3×lum + 60 <span className="text-muted-foreground">// Blue-gray desaturation</span></p>
+                  <p className="ml-4">where lum = 0.299R + 0.587G + 0.114B</p>
+                </div>
+                <p className="text-center font-mono text-sm text-primary font-bold mt-2">
+                  Shader(x,y) = &#123; RedMask(V) if (x,y) ∈ ∪R<sub>i</sub>, &nbsp; Desat(V) otherwise &#125;
+                </p>
+              </div>
+
               {/* Fusion */}
               <div className="border-t-2 border-primary/50 pt-4 space-y-3">
-                <p className="text-[10px] font-mono text-primary uppercase tracking-wider font-bold">⚡ Multimodal Fusion — Combining All 4 Cameras</p>
+                <p className="text-[10px] font-mono text-primary uppercase tracking-wider font-bold">⚡ Multimodal Fusion — Combining All 6 Cameras</p>
                 <p className="text-xs text-foreground/80">
-                  The final attention score combines the specialized outputs from all four cameras with the 
+                  The final attention score combines the specialized outputs from all six cameras with the 
                   audio analysis module. Each camera contributes its unique analytical perspective:
                 </p>
                 <div className="bg-secondary/20 rounded-md p-4 text-center space-y-3">
@@ -1250,7 +1297,7 @@ export default function Research() {
                   <p className="text-xs text-muted-foreground font-mono">
                     where w<sub>s</sub> = 0.4, w<sub>a</sub> = 0.3, w<sub>o</sub> = 0.3
                   </p>
-                  <div className="grid grid-cols-4 gap-2 text-left mt-3">
+                  <div className="grid grid-cols-3 gap-2 text-left mt-3">
                     <div className="bg-card rounded p-2 border border-border">
                       <p className="text-[8px] font-mono text-accent font-bold">CAM 1 → O(t)</p>
                       <p className="text-[8px] font-mono text-muted-foreground">What objects exist?</p>
@@ -1266,6 +1313,14 @@ export default function Research() {
                     <div className="bg-card rounded p-2 border border-border">
                       <p className="text-[8px] font-mono text-accent font-bold">CAM 4 → T(t)</p>
                       <p className="text-[8px] font-mono text-muted-foreground">Segments salient areas</p>
+                    </div>
+                    <div className="bg-card rounded p-2 border border-border">
+                      <p className="text-[8px] font-mono text-accent font-bold">CAM 5 → L(t)</p>
+                      <p className="text-[8px] font-mono text-muted-foreground">Low-fi region validation</p>
+                    </div>
+                    <div className="bg-card rounded p-2 border border-border">
+                      <p className="text-[8px] font-mono text-accent font-bold">CAM 6 → Shader(t)</p>
+                      <p className="text-[8px] font-mono text-muted-foreground">Object semantic mask</p>
                     </div>
                   </div>
                   <p className="text-xs text-muted-foreground font-mono mt-2">
@@ -1298,8 +1353,8 @@ export default function Research() {
                     <tr className="border-b border-border/50">
                       <td className="py-2 px-3">Single webcam</td>
                       <td className="py-2 px-3 text-accent">1 physical</td>
-                      <td className="py-2 px-3">CAM 1 captures, CAMs 2-4 process same frame</td>
-                      <td className="py-2 px-3">Full pipeline via frame sharing</td>
+                      <td className="py-2 px-3">CAM 1 captures, CAMs 2-6 process same frame</td>
+                      <td className="py-2 px-3">Full 6-pipeline via frame sharing</td>
                     </tr>
                     <tr>
                       <td className="py-2 px-3">Simulation</td>

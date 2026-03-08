@@ -1,5 +1,5 @@
 import type { SaliencyMode, QualityMode } from '@/types/dashboard';
-import { DETECTABLE_OBJECTS } from '@/types/dashboard';
+import { DETECTABLE_OBJECTS, DEFAULT_PRIORITY_OBJECTS } from '@/types/dashboard';
 
 interface ControlsPanelProps {
   running: boolean;
@@ -158,9 +158,28 @@ export default function ControlsPanel(props: ControlsPanelProps) {
 
       {/* Priority Objects */}
       <div className="space-y-1">
-        <span className="text-[10px] font-mono text-muted-foreground">Priority Objects</span>
-        <div className="flex flex-wrap gap-1 max-h-20 overflow-y-auto">
-          {DETECTABLE_OBJECTS.slice(0, 15).map(obj => (
+        <div className="flex items-center justify-between">
+          <span className="text-[10px] font-mono text-muted-foreground">Priority Objects</span>
+          <button
+            onClick={() => {
+              const allObjects = [...DETECTABLE_OBJECTS];
+              if (priorityObjects.length === allObjects.length) {
+                onPriorityObjectsChange(DEFAULT_PRIORITY_OBJECTS);
+              } else {
+                onPriorityObjectsChange([...allObjects]);
+              }
+            }}
+            className={`text-[9px] font-mono px-1.5 py-0.5 rounded border transition-all ${
+              priorityObjects.length === DETECTABLE_OBJECTS.length
+                ? 'border-accent bg-accent/10 text-accent'
+                : 'border-border text-muted-foreground hover:border-primary'
+            }`}
+          >
+            {priorityObjects.length === DETECTABLE_OBJECTS.length ? '● ALL' : '○ ALL'}
+          </button>
+        </div>
+        <div className="flex flex-wrap gap-1 max-h-24 overflow-y-auto">
+          {[...DETECTABLE_OBJECTS].map(obj => (
             <button
               key={obj}
               onClick={() => togglePriority(obj)}
