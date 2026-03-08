@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Navigate, useNavigate } from 'react-router-dom';
+import { QRCodeSVG } from 'qrcode.react';
 
 interface Household {
   id: string;
@@ -21,6 +22,7 @@ interface WakeWord {
   id: string;
   phrase: string;
   is_emergency: boolean;
+  action_type: string;
 }
 
 export default function HouseholdPage() {
@@ -43,15 +45,17 @@ export default function HouseholdPage() {
   // Wake word form
   const [newPhrase, setNewPhrase] = useState('');
   const [isEmergency, setIsEmergency] = useState(false);
+  const [actionType, setActionType] = useState<'sms' | 'email' | 'both'>('sms');
+  const [showAddPhrase, setShowAddPhrase] = useState(false);
 
   // Emergency state
   const [showEmergency, setShowEmergency] = useState(false);
+  const [showQr, setShowQr] = useState(false);
 
   const fetchHousehold = useCallback(async () => {
     if (!user) return;
     setLoadingData(true);
 
-    // Check if user belongs to a household
     const { data: membership } = await supabase
       .from('household_members')
       .select('household_id')
@@ -79,9 +83,16 @@ export default function HouseholdPage() {
           .from('wake_words')
           .select('*')
           .eq('household_id', hh.id);
-        setWakeWords(ww || []);
+        setWakeWords((ww as WakeWord[]) || []);
       }
     } else {
+      // Check for pending invite code from QR join flow
+      const pendingCode = sessionStorage.getItem('pending_invite_code');
+      if (pendingCode) {
+        setMode('join');
+        setInviteCode(pendingCode);
+        sessionStorage.removeItem('pending_invite_code');
+      }
       setTab('setup');
     }
     setLoadingData(false);
@@ -119,12 +130,12 @@ export default function HouseholdPage() {
 
     if (memErr) { setFormError(memErr.message); return; }
 
-    // Add default "911" emergency wake word
     await supabase.from('wake_words').insert({
       household_id: hh.id,
       phrase: '911',
       is_emergency: true,
       created_by: user.id,
+      action_type: 'both',
     });
 
     fetchHousehold();
@@ -169,10 +180,13 @@ export default function HouseholdPage() {
       phrase: newPhrase.trim().toLowerCase(),
       is_emergency: isEmergency,
       created_by: user?.id,
+      action_type: actionType,
     });
 
     setNewPhrase('');
     setIsEmergency(false);
+    setActionType('sms');
+    setShowAddPhrase(false);
     fetchHousehold();
   };
 
@@ -191,74 +205,63 @@ export default function HouseholdPage() {
 
   if (!user) return <Navigate to="/auth" replace />;
 
-  // 911 Emergency screen
   if (showEmergency) {
     return (
       <div className="min-h-screen bg-destructive/10 flex items-center justify-center p-4">
         <div className="text-center space-y-6 max-w-sm">
           <div className="text-6xl animate-pulse">🚨</div>
           <h1 className="text-2xl font-mono font-bold text-destructive">EMERGENCY</h1>
-          <p className="text-sm font-mono text-foreground">
-            A 911 trigger was detected. Tap below to call emergency services.
-          </p>
-          <a
-            href="tel:911"
-            className="block w-full py-4 px-6 bg-destructive text-destructive-foreground font-mono font-bold text-lg rounded-md hover:bg-destructive/80 transition-all"
-          >
-            📞 CALL 911
-          </a>
-          <button
-            onClick={() => setShowEmergency(false)}
-            className="text-[10px] font-mono text-muted-foreground hover:text-foreground"
-          >
-            Dismiss (false alarm)
-          </button>
+          <p className="text-sm font-mono text-foreground">A 911 trigger was detected. Tap below to call emergency services.</p>
+          <a href="tel:911" className="block w-full py-4 px-6 bg-destructive text-destructive-foreground font-mono font-bold text-lg rounded-md hover:bg-destructive/80 transition-all">📞 CALL 911</a>
+          <button onClick={() => setShowEmergency(false)} className="text-[10px] font-mono text-muted-foreground hover:text-foreground">Dismiss (false alarm)</button>
         </div>
       </div>
     );
   }
 
+  const actionLabel = (type: string) => {
+    switch (type) {
+      case 'sms': return '📱 SMS';
+      case 'email': return '📧 Email';
+      case 'both': return '📱📧 Both';
+      default: return type;
+    }
+  };
+
+  const actionDescription = (type: string) => {
+    switch (type) {
+      case 'sms': return 'Text message sent to all member phone numbers';
+      case 'email': return 'Email notification sent to admin/registered accounts';
+      case 'both': return 'Both SMS and email notifications sent';
+      default: return '';
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background text-foreground">
-      {/* Header */}
       <header className="border-b border-border px-4 py-2 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
           <h1 className="text-sm font-mono font-bold text-foreground tracking-wide">HOUSEHOLD</h1>
         </div>
         <div className="flex items-center gap-3">
-          <button
-            onClick={() => navigate('/')}
-            className="text-[10px] font-mono text-primary hover:underline"
-          >
-            ← Dashboard
-          </button>
+          <button onClick={() => navigate('/')} className="text-[10px] font-mono text-primary hover:underline">← Dashboard</button>
           <span className="text-[10px] font-mono text-muted-foreground">{user.email}</span>
-          <button
-            onClick={signOut}
-            className="text-[10px] font-mono text-muted-foreground hover:text-destructive"
-          >
-            Sign Out
-          </button>
+          <button onClick={signOut} className="text-[10px] font-mono text-muted-foreground hover:text-destructive">Sign Out</button>
         </div>
       </header>
 
       <div className="max-w-2xl mx-auto p-4 space-y-4">
         {tab === 'setup' && (
           <div className="space-y-4">
-            {/* Mode toggle */}
             <div className="flex gap-2">
               {(['create', 'join'] as const).map(m => (
                 <button
                   key={m}
                   onClick={() => { setMode(m); setFormError(''); }}
-                  className={`flex-1 text-xs font-mono py-2 rounded border transition-all ${
-                    mode === m
-                      ? 'border-primary bg-primary/10 text-primary'
-                      : 'border-border text-muted-foreground'
-                  }`}
+                  className={`flex-1 text-xs font-mono py-2 rounded border transition-all ${mode === m ? 'border-primary bg-primary/10 text-primary' : 'border-border text-muted-foreground'}`}
                 >
-                  {m === 'create' ? '+ Create Household' : '→ Join Household'}
+                  {m === 'create' ? '🏠 Create Household' : '📱 Join Household'}
                 </button>
               ))}
             </div>
@@ -274,61 +277,30 @@ export default function HouseholdPage() {
               {mode === 'create' && (
                 <div className="space-y-1">
                   <label className="text-[10px] font-mono text-muted-foreground">Household Name</label>
-                  <input
-                    type="text"
-                    value={householdName}
-                    onChange={e => setHouseholdName(e.target.value)}
-                    className="w-full bg-secondary border border-border rounded px-3 py-2 text-xs font-mono text-foreground focus:outline-none focus:border-primary"
-                    placeholder="My Home"
-                    required
-                  />
+                  <input type="text" value={householdName} onChange={e => setHouseholdName(e.target.value)} className="w-full bg-secondary border border-border rounded px-3 py-2 text-xs font-mono text-foreground focus:outline-none focus:border-primary" placeholder="My Home" required />
                 </div>
               )}
 
               {mode === 'join' && (
                 <div className="space-y-1">
                   <label className="text-[10px] font-mono text-muted-foreground">Invite Code</label>
-                  <input
-                    type="text"
-                    value={inviteCode}
-                    onChange={e => setInviteCode(e.target.value)}
-                    className="w-full bg-secondary border border-border rounded px-3 py-2 text-xs font-mono text-foreground focus:outline-none focus:border-primary"
-                    placeholder="abc12345"
-                    required
-                  />
+                  <input type="text" value={inviteCode} onChange={e => setInviteCode(e.target.value)} className="w-full bg-secondary border border-border rounded px-3 py-2 text-xs font-mono text-foreground text-center tracking-widest focus:outline-none focus:border-primary" placeholder="abc12345" required />
                 </div>
               )}
 
               <div className="space-y-1">
                 <label className="text-[10px] font-mono text-muted-foreground">Your Name</label>
-                <input
-                  type="text"
-                  value={displayName}
-                  onChange={e => setDisplayName(e.target.value)}
-                  className="w-full bg-secondary border border-border rounded px-3 py-2 text-xs font-mono text-foreground focus:outline-none focus:border-primary"
-                  placeholder="John"
-                  required
-                />
+                <input type="text" value={displayName} onChange={e => setDisplayName(e.target.value)} className="w-full bg-secondary border border-border rounded px-3 py-2 text-xs font-mono text-foreground focus:outline-none focus:border-primary" placeholder="John" required />
               </div>
 
               <div className="space-y-1">
                 <label className="text-[10px] font-mono text-muted-foreground">Phone Number</label>
-                <input
-                  type="tel"
-                  value={phoneNumber}
-                  onChange={e => setPhoneNumber(e.target.value)}
-                  className="w-full bg-secondary border border-border rounded px-3 py-2 text-xs font-mono text-foreground focus:outline-none focus:border-primary"
-                  placeholder="+1 555-123-4567"
-                  required
-                />
+                <input type="tel" value={phoneNumber} onChange={e => setPhoneNumber(e.target.value)} className="w-full bg-secondary border border-border rounded px-3 py-2 text-xs font-mono text-foreground focus:outline-none focus:border-primary" placeholder="+1 555-123-4567" required />
               </div>
 
               {formError && <p className="text-[10px] font-mono text-destructive">{formError}</p>}
 
-              <button
-                type="submit"
-                className="w-full text-xs font-mono py-2 rounded-md bg-primary text-primary-foreground hover:bg-primary/80 transition-all"
-              >
+              <button type="submit" className="w-full text-xs font-mono py-2 rounded-md bg-primary text-primary-foreground hover:bg-primary/80 transition-all">
                 {mode === 'create' ? '▶ CREATE' : '▶ JOIN'}
               </button>
             </form>
@@ -337,38 +309,45 @@ export default function HouseholdPage() {
 
         {tab === 'manage' && household && (
           <div className="space-y-4">
-            {/* Household Info */}
-            <div className="bg-card rounded-md border border-border panel-glow p-4 space-y-2">
+            {/* Household Info with QR Code */}
+            <div className="bg-card rounded-md border border-border panel-glow p-4 space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-[10px] font-mono text-primary uppercase tracking-wider">
-                  {household.name}
-                </span>
-                <button
-                  onClick={() => setShowEmergency(true)}
-                  className="text-[10px] font-mono text-destructive border border-destructive/30 px-2 py-1 rounded hover:bg-destructive/10"
-                >
-                  🚨 Test 911
-                </button>
+                <span className="text-[10px] font-mono text-primary uppercase tracking-wider">{household.name}</span>
+                <div className="flex items-center gap-2">
+                  <button onClick={() => setShowQr(p => !p)} className="text-[10px] font-mono text-accent border border-accent/30 px-2 py-1 rounded hover:bg-accent/10">
+                    {showQr ? '✕ Hide QR' : '📱 Show QR'}
+                  </button>
+                  <button onClick={() => setShowEmergency(true)} className="text-[10px] font-mono text-destructive border border-destructive/30 px-2 py-1 rounded hover:bg-destructive/10">
+                    🚨 Test 911
+                  </button>
+                </div>
               </div>
+
               <div className="flex items-center gap-2">
                 <span className="text-[10px] font-mono text-muted-foreground">Invite Code:</span>
-                <code className="text-xs font-mono text-accent bg-accent/10 px-2 py-0.5 rounded">
-                  {household.invite_code}
-                </code>
-                <button
-                  onClick={() => navigator.clipboard.writeText(household.invite_code)}
-                  className="text-[10px] font-mono text-muted-foreground hover:text-primary"
-                >
-                  📋 Copy
-                </button>
+                <code className="text-xs font-mono text-accent bg-accent/10 px-2 py-0.5 rounded">{household.invite_code}</code>
+                <button onClick={() => navigator.clipboard.writeText(household.invite_code)} className="text-[10px] font-mono text-muted-foreground hover:text-primary">📋 Copy</button>
               </div>
+
+              {showQr && (
+                <div className="flex flex-col items-center gap-2 py-3 border-t border-border">
+                  <QRCodeSVG
+                    value={household.invite_code}
+                    size={160}
+                    bgColor="transparent"
+                    fgColor="hsl(var(--foreground))"
+                    level="M"
+                  />
+                  <p className="text-[9px] font-mono text-muted-foreground">
+                    New members scan this to join your household
+                  </p>
+                </div>
+              )}
             </div>
 
             {/* Members */}
             <div className="bg-card rounded-md border border-border panel-glow p-4 space-y-2">
-              <span className="text-[10px] font-mono text-primary uppercase tracking-wider">
-                Members ({members.length})
-              </span>
+              <span className="text-[10px] font-mono text-primary uppercase tracking-wider">Members ({members.length})</span>
               <div className="space-y-1.5">
                 {members.map(m => (
                   <div key={m.id} className="flex items-center justify-between bg-secondary/50 rounded px-3 py-2">
@@ -382,72 +361,115 @@ export default function HouseholdPage() {
               </div>
             </div>
 
-            {/* Wake Words */}
+            {/* Wake Words & Phrases */}
             <div className="bg-card rounded-md border border-border panel-glow p-4 space-y-3">
-              <span className="text-[10px] font-mono text-primary uppercase tracking-wider">
-                Wake Words & Phrases
-              </span>
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-mono text-primary uppercase tracking-wider">Wake Words & Phrases</span>
+                <button
+                  onClick={() => setShowAddPhrase(p => !p)}
+                  className="text-[10px] font-mono text-primary border border-primary/30 px-2 py-1 rounded hover:bg-primary/10 transition-all"
+                >
+                  {showAddPhrase ? '✕ Cancel' : '+ Phrase'}
+                </button>
+              </div>
               <p className="text-[9px] font-mono text-muted-foreground">
-                Words/phrases to listen for. Emergency phrases trigger the 911 prompt.
+                Each phrase triggers a specific action when detected in audio.
               </p>
 
               <div className="space-y-1.5">
                 {wakeWords.map(w => (
-                  <div key={w.id} className="flex items-center justify-between bg-secondary/50 rounded px-3 py-2">
-                    <div className="flex items-center gap-2">
-                      <span className={`text-xs font-mono ${w.is_emergency ? 'text-destructive' : 'text-foreground'}`}>
-                        "{w.phrase}"
-                      </span>
-                      {w.is_emergency && (
-                        <span className="text-[9px] font-mono text-destructive border border-destructive/30 px-1 rounded">
-                          🚨 EMERGENCY
+                  <div key={w.id} className="bg-secondary/50 rounded px-3 py-2 space-y-1">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className={`text-xs font-mono ${w.is_emergency ? 'text-destructive' : 'text-foreground'}`}>
+                          "{w.phrase}"
                         </span>
-                      )}
+                        {w.is_emergency && (
+                          <span className="text-[9px] font-mono text-destructive border border-destructive/30 px-1 rounded">🚨 EMERGENCY</span>
+                        )}
+                      </div>
+                      <button onClick={() => handleDeleteWakeWord(w.id)} className="text-[9px] font-mono text-muted-foreground hover:text-destructive">✕</button>
                     </div>
-                    <button
-                      onClick={() => handleDeleteWakeWord(w.id)}
-                      className="text-[9px] font-mono text-muted-foreground hover:text-destructive"
-                    >
-                      ✕
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <span className={`text-[9px] font-mono px-1.5 py-0.5 rounded ${
+                        w.action_type === 'sms' ? 'bg-primary/10 text-primary' :
+                        w.action_type === 'email' ? 'bg-accent/10 text-accent' :
+                        'bg-warning/10 text-warning'
+                      }`}>
+                        {actionLabel(w.action_type)}
+                      </span>
+                      <span className="text-[8px] font-mono text-muted-foreground">{actionDescription(w.action_type)}</span>
+                    </div>
                   </div>
                 ))}
               </div>
 
-              <form onSubmit={handleAddWakeWord} className="flex gap-2 items-end">
-                <div className="flex-1 space-y-1">
-                  <input
-                    type="text"
-                    value={newPhrase}
-                    onChange={e => setNewPhrase(e.target.value)}
-                    className="w-full bg-secondary border border-border rounded px-3 py-2 text-xs font-mono text-foreground focus:outline-none focus:border-primary"
-                    placeholder="help, intruder, fire..."
-                    required
-                  />
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setIsEmergency(p => !p)}
-                  className={`text-[10px] font-mono py-2 px-2 rounded border transition-all ${
-                    isEmergency ? 'border-destructive bg-destructive/10 text-destructive' : 'border-border text-muted-foreground'
-                  }`}
-                >
-                  {isEmergency ? '🚨' : '○'} 911
-                </button>
-                <button
-                  type="submit"
-                  className="text-xs font-mono py-2 px-3 rounded bg-primary text-primary-foreground hover:bg-primary/80"
-                >
-                  + Add
-                </button>
-              </form>
+              {/* Add Phrase Form */}
+              {showAddPhrase && (
+                <form onSubmit={handleAddWakeWord} className="border border-primary/20 rounded-md p-3 space-y-3 bg-primary/5">
+                  <span className="text-[10px] font-mono text-primary uppercase tracking-wider">New Phrase</span>
+
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-mono text-muted-foreground">Phrase to detect</label>
+                    <input
+                      type="text"
+                      value={newPhrase}
+                      onChange={e => setNewPhrase(e.target.value)}
+                      className="w-full bg-secondary border border-border rounded px-3 py-2 text-xs font-mono text-foreground focus:outline-none focus:border-primary"
+                      placeholder="help, intruder, fire..."
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-mono text-muted-foreground">What should this phrase do?</label>
+                    <div className="grid grid-cols-3 gap-2">
+                      {([
+                        { value: 'sms' as const, icon: '📱', label: 'Text SMS', desc: 'Text all member phone numbers' },
+                        { value: 'email' as const, icon: '📧', label: 'Email', desc: 'Email admin & registered users' },
+                        { value: 'both' as const, icon: '📱📧', label: 'Both', desc: 'SMS + Email notification' },
+                      ]).map(opt => (
+                        <button
+                          key={opt.value}
+                          type="button"
+                          onClick={() => setActionType(opt.value)}
+                          className={`text-left p-2 rounded border transition-all ${
+                            actionType === opt.value
+                              ? 'border-primary bg-primary/10'
+                              : 'border-border hover:border-muted-foreground'
+                          }`}
+                        >
+                          <span className="text-sm">{opt.icon}</span>
+                          <p className={`text-[10px] font-mono font-bold mt-1 ${actionType === opt.value ? 'text-primary' : 'text-foreground'}`}>
+                            {opt.label}
+                          </p>
+                          <p className="text-[8px] font-mono text-muted-foreground mt-0.5">{opt.desc}</p>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setIsEmergency(p => !p)}
+                      className={`text-[10px] font-mono py-1.5 px-3 rounded border transition-all ${
+                        isEmergency ? 'border-destructive bg-destructive/10 text-destructive' : 'border-border text-muted-foreground'
+                      }`}
+                    >
+                      {isEmergency ? '🚨 Emergency ON' : '○ Not Emergency'}
+                    </button>
+                    <span className="text-[8px] font-mono text-muted-foreground">Emergency phrases also trigger 911 prompt</span>
+                  </div>
+
+                  <button type="submit" className="w-full text-xs font-mono py-2 rounded bg-primary text-primary-foreground hover:bg-primary/80 transition-all">
+                    + ADD PHRASE
+                  </button>
+                </form>
+              )}
             </div>
 
-            {/* Go to Dashboard */}
-            <button
-              onClick={() => navigate('/')}
-              className="w-full text-xs font-mono py-2 rounded-md bg-primary text-primary-foreground hover:bg-primary/80 transition-all"
-            >
+            <button onClick={() => navigate('/')} className="w-full text-xs font-mono py-2 rounded-md bg-primary text-primary-foreground hover:bg-primary/80 transition-all">
               ▶ GO TO MONITORING DASHBOARD
             </button>
           </div>
