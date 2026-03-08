@@ -216,6 +216,16 @@ export default function HouseholdPage() {
     fetchHousehold();
   };
 
+  const handleAcceptJoinRequest = async (req: JoinRequest) => {
+    await supabase.from('join_requests').update({ status: 'accepted' }).eq('id', req.id);
+    fetchHousehold();
+  };
+
+  const handleRejectJoinRequest = async (id: string) => {
+    await supabase.from('join_requests').update({ status: 'rejected' }).eq('id', id);
+    fetchHousehold();
+  };
+
   if (loading || loadingData) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
