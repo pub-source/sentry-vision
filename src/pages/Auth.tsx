@@ -1,13 +1,14 @@
 import { useState, useRef, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { Navigate, useNavigate } from 'react-router-dom';
+import { Navigate, useNavigate, useParams } from 'react-router-dom';
 
 type AuthMode = 'choose' | 'create' | 'join-qr' | 'login' | 'forgot';
 
 export default function Auth() {
   const { user, loading, signUp, signIn } = useAuth();
   const navigate = useNavigate();
+  const { code: urlCode } = useParams<{ code?: string }>();
   const [mode, setMode] = useState<AuthMode>('choose');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -20,6 +21,14 @@ export default function Auth() {
   const [scanning, setScanning] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
+
+  // Handle URL invite code from /join/:code route
+  useEffect(() => {
+    if (urlCode && !inviteCode) {
+      setInviteCode(urlCode);
+      setMode('join-qr');
+    }
+  }, [urlCode, inviteCode]);
 
   // Cleanup camera on unmount or mode change
   useEffect(() => {
@@ -129,17 +138,27 @@ export default function Auth() {
       streamRef.current = stream;
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        videoRef.current.play().catch(() => {});
+        // Wait for video to actually load before scanning
+        videoRef.current.onloadedmetadata = () => {
+          videoRef.current?.play().catch(() => {});
+        };
       }
       // Use BarcodeDetector API if available
       if ('BarcodeDetector' in window) {
         const detector = new (window as any).BarcodeDetector({ formats: ['qr_code'] });
         const scanLoop = async () => {
-          if (!videoRef.current || videoRef.current.readyState < 2 || !streamRef.current) return;
+          if (!videoRef.current || videoRef.current.readyState < 2 || !streamRef.current) {
+            if (streamRef.current) requestAnimationFrame(scanLoop);
+            return;
+          }
           try {
             const barcodes = await detector.detect(videoRef.current);
             if (barcodes.length > 0) {
-              const code = barcodes[0].rawValue;
+              let code = barcodes[0].rawValue;
+              // Handle both URL format and plain code
+              if (code.includes('/join/')) {
+                code = code.split('/join/').pop() || code;
+              }
               setInviteCode(code);
               setScanning(false);
               streamRef.current?.getTracks().forEach(t => t.stop());
@@ -149,7 +168,8 @@ export default function Auth() {
           } catch { /* ignore scan errors */ }
           if (streamRef.current) requestAnimationFrame(scanLoop);
         };
-        requestAnimationFrame(scanLoop);
+        // Start scanning after a short delay to ensure video is ready
+        setTimeout(() => requestAnimationFrame(scanLoop), 500);
       } else {
         setError('QR scanning not supported in this browser. Enter the code manually.');
         setScanning(false);
@@ -162,7 +182,7 @@ export default function Auth() {
     }
   };
 
-  const Header = () => (
+  const renderHeader = () => (
     <div className="text-center space-y-2">
       <div className="flex items-center justify-center gap-2">
         <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
@@ -181,7 +201,7 @@ export default function Auth() {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <div className="w-full max-w-sm space-y-6">
-          <Header />
+          {renderHeader()}
           {resetSent ? (
             <div className="bg-card rounded-md border border-border panel-glow p-4 space-y-3 text-center">
               <p className="text-xs font-mono text-primary">Recovery email sent!</p>
@@ -210,7 +230,7 @@ export default function Auth() {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <div className="w-full max-w-sm space-y-6">
-          <Header />
+          {renderHeader()}
 
           <div className="bg-card rounded-md border border-border panel-glow p-5 space-y-4">
             <span className="text-[10px] font-mono text-primary uppercase tracking-wider">
@@ -270,7 +290,7 @@ export default function Auth() {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <div className="w-full max-w-sm space-y-6">
-          <Header />
+          {renderHeader()}
 
           <div className="bg-card rounded-md border border-border panel-glow p-4 space-y-4">
             <span className="text-[10px] font-mono text-primary uppercase tracking-wider">
@@ -345,7 +365,7 @@ export default function Auth() {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <div className="w-full max-w-sm space-y-6">
-          <Header />
+          {renderHeader()}
           <form onSubmit={handleSignIn} className="bg-card rounded-md border border-border panel-glow p-4 space-y-4">
             <span className="text-[10px] font-mono text-primary uppercase tracking-wider">Sign In</span>
             <div className="space-y-3">
@@ -372,7 +392,7 @@ export default function Auth() {
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-sm space-y-6">
-        <Header />
+        {renderHeader()}
         <form onSubmit={handleCreateAccount} className="bg-card rounded-md border border-border panel-glow p-4 space-y-4">
           <span className="text-[10px] font-mono text-primary uppercase tracking-wider">Create Account</span>
 
