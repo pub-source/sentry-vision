@@ -1236,6 +1236,39 @@ export default function Research() {
                 </p>
               </div>
 
+              {/* CAM 5 */}
+              <div className="border-t border-border pt-4 space-y-2">
+                <p className="text-[10px] font-mono text-accent uppercase tracking-wider">CAM 5 — Low-Fi Superpixel Saliency</p>
+                <div className="font-mono text-xs text-foreground/80 space-y-1 text-left max-w-lg mx-auto">
+                  <p>1. Compute saliency map S(x,y) using edge detection (Sobel/Laplacian)</p>
+                  <p>2. Partition image into blocks of size B×B (default B=6)</p>
+                  <p>3. For each block (i,j):</p>
+                  <p className="ml-4">μ<sub>ij</sub> = (1/B²) Σ<sub>x∈block</sub> Σ<sub>y∈block</sub> S(x,y) <span className="text-muted-foreground">// Block average</span></p>
+                  <p>4. Fill entire block with averaged value → superpixel mosaic</p>
+                  <p>5. Result: Downsampled region map preserving salient structure</p>
+                </div>
+                <p className="text-center font-mono text-sm text-primary font-bold mt-2">
+                  L(i,j) = ⌊(1/B²) Σ S(x,y)⌋ <span className="text-xs text-muted-foreground font-normal ml-2">// Low-fidelity region average</span>
+                </p>
+              </div>
+
+              {/* CAM 6 */}
+              <div className="border-t border-border pt-4 space-y-2">
+                <p className="text-[10px] font-mono text-accent uppercase tracking-wider">CAM 6 — Object Shader (Semantic Masking)</p>
+                <div className="font-mono text-xs text-foreground/80 space-y-1 text-left max-w-lg mx-auto">
+                  <p>1. For each detected object o<sub>i</sub> ∈ O(t) with bbox (x, y, w, h):</p>
+                  <p className="ml-4">Define region R<sub>i</sub> = &#123;(px, py) | x ≤ px ≤ x+w ∧ y ≤ py ≤ y+h&#125;</p>
+                  <p>2. For pixels inside any R<sub>i</sub> (foreground):</p>
+                  <p className="ml-4">F(px,py) = 0.3×R + 200, &nbsp; 0.2×G, &nbsp; 0.2×B <span className="text-muted-foreground">// Red tint overlay</span></p>
+                  <p>3. For background pixels (outside all R<sub>i</sub>):</p>
+                  <p className="ml-4">B(px,py) = 0.3×lum + 30, &nbsp; 0.3×lum + 40, &nbsp; 0.3×lum + 60 <span className="text-muted-foreground">// Blue-gray desaturation</span></p>
+                  <p className="ml-4">where lum = 0.299R + 0.587G + 0.114B</p>
+                </div>
+                <p className="text-center font-mono text-sm text-primary font-bold mt-2">
+                  Shader(x,y) = &#123; RedMask(V) if (x,y) ∈ ∪R<sub>i</sub>, &nbsp; Desat(V) otherwise &#125;
+                </p>
+              </div>
+
               {/* Fusion */}
               <div className="border-t-2 border-primary/50 pt-4 space-y-3">
                 <p className="text-[10px] font-mono text-primary uppercase tracking-wider font-bold">⚡ Multimodal Fusion — Combining All 4 Cameras</p>
