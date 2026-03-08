@@ -2419,7 +2419,126 @@ if (db > -15 && lowEnergy > 80 && lowEnergy > midEnergy * 1.5 && zcr < 0.15) {
             </table>
           </div>
 
-          {/* Integration Flow Summary */}
+
+          {/* CAM 7: Laplacian Detection */}
+          <div className="bg-card border border-border rounded-lg p-5 space-y-4">
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-mono text-accent-foreground bg-accent/30 px-1.5 py-0.5 rounded">CAM 7</span>
+              <h3 className="text-sm font-mono font-bold text-primary">Laplacian Edge Detection</h3>
+            </div>
+            <p className="text-xs text-foreground/80 leading-relaxed">
+              CAM 7 applies the <strong>Laplacian operator</strong> (second-order isotropic derivative) to isolate fine edges and texture boundaries. 
+              Unlike first-order operators (Sobel), the Laplacian detects edges at zero-crossings of the second derivative, making it sensitive to rapid intensity changes.
+            </p>
+            <div className="bg-background border border-border rounded-md p-4 font-mono text-xs space-y-3">
+              <div>
+                <span className="text-primary font-semibold">Discrete Laplacian (4-neighbor kernel):</span>
+                <p className="mt-1 text-foreground/80">
+                  ∇²I(x,y) = I(x-1,y) + I(x+1,y) + I(x,y-1) + I(x,y+1) − 4·I(x,y)
+                </p>
+              </div>
+              <div>
+                <span className="text-primary font-semibold">Edge Classification:</span>
+                <p className="mt-1 text-foreground/80">
+                  E(x,y) = |∇²I(x,y)| &gt; τ → edge pixel (magenta/purple visualization)
+                </p>
+              </div>
+              <div>
+                <span className="text-primary font-semibold">Edge Density Metric:</span>
+                <p className="mt-1 text-foreground/80">
+                  ∇²% = (Σ E(x,y)) / (W × H) × 100
+                </p>
+                <p className="mt-1 text-muted-foreground">
+                  Displayed as real-time badge on CAM 7 panel. High ∇²% indicates textured/complex scenes.
+                </p>
+              </div>
+              <div>
+                <span className="text-primary font-semibold">Kernel Matrix:</span>
+                <pre className="mt-1 text-foreground/70 bg-secondary/30 rounded p-2">
+{`K = [  0  1  0 ]
+    [  1 -4  1 ]
+    [  0  1  0 ]`}
+                </pre>
+              </div>
+              <div>
+                <span className="text-primary font-semibold">Visualization:</span>
+                <p className="mt-1 text-foreground/80">
+                  Edge pixels rendered in magenta/purple (R=0.8·intensity, G=0, B=intensity). Background: dark (#06060C).
+                  Intensity scaled as min(255, |∇²I| × 2) for enhanced visibility.
+                </p>
+              </div>
+              <div>
+                <span className="text-primary font-semibold">Complexity:</span>
+                <p className="mt-1 text-foreground/80">O(W×H) — single pass over interior pixels with constant-time 4-neighbor lookups.</p>
+              </div>
+            </div>
+          </div>
+
+          {/* CAM 8: Motion Detection */}
+          <div className="bg-card border border-border rounded-lg p-5 space-y-4">
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-mono text-success bg-success/20 px-1.5 py-0.5 rounded">CAM 8</span>
+              <h3 className="text-sm font-mono font-bold text-primary">Temporal Motion Detection</h3>
+            </div>
+            <p className="text-xs text-foreground/80 leading-relaxed">
+              CAM 8 implements <strong>frame differencing</strong> — the simplest yet most intuitive motion detection algorithm. 
+              By comparing consecutive grayscale frames, it isolates regions of temporal change, effectively highlighting moving objects against a static background.
+            </p>
+            <div className="bg-background border border-border rounded-md p-4 font-mono text-xs space-y-3">
+              <div>
+                <span className="text-primary font-semibold">Frame Differencing Formula:</span>
+                <p className="mt-1 text-foreground/80">
+                  ΔI(x,y,t) = |I(x,y,t) − I(x,y,t−1)|
+                </p>
+              </div>
+              <div>
+                <span className="text-primary font-semibold">Motion Thresholding:</span>
+                <p className="mt-1 text-foreground/80">
+                  M(x,y,t) = 1 if ΔI(x,y,t) &gt; τ, else 0
+                </p>
+                <p className="mt-1 text-muted-foreground">
+                  Where τ is the user-configurable threshold (default=15). Higher τ filters out noise/subtle illumination changes.
+                </p>
+              </div>
+              <div>
+                <span className="text-primary font-semibold">Motion Density Metric:</span>
+                <p className="mt-1 text-foreground/80">
+                  Δ% = (Σ M(x,y,t)) / (W × H) × 100
+                </p>
+                <p className="mt-1 text-muted-foreground">
+                  Displayed as real-time badge on CAM 8 panel. High Δ% indicates significant scene activity.
+                </p>
+              </div>
+              <div>
+                <span className="text-primary font-semibold">Visualization:</span>
+                <p className="mt-1 text-foreground/80">
+                  Motion pixels rendered in green (R=0, G=min(255, ΔI×3), B=0.3×intensity). 
+                  Background: dark green-tinted (#060806). Intensity amplified ×3 for enhanced motion trail visibility.
+                </p>
+              </div>
+              <div>
+                <span className="text-primary font-semibold">Temporal Buffer:</span>
+                <p className="mt-1 text-foreground/80">
+                  Single-frame buffer (t−1) stored as Float32Array grayscale. Memory: W×H×4 bytes. 
+                  First frame renders blank (no reference). Buffer updates every animation frame (~60 FPS).
+                </p>
+              </div>
+              <div>
+                <span className="text-primary font-semibold">Complexity:</span>
+                <p className="mt-1 text-foreground/80">O(W×H) — single pass pixel-wise subtraction with O(1) per-pixel cost.</p>
+              </div>
+              <div>
+                <span className="text-primary font-semibold">Limitations & Considerations:</span>
+                <ul className="mt-1 text-foreground/70 space-y-1">
+                  <li>• Sensitive to global illumination changes (e.g., lights turning on/off)</li>
+                  <li>• Cannot distinguish object identity — only detects presence of change</li>
+                  <li>• Stationary objects become invisible after initial movement stops</li>
+                  <li>• Complements Sobel/Laplacian spatial detection with temporal information</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
           <div className="bg-card border border-border rounded-lg p-5 space-y-4">
             <h3 className="text-sm font-mono font-bold text-primary">Integration Flow Summary</h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">

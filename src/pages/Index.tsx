@@ -5,6 +5,8 @@ import SaliencyView from '@/components/dashboard/SaliencyView';
 import ThresholdView from '@/components/dashboard/ThresholdView';
 import LowFiView from '@/components/dashboard/LowFiView';
 import ObjectShaderView from '@/components/dashboard/ObjectShaderView';
+import LaplacianView from '@/components/dashboard/LaplacianView';
+import MotionView from '@/components/dashboard/MotionView';
 import AudioMeter from '@/components/dashboard/AudioMeter';
 import AlertLog from '@/components/dashboard/AlertLog';
 import ControlsPanel from '@/components/dashboard/ControlsPanel';
@@ -432,7 +434,48 @@ export default function Index() {
             </div>
           </div>
 
-          {/* Fusion Output Strip */}
+          {/* 4th row: Laplacian + Motion */}
+          <div className="grid grid-cols-2 gap-2">
+            {/* CAM 7: Laplacian Detection */}
+            <div className="relative bg-card rounded-md overflow-hidden border border-border panel-glow">
+              <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between px-2 py-1 bg-gradient-to-b from-background/80 to-transparent">
+                <span className="text-[10px] font-mono text-primary uppercase tracking-wider">
+                  CAM 7 — Laplacian Detection
+                </span>
+                <span className="text-[8px] font-mono px-1 py-0.5 rounded bg-accent/20 text-accent">∇²I</span>
+              </div>
+              <LaplacianView
+                sourceCanvas={sourceCanvas}
+                threshold={threshold}
+                active={running}
+              />
+              {!running && (
+                <div className="absolute inset-0 flex items-center justify-center bg-background/80">
+                  <span className="text-xs font-mono text-muted-foreground">OFFLINE</span>
+                </div>
+              )}
+            </div>
+
+            {/* CAM 8: Motion Detection */}
+            <div className="relative bg-card rounded-md overflow-hidden border border-border panel-glow">
+              <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between px-2 py-1 bg-gradient-to-b from-background/80 to-transparent">
+                <span className="text-[10px] font-mono text-primary uppercase tracking-wider">
+                  CAM 8 — Motion Detection
+                </span>
+                <span className="text-[8px] font-mono px-1 py-0.5 rounded bg-success/20 text-success">ΔI</span>
+              </div>
+              <MotionView
+                sourceCanvas={sourceCanvas}
+                threshold={threshold}
+                active={running}
+              />
+              {!running && (
+                <div className="absolute inset-0 flex items-center justify-center bg-background/80">
+                  <span className="text-xs font-mono text-muted-foreground">OFFLINE</span>
+                </div>
+              )}
+            </div>
+          </div>
           <div className="bg-card rounded-md border border-primary/30 panel-glow p-3">
             <div className="flex items-center justify-between mb-2">
               <span className="text-[10px] font-mono text-primary uppercase tracking-wider">
@@ -442,7 +485,7 @@ export default function Index() {
                 α = 0.4×S + 0.3×A + 0.3×O
               </span>
             </div>
-            <div className="grid grid-cols-6 gap-2">
+            <div className="grid grid-cols-8 gap-2">
               {/* CAM 1 contribution */}
               <div className="bg-secondary/30 rounded p-2 space-y-1">
                 <p className="text-[9px] font-mono text-accent font-semibold">CAM 1</p>
@@ -498,6 +541,24 @@ export default function Index() {
                   <div className="h-full bg-destructive rounded transition-all" style={{ width: `${Math.min(100, cameras[0].objects.length * 30)}%` }} />
                 </div>
                 <p className="text-[7px] font-mono text-foreground/70">Mask</p>
+              </div>
+              {/* CAM 7 */}
+              <div className="bg-secondary/30 rounded p-2 space-y-1">
+                <p className="text-[9px] font-mono text-accent font-semibold">CAM 7</p>
+                <p className="text-[8px] font-mono text-muted-foreground">Laplacian</p>
+                <div className="h-1.5 bg-secondary/50 rounded overflow-hidden">
+                  <div className="h-full bg-accent rounded transition-all" style={{ width: `${Math.min(100, globalSaliencyScore * 1.1)}%` }} />
+                </div>
+                <p className="text-[7px] font-mono text-foreground/70">∇²I</p>
+              </div>
+              {/* CAM 8 */}
+              <div className="bg-secondary/30 rounded p-2 space-y-1">
+                <p className="text-[9px] font-mono text-accent font-semibold">CAM 8</p>
+                <p className="text-[8px] font-mono text-muted-foreground">Motion</p>
+                <div className="h-1.5 bg-secondary/50 rounded overflow-hidden">
+                  <div className="h-full bg-success rounded transition-all" style={{ width: `${Math.min(100, globalSaliencyScore * 0.9)}%` }} />
+                </div>
+                <p className="text-[7px] font-mono text-foreground/70">ΔI</p>
               </div>
             </div>
             {/* Combined score */}
