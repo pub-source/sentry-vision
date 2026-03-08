@@ -94,15 +94,26 @@ export default function Index() {
 
   const handleObjectsUpdate = useCallback((cameraId: number, objects: DetectedObject[]) => {
     updateCamera(cameraId, { objects });
+    // Alert for any detected object
     objects.forEach(obj => {
       if (obj.label === 'person' && obj.confidence > 0.7) {
         addAlert('Person detected', 'medium', cameraId);
-      }
-      if (priorityObjects.includes(obj.label) && obj.label !== 'person') {
-        addAlert(`Priority: ${obj.label} detected`, 'high', cameraId);
+      } else if (obj.confidence > 0.6) {
+        addAlert(`${obj.label} detected (${(obj.confidence * 100).toFixed(0)}%)`, 'low', cameraId);
       }
     });
-  }, [updateCamera, addAlert, priorityObjects]);
+    // Buffer objects for cloud save
+    if (sessionIdRef.current) {
+      objects.forEach(obj => {
+        objectsBufferRef.current.push({
+          session_id: sessionIdRef.current,
+          label: obj.label,
+          confidence: obj.confidence,
+          bbox: obj.bbox,
+        });
+      });
+    }
+  }, [updateCamera, addAlert]);
 
   const handleCameraSaliencyScore = useCallback((cameraId: number, score: number) => {
     updateCamera(cameraId, { saliencyScore: score });
