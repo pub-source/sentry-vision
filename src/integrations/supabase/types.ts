@@ -52,6 +52,136 @@ export type Database = {
           },
         ]
       }
+      detected_objects_log: {
+        Row: {
+          bbox: Json | null
+          confidence: number
+          id: string
+          label: string
+          session_id: string
+          timestamp: string
+        }
+        Insert: {
+          bbox?: Json | null
+          confidence: number
+          id?: string
+          label: string
+          session_id: string
+          timestamp?: string
+        }
+        Update: {
+          bbox?: Json | null
+          confidence?: number
+          id?: string
+          label?: string
+          session_id?: string
+          timestamp?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "detected_objects_log_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "detection_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      detection_data: {
+        Row: {
+          attention_score: number | null
+          audio_event: string | null
+          decibel: number | null
+          fps: number | null
+          id: string
+          object_count: number | null
+          objects_detected: Json | null
+          saliency_score: number | null
+          session_id: string
+          speech_detected: boolean | null
+          timestamp: string
+        }
+        Insert: {
+          attention_score?: number | null
+          audio_event?: string | null
+          decibel?: number | null
+          fps?: number | null
+          id?: string
+          object_count?: number | null
+          objects_detected?: Json | null
+          saliency_score?: number | null
+          session_id: string
+          speech_detected?: boolean | null
+          timestamp?: string
+        }
+        Update: {
+          attention_score?: number | null
+          audio_event?: string | null
+          decibel?: number | null
+          fps?: number | null
+          id?: string
+          object_count?: number | null
+          objects_detected?: Json | null
+          saliency_score?: number | null
+          session_id?: string
+          speech_detected?: boolean | null
+          timestamp?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "detection_data_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "detection_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      detection_sessions: {
+        Row: {
+          avg_attention: number | null
+          avg_saliency: number | null
+          created_at: string
+          duration_seconds: number | null
+          ended_at: string | null
+          id: string
+          max_attention: number | null
+          saliency_mode: string | null
+          started_at: string
+          total_alerts: number | null
+          total_objects_detected: number | null
+          user_id: string | null
+        }
+        Insert: {
+          avg_attention?: number | null
+          avg_saliency?: number | null
+          created_at?: string
+          duration_seconds?: number | null
+          ended_at?: string | null
+          id?: string
+          max_attention?: number | null
+          saliency_mode?: string | null
+          started_at?: string
+          total_alerts?: number | null
+          total_objects_detected?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          avg_attention?: number | null
+          avg_saliency?: number | null
+          created_at?: string
+          duration_seconds?: number | null
+          ended_at?: string | null
+          id?: string
+          max_attention?: number | null
+          saliency_mode?: string | null
+          started_at?: string
+          total_alerts?: number | null
+          total_objects_detected?: number | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       household_members: {
         Row: {
           created_at: string
