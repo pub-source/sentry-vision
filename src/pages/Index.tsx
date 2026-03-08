@@ -84,91 +84,89 @@ export default function Index() {
     setGlobalSaliencyScore(0);
   }, [stopCameras, stopAudio]);
 
-  const handleFpsUpdate = useCallback((fps: number) => {
-    updateCamera(1, { fps });
+  const handleFpsUpdate = useCallback((cameraId: number, fps: number) => {
+    updateCamera(cameraId, { fps });
   }, [updateCamera]);
 
-  const handleObjectsUpdate = useCallback((objects: DetectedObject[]) => {
-    updateCamera(1, { objects });
+  const handleObjectsUpdate = useCallback((cameraId: number, objects: DetectedObject[]) => {
+    updateCamera(cameraId, { objects });
     objects.forEach(obj => {
       if (obj.label === 'person' && obj.confidence > 0.7) {
-        addAlert('Person detected', 'medium', 1);
+        addAlert('Person detected', 'medium', cameraId);
       }
       if (priorityObjects.includes(obj.label) && obj.label !== 'person') {
-        addAlert(`Priority: ${obj.label} detected`, 'high', 1);
+        addAlert(`Priority: ${obj.label} detected`, 'high', cameraId);
       }
     });
   }, [updateCamera, addAlert, priorityObjects]);
 
-  const handleCameraSaliencyScore = useCallback((score: number) => {
-    updateCamera(1, { saliencyScore: score });
-    setGlobalSaliencyScore(score);
+  const handleCameraSaliencyScore = useCallback((cameraId: number, score: number) => {
+    updateCamera(cameraId, { saliencyScore: score });
+    
+    // Use max saliency across all cameras for global score
+    setGlobalSaliencyScore(prev => Math.max(prev, score));
 
-    // Attention = saliency + audio
-    const audioBoost = audioFeatures.speechDetected ? 20 : 0;
-    const dbBoost = Math.max(0, (audioFeatures.decibel + 30) * 0.5);
-    const newAttention = Math.min(100, Math.round(score + audioBoost + dbBoost));
-    setAttentionScore(newAttention);
+    // Only compute attention from camera 1 (primary) for global attention
+    if (cameraId === 1) {
+      const audioBoost = audioFeatures.speechDetected ? 20 : 0;
+      const dbBoost = Math.max(0, (audioFeatures.decibel + 30) * 0.5);
+      const newAttention = Math.min(100, Math.round(score + audioBoost + dbBoost));
+      setAttentionScore(newAttention);
+    }
 
-    // Audio event classification alerts
-    if (audioFeatures.audioEvent === 'clap') {
-      addAlert('Clap detected', 'medium', 0);
-    }
-    if (audioFeatures.audioEvent === 'scream') {
-      addAlert('Scream detected!', 'high', 0);
-      logAlert('scream', 'Scream detected by audio analysis');
-    }
-    if (audioFeatures.audioEvent === 'bang') {
-      addAlert('Bang/impact detected!', 'critical', 0);
-      logAlert('bang', 'Bang/impact detected by audio analysis');
-    }
-    if (audioFeatures.speechDetected) {
-      addAlert('Speech detected', 'low', 0);
-
-      // Check wake words when speech is detected
-      // Using audioEvent as a simple proxy - in production you'd use speech-to-text
-      wakeWords.forEach(ww => {
-        if (ww.is_emergency && audioFeatures.audioEvent === 'scream') {
-          setShowEmergency(true);
-          logAlert('emergency_trigger', `Emergency wake word triggered: "${ww.phrase}"`);
-        }
-      });
-    }
-    if (audioFeatures.decibel > -10) {
-      addAlert('High noise level', 'medium', 0);
-    }
-    if (audioFeatures.speechDetected && score > 50) {
-      // Auto-snapshot on high attention (cooldown 5s)
-      const now = Date.now();
-      let snapId: string | undefined;
-      if (now - snapshotCooldownRef.current > 5000 && sourceCanvas) {
-        snapshotCooldownRef.current = now;
-        try {
-          const dataUrl = sourceCanvas.toDataURL('image/png');
-          snapId = `snap-${now}`;
-          const snap = {
-            id: snapId,
-            timestamp: new Date(),
-            dataUrl,
-            reason: 'Person + loud speech (HIGH ATTENTION)',
-          };
-          setSnapshots(prev => [snap, ...prev].slice(0, 50));
-          console.log('[AutoSnapshot] Captured snapshot:', snap.reason);
-
-          const a = document.createElement('a');
-          a.href = dataUrl;
-          a.download = `snapshot-${new Date().toISOString().replace(/[:.]/g, '-')}.png`;
-          a.click();
-
-          // Log high attention alert to household
-          logAlert('high_attention', 'Person + loud speech = HIGH ATTENTION');
-        } catch (err) {
-          console.error('[AutoSnapshot] Failed:', err);
-        }
+    // Audio event classification alerts (only from camera 1 to avoid duplicates)
+    if (cameraId === 1) {
+      if (audioFeatures.audioEvent === 'clap') {
+        addAlert('Clap detected', 'medium', 0);
       }
-      addAlert('Person + loud speech = HIGH ATTENTION', 'critical', 1, snapId);
+      if (audioFeatures.audioEvent === 'scream') {
+        addAlert('Scream detected!', 'high', 0);
+        logAlert('scream', 'Scream detected by audio analysis');
+      }
+      if (audioFeatures.audioEvent === 'bang') {
+        addAlert('Bang/impact detected!', 'critical', 0);
+        logAlert('bang', 'Bang/impact detected by audio analysis');
+      }
+      if (audioFeatures.speechDetected) {
+        addAlert('Speech detected', 'low', 0);
+        wakeWords.forEach(ww => {
+          if (ww.is_emergency && audioFeatures.audioEvent === 'scream') {
+            setShowEmergency(true);
+            logAlert('emergency_trigger', `Emergency wake word triggered: "${ww.phrase}"`);
+          }
+        });
+      }
+      if (audioFeatures.decibel > -10) {
+        addAlert('High noise level', 'medium', 0);
+      }
+      if (audioFeatures.speechDetected && score > 50) {
+        const now = Date.now();
+        let snapId: string | undefined;
+        if (now - snapshotCooldownRef.current > 5000 && sourceCanvas) {
+          snapshotCooldownRef.current = now;
+          try {
+            const dataUrl = sourceCanvas.toDataURL('image/png');
+            snapId = `snap-${now}`;
+            const snap = {
+              id: snapId,
+              timestamp: new Date(),
+              dataUrl,
+              reason: 'Person + loud speech (HIGH ATTENTION)',
+            };
+            setSnapshots(prev => [snap, ...prev].slice(0, 50));
+            const a = document.createElement('a');
+            a.href = dataUrl;
+            a.download = `snapshot-${new Date().toISOString().replace(/[:.]/g, '-')}.png`;
+            a.click();
+            logAlert('high_attention', 'Person + loud speech = HIGH ATTENTION');
+          } catch (err) {
+            console.error('[AutoSnapshot] Failed:', err);
+          }
+        }
+        addAlert('Person + loud speech = HIGH ATTENTION', 'critical', 1, snapId);
+      }
     }
-  }, [audioFeatures, addAlert, updateCamera, sourceCanvas]);
+  }, [audioFeatures, addAlert, updateCamera, sourceCanvas, logAlert, wakeWords]);
 
   const handleSaliencyViewScore = useCallback((score: number) => {
     setGlobalSaliencyScore(score);
