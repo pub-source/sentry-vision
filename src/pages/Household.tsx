@@ -332,14 +332,14 @@ export default function HouseholdPage() {
               {showQr && (
                 <div className="flex flex-col items-center gap-2 py-3 border-t border-border">
                   <QRCodeSVG
-                    value={household.invite_code}
+                    value={`${window.location.origin}/join/${household.invite_code}`}
                     size={160}
                     bgColor="transparent"
                     fgColor="hsl(var(--foreground))"
                     level="M"
                   />
-                  <p className="text-[9px] font-mono text-muted-foreground">
-                    New members scan this to join your household
+                  <p className="text-[9px] font-mono text-muted-foreground text-center">
+                    Scan to join • Code: <code className="text-accent">{household.invite_code}</code>
                   </p>
                 </div>
               )}

@@ -129,17 +129,27 @@ export default function Auth() {
       streamRef.current = stream;
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        videoRef.current.play().catch(() => {});
+        // Wait for video to actually load before scanning
+        videoRef.current.onloadedmetadata = () => {
+          videoRef.current?.play().catch(() => {});
+        };
       }
       // Use BarcodeDetector API if available
       if ('BarcodeDetector' in window) {
         const detector = new (window as any).BarcodeDetector({ formats: ['qr_code'] });
         const scanLoop = async () => {
-          if (!videoRef.current || videoRef.current.readyState < 2 || !streamRef.current) return;
+          if (!videoRef.current || videoRef.current.readyState < 2 || !streamRef.current) {
+            if (streamRef.current) requestAnimationFrame(scanLoop);
+            return;
+          }
           try {
             const barcodes = await detector.detect(videoRef.current);
             if (barcodes.length > 0) {
-              const code = barcodes[0].rawValue;
+              let code = barcodes[0].rawValue;
+              // Handle both URL format and plain code
+              if (code.includes('/join/')) {
+                code = code.split('/join/').pop() || code;
+              }
               setInviteCode(code);
               setScanning(false);
               streamRef.current?.getTracks().forEach(t => t.stop());
@@ -149,7 +159,8 @@ export default function Auth() {
           } catch { /* ignore scan errors */ }
           if (streamRef.current) requestAnimationFrame(scanLoop);
         };
-        requestAnimationFrame(scanLoop);
+        // Start scanning after a short delay to ensure video is ready
+        setTimeout(() => requestAnimationFrame(scanLoop), 500);
       } else {
         setError('QR scanning not supported in this browser. Enter the code manually.');
         setScanning(false);
