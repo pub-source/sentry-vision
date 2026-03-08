@@ -244,6 +244,57 @@ export type Database = {
         }
         Relationships: []
       }
+      notification_log: {
+        Row: {
+          action_type: string
+          created_at: string
+          household_id: string
+          id: string
+          is_emergency: boolean
+          phrase_matched: string
+          recipient_count: number
+          triggered_by: string | null
+          wake_word_id: string | null
+        }
+        Insert: {
+          action_type: string
+          created_at?: string
+          household_id: string
+          id?: string
+          is_emergency?: boolean
+          phrase_matched: string
+          recipient_count?: number
+          triggered_by?: string | null
+          wake_word_id?: string | null
+        }
+        Update: {
+          action_type?: string
+          created_at?: string
+          household_id?: string
+          id?: string
+          is_emergency?: boolean
+          phrase_matched?: string
+          recipient_count?: number
+          triggered_by?: string | null
+          wake_word_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_log_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notification_log_wake_word_id_fkey"
+            columns: ["wake_word_id"]
+            isOneToOne: false
+            referencedRelation: "wake_words"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       wake_words: {
         Row: {
           action_type: string

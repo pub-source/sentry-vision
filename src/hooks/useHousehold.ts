@@ -5,12 +5,21 @@ interface WakeWord {
   id: string;
   phrase: string;
   is_emergency: boolean;
+  action_type: 'sms' | 'email' | 'both';
 }
 
 interface HouseholdMember {
   id: string;
   display_name: string;
   phone_number: string;
+}
+
+interface WakeWordMatch {
+  matched: boolean;
+  phrase: string;
+  isEmergency: boolean;
+  actionType: 'sms' | 'email' | 'both';
+  wakeWordId: string;
 }
 
 export function useHousehold(userId: string | undefined) {
@@ -31,11 +40,11 @@ export function useHousehold(userId: string | undefined) {
     setHouseholdId(membership.household_id);
 
     const [wwRes, memRes] = await Promise.all([
-      supabase.from('wake_words').select('*').eq('household_id', membership.household_id),
-      supabase.from('household_members').select('*').eq('household_id', membership.household_id),
+      supabase.from('wake_words').select('id, phrase, is_emergency, action_type').eq('household_id', membership.household_id),
+      supabase.from('household_members').select('id, display_name, phone_number').eq('household_id', membership.household_id),
     ]);
 
-    setWakeWords(wwRes.data || []);
+    setWakeWords((wwRes.data as WakeWord[]) || []);
     setMembers(memRes.data || []);
   }, [userId]);
 
@@ -43,14 +52,20 @@ export function useHousehold(userId: string | undefined) {
     fetchData();
   }, [fetchData]);
 
-  const checkForWakeWord = useCallback((transcript: string): { matched: boolean; phrase: string; isEmergency: boolean } => {
+  const checkForWakeWord = useCallback((transcript: string): WakeWordMatch => {
     const lower = transcript.toLowerCase();
     for (const ww of wakeWords) {
       if (lower.includes(ww.phrase.toLowerCase())) {
-        return { matched: true, phrase: ww.phrase, isEmergency: ww.is_emergency };
+        return { 
+          matched: true, 
+          phrase: ww.phrase, 
+          isEmergency: ww.is_emergency,
+          actionType: ww.action_type,
+          wakeWordId: ww.id
+        };
       }
     }
-    return { matched: false, phrase: '', isEmergency: false };
+    return { matched: false, phrase: '', isEmergency: false, actionType: 'sms', wakeWordId: '' };
   }, [wakeWords]);
 
   const logAlert = useCallback(async (alertType: string, message: string, snapshotUrl?: string) => {
@@ -64,5 +79,31 @@ export function useHousehold(userId: string | undefined) {
     });
   }, [householdId, userId]);
 
-  return { householdId, wakeWords, members, checkForWakeWord, logAlert, refetch: fetchData };
+  const logNotification = useCallback(async (
+    wakeWordId: string,
+    phraseMatched: string,
+    actionType: 'sms' | 'email' | 'both',
+    isEmergency: boolean
+  ) => {
+    if (!householdId || !userId) return;
+    await supabase.from('notification_log').insert({
+      household_id: householdId,
+      wake_word_id: wakeWordId,
+      phrase_matched: phraseMatched,
+      action_type: actionType,
+      is_emergency: isEmergency,
+      recipient_count: members.length,
+      triggered_by: userId,
+    });
+  }, [householdId, userId, members.length]);
+
+  return { 
+    householdId, 
+    wakeWords, 
+    members, 
+    checkForWakeWord, 
+    logAlert, 
+    logNotification,
+    refetch: fetchData 
+  };
 }
