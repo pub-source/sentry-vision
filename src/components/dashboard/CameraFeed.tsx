@@ -223,7 +223,7 @@ export default function CameraFeed({
       fpsCountRef.current++;
       const now = Date.now();
       if (now - fpsTimeRef.current >= 1000) {
-        onFpsUpdate(fpsCountRef.current);
+        onFpsUpdate(camera.id, fpsCountRef.current);
         fpsCountRef.current = 0;
         fpsTimeRef.current = now;
       }
