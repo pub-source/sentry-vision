@@ -411,6 +411,59 @@ export default function Auth() {
     );
   }
 
+  // Join - Enter Name
+  if (mode === 'join-name') {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <div className="w-full max-w-sm space-y-6">
+          {renderHeader()}
+          <form onSubmit={handleSubmitJoinRequest} className="bg-card rounded-md border border-border panel-glow p-4 space-y-4">
+            <span className="text-[10px] font-mono text-primary uppercase tracking-wider">Join Household</span>
+            {matchedHousehold && (
+              <div className="bg-accent/10 border border-accent/30 rounded px-3 py-2">
+                <p className="text-[9px] font-mono text-accent">
+                  ✓ Household: "{matchedHousehold.name}"
+                </p>
+              </div>
+            )}
+            <div className="space-y-3">
+              <div className="space-y-1">
+                <label className="text-[10px] font-mono text-muted-foreground">Your Name</label>
+                <input type="text" value={joinName} onChange={e => setJoinName(e.target.value)} required className="w-full bg-secondary border border-border rounded px-3 py-2 text-xs font-mono text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary" placeholder="John" />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] font-mono text-muted-foreground">Phone Number (optional)</label>
+                <input type="tel" value={joinPhone} onChange={e => setJoinPhone(e.target.value)} className="w-full bg-secondary border border-border rounded px-3 py-2 text-xs font-mono text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary" placeholder="+1 555-123-4567" />
+              </div>
+            </div>
+            {error && <p className="text-[10px] font-mono text-destructive">{error}</p>}
+            <button type="submit" disabled={submitting} className="w-full text-xs font-mono py-2 px-3 rounded-md bg-primary text-primary-foreground hover:bg-primary/80 transition-all disabled:opacity-50">{submitting ? '...' : '▶ REQUEST TO JOIN'}</button>
+            <button type="button" onClick={() => { clearState(); setMode('join-qr'); }} className="w-full text-[10px] font-mono text-muted-foreground hover:text-primary transition-colors">← Back</button>
+          </form>
+        </div>
+      </div>
+    );
+  }
+
+  // Join - Submitted confirmation
+  if (mode === 'join-submitted') {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <div className="w-full max-w-sm space-y-6">
+          {renderHeader()}
+          <div className="bg-card rounded-md border border-border panel-glow p-5 space-y-4 text-center">
+            <div className="text-3xl">✅</div>
+            <p className="text-xs font-mono text-primary font-bold">Request Submitted!</p>
+            <p className="text-[10px] font-mono text-muted-foreground">
+              Your request to join has been sent to the household admin. They will review and accept or reject your request.
+            </p>
+            <button onClick={() => { clearState(); setMode('choose'); }} className="w-full text-[10px] font-mono text-muted-foreground hover:text-primary transition-colors">← Back to start</button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // Sign In screen
   if (mode === 'login') {
     return (
