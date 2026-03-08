@@ -97,6 +97,13 @@ export default function HouseholdPage() {
           .select('*')
           .eq('household_id', hh.id);
         setWakeWords((ww as WakeWord[]) || []);
+
+        const { data: jr } = await supabase
+          .from('join_requests')
+          .select('*')
+          .eq('household_id', hh.id)
+          .eq('status', 'pending');
+        setJoinRequests((jr as JoinRequest[]) || []);
       }
     } else {
       // Check for pending invite code from QR join flow
