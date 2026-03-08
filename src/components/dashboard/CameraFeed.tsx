@@ -268,7 +268,7 @@ export default function CameraFeed({
         ref={canvasRef}
         width={camera.active ? 640 : 320}
         height={camera.active ? 480 : 240}
-        className="w-full h-full object-cover aspect-video"
+        className="w-full h-full object-contain aspect-video bg-background"
       />
 
       {/* Detection stats badge */}

@@ -103,15 +103,25 @@ export default function Index() {
   const handleCameraSaliencyScore = useCallback((cameraId: number, score: number) => {
     updateCamera(cameraId, { saliencyScore: score });
     
-    // Use max saliency across all cameras for global score
-    setGlobalSaliencyScore(prev => Math.max(prev, score));
-
-    // Only compute attention from camera 1 (primary) for global attention
+    // Update global saliency from this frame (not max - use latest from cam 1)
     if (cameraId === 1) {
-      const audioBoost = audioFeatures.speechDetected ? 20 : 0;
-      const dbBoost = Math.max(0, (audioFeatures.decibel + 30) * 0.5);
-      const newAttention = Math.min(100, Math.round(score + audioBoost + dbBoost));
-      setAttentionScore(newAttention);
+      setGlobalSaliencyScore(score);
+    }
+
+    // Compute fused attention: α = 0.4×S + 0.3×A + 0.3×O
+    if (cameraId === 1) {
+      const saliencyComponent = score; // S from CAM 2 (same source frame)
+      const audioComponent = audioFeatures.speechDetected
+        ? Math.min(100, Math.abs(audioFeatures.decibel) + 20)
+        : Math.min(100, Math.max(0, (audioFeatures.decibel + 50) * 1.5));
+      const objectComponent = cameras[0].objects.length > 0
+        ? Math.min(100, cameras[0].objects.reduce((sum, o) => sum + o.confidence * 100, 0) / cameras[0].objects.length)
+        : 0;
+      
+      const fused = Math.min(100, Math.round(
+        0.4 * saliencyComponent + 0.3 * audioComponent + 0.3 * objectComponent
+      ));
+      setAttentionScore(fused);
     }
 
     // Audio event classification alerts (only from camera 1 to avoid duplicates)
