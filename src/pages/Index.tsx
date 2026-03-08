@@ -198,8 +198,8 @@ export default function Index() {
   }, []);
 
   const handleDetectFrame = useCallback(async (video: HTMLVideoElement): Promise<DetectedObject[]> => {
-    return detect(video, priorityObjects);
-  }, [detect, priorityObjects]);
+    return detect(video);
+  }, [detect]);
 
   const handleFrameCapture = useCallback((canvas: HTMLCanvasElement) => {
     setSourceCanvas(prev => prev === canvas ? prev : canvas);
