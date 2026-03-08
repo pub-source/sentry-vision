@@ -3,7 +3,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
 
-type AuthMode = 'choose' | 'create' | 'join-qr' | 'login' | 'forgot';
+type AuthMode = 'choose' | 'create' | 'join-qr' | 'join-name' | 'join-submitted' | 'login' | 'forgot';
 
 export default function Auth() {
   const { user, loading, signUp, signIn } = useAuth();
