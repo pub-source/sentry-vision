@@ -93,7 +93,7 @@ export default function HouseholdPage() {
       const pendingCode = sessionStorage.getItem('pending_invite_code');
       if (pendingCode) {
         setMode('join');
-        setInviteCode(pendingCode);
+        setInviteCode(normalizeInviteCode(pendingCode));
         sessionStorage.removeItem('pending_invite_code');
       }
       setTab('setup');
