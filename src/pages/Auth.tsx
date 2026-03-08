@@ -345,7 +345,7 @@ export default function Auth() {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <div className="w-full max-w-sm space-y-6">
-          <Header />
+          {renderHeader()}
           <form onSubmit={handleSignIn} className="bg-card rounded-md border border-border panel-glow p-4 space-y-4">
             <span className="text-[10px] font-mono text-primary uppercase tracking-wider">Sign In</span>
             <div className="space-y-3">
