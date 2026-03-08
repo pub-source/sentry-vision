@@ -13,6 +13,9 @@ export default function Auth() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [inviteCode, setInviteCode] = useState('');
+  const [joinName, setJoinName] = useState('');
+  const [joinPhone, setJoinPhone] = useState('');
+  const [matchedHousehold, setMatchedHousehold] = useState<{ id: string; name: string } | null>(null);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [submitting, setSubmitting] = useState(false);
