@@ -52,6 +52,9 @@ export default function HouseholdPage() {
   const [showEmergency, setShowEmergency] = useState(false);
   const [showQr, setShowQr] = useState(false);
 
+  const normalizeInviteCode = (value: string) =>
+    value.trim().toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 8);
+
   const fetchHousehold = useCallback(async () => {
     if (!user) return;
     setLoadingData(true);

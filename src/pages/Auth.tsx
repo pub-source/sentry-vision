@@ -25,8 +25,11 @@ export default function Auth() {
   // Handle URL invite code from /join/:code route
   useEffect(() => {
     if (urlCode && !inviteCode) {
-      setInviteCode(urlCode);
-      setMode('join-qr');
+      const normalized = normalizeInviteCode(urlCode);
+      if (normalized) {
+        setInviteCode(normalized);
+        setMode('join-qr');
+      }
     }
   }, [urlCode, inviteCode]);
 
