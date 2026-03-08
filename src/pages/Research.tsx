@@ -303,45 +303,50 @@ export default function Research() {
               Figure 2.1 — Theoretical Concept Map
             </p>
             <div className="bg-background rounded-md p-6 border border-border overflow-x-auto">
-              <svg viewBox="0 0 800 400" className="w-full max-w-3xl mx-auto" style={{ minWidth: '500px' }}>
+              <svg viewBox="0 0 860 440" className="w-full max-w-4xl mx-auto" style={{ minWidth: '600px' }}>
                 {/* Central node */}
-                <circle cx="400" cy="200" r="50" className="fill-primary/20 stroke-primary" strokeWidth="2"/>
-                <text x="400" y="195" textAnchor="middle" className="fill-primary text-[10px] font-mono font-bold">MULTIMODAL</text>
-                <text x="400" y="210" textAnchor="middle" className="fill-primary text-[10px] font-mono font-bold">FUSION</text>
+                <circle cx="430" cy="220" r="55" className="fill-primary/20 stroke-primary" strokeWidth="2.5"/>
+                <text x="430" y="212" textAnchor="middle" className="fill-primary text-[11px] font-mono font-bold">MULTIMODAL</text>
+                <text x="430" y="228" textAnchor="middle" className="fill-primary text-[11px] font-mono font-bold">FUSION</text>
+                <text x="430" y="244" textAnchor="middle" className="fill-primary text-[8px] font-mono">α(t) ∈ [0,100]</text>
 
-                {/* Branch 1: Spatial Derivatives */}
-                <line x1="350" y1="180" x2="160" y2="80" className="stroke-accent" strokeWidth="1.5"/>
-                <rect x="60" y="40" width="200" height="80" rx="6" className="fill-accent/10 stroke-accent" strokeWidth="1"/>
-                <text x="160" y="63" textAnchor="middle" className="fill-accent text-[9px] font-mono font-bold">SPATIAL DERIVATIVES</text>
-                <text x="160" y="78" textAnchor="middle" className="fill-foreground text-[7px] font-mono">∇I = (∂I/∂x, ∂I/∂y)</text>
-                <text x="160" y="93" textAnchor="middle" className="fill-muted-foreground text-[7px] font-mono">Sobel: 1st order gradient</text>
-                <text x="160" y="106" textAnchor="middle" className="fill-muted-foreground text-[7px] font-mono">Laplacian: ∇²I = ∂²I/∂x² + ∂²I/∂y²</text>
+                {/* Branch 1: Spatial Derivatives (top-left) */}
+                <line x1="380" y1="185" x2="180" y2="80" className="stroke-accent" strokeWidth="2"/>
+                <rect x="40" y="30" width="270" height="100" rx="8" className="fill-accent/8 stroke-accent" strokeWidth="1.5"/>
+                <text x="175" y="55" textAnchor="middle" className="fill-accent text-[10px] font-mono font-bold">SPATIAL DERIVATIVES</text>
+                <line x1="55" y1="64" x2="295" y2="64" className="stroke-accent/30" strokeWidth="0.5"/>
+                <text x="175" y="82" textAnchor="middle" className="fill-foreground text-[8px] font-mono">∇I = (∂I/∂x, ∂I/∂y) — Image Gradient</text>
+                <text x="175" y="97" textAnchor="middle" className="fill-muted-foreground text-[7px] font-mono">Sobel: 1st order | Laplacian: ∇²I = ∂²I/∂x² + ∂²I/∂y²</text>
+                <text x="175" y="112" textAnchor="middle" className="fill-muted-foreground text-[7px] font-mono">(Gonzalez & Woods, 2018; Kaur & Kaur, 2023)</text>
 
-                {/* Branch 2: Temporal Derivatives */}
-                <line x1="450" y1="180" x2="640" y2="80" className="stroke-accent" strokeWidth="1.5"/>
-                <rect x="540" y="40" width="200" height="80" rx="6" className="fill-accent/10 stroke-accent" strokeWidth="1"/>
-                <text x="640" y="63" textAnchor="middle" className="fill-accent text-[9px] font-mono font-bold">TEMPORAL DERIVATIVES</text>
-                <text x="640" y="78" textAnchor="middle" className="fill-foreground text-[7px] font-mono">∂I/∂t ≈ I(t) − I(t−1)</text>
-                <text x="640" y="93" textAnchor="middle" className="fill-muted-foreground text-[7px] font-mono">Frame differencing</text>
-                <text x="640" y="106" textAnchor="middle" className="fill-muted-foreground text-[7px] font-mono">Collins et al. (2000)</text>
+                {/* Branch 2: Temporal Derivatives (top-right) */}
+                <line x1="480" y1="185" x2="680" y2="80" className="stroke-accent" strokeWidth="2"/>
+                <rect x="550" y="30" width="270" height="100" rx="8" className="fill-accent/8 stroke-accent" strokeWidth="1.5"/>
+                <text x="685" y="55" textAnchor="middle" className="fill-accent text-[10px] font-mono font-bold">TEMPORAL DERIVATIVES</text>
+                <line x1="565" y1="64" x2="805" y2="64" className="stroke-accent/30" strokeWidth="0.5"/>
+                <text x="685" y="82" textAnchor="middle" className="fill-foreground text-[8px] font-mono">∂I/∂t ≈ I(t) − I(t−1) — Frame Differencing</text>
+                <text x="685" y="97" textAnchor="middle" className="fill-muted-foreground text-[7px] font-mono">Background subtraction & motion detection</text>
+                <text x="685" y="112" textAnchor="middle" className="fill-muted-foreground text-[7px] font-mono">(Bouwmans et al., 2022)</text>
 
-                {/* Branch 3: Fourier Analysis */}
-                <line x1="360" y1="230" x2="140" y2="320" className="stroke-info" strokeWidth="1.5"/>
-                <rect x="30" y="280" width="220" height="90" rx="6" className="fill-info/10 stroke-info" strokeWidth="1"/>
-                <text x="140" y="303" textAnchor="middle" className="fill-info text-[9px] font-mono font-bold">FOURIER ANALYSIS</text>
-                <text x="140" y="318" textAnchor="middle" className="fill-foreground text-[7px] font-mono">X(k) = Σ x(n)·e^(-j2πkn/N)</text>
-                <text x="140" y="333" textAnchor="middle" className="fill-muted-foreground text-[7px] font-mono">FFT: O(N log N)</text>
-                <text x="140" y="348" textAnchor="middle" className="fill-muted-foreground text-[7px] font-mono">→ Spectral band energy</text>
-                <text x="140" y="361" textAnchor="middle" className="fill-muted-foreground text-[7px] font-mono">→ ZCR, Autocorrelation</text>
+                {/* Branch 3: Fourier Analysis (bottom-left) */}
+                <line x1="385" y1="260" x2="180" y2="340" className="stroke-info" strokeWidth="2"/>
+                <rect x="20" y="290" width="310" height="120" rx="8" className="fill-info/8 stroke-info" strokeWidth="1.5"/>
+                <text x="175" y="315" textAnchor="middle" className="fill-info text-[10px] font-mono font-bold">FOURIER ANALYSIS</text>
+                <line x1="35" y1="324" x2="315" y2="324" className="stroke-info/30" strokeWidth="0.5"/>
+                <text x="175" y="342" textAnchor="middle" className="fill-foreground text-[8px] font-mono">X(k) = Σ x(n)·e^(-j2πkn/N)</text>
+                <text x="175" y="358" textAnchor="middle" className="fill-muted-foreground text-[7px] font-mono">FFT: O(N log N) — Spectral band energy</text>
+                <text x="175" y="374" textAnchor="middle" className="fill-muted-foreground text-[7px] font-mono">ZCR + Autocorrelation for pitch</text>
+                <text x="175" y="390" textAnchor="middle" className="fill-muted-foreground text-[7px] font-mono">(Kim et al., 2023; Singh & Jain, 2022)</text>
 
-                {/* Branch 4: Deep Learning */}
-                <line x1="440" y1="230" x2="660" y2="320" className="stroke-warning" strokeWidth="1.5"/>
-                <rect x="550" y="280" width="220" height="90" rx="6" className="fill-warning/10 stroke-warning" strokeWidth="1"/>
-                <text x="660" y="303" textAnchor="middle" className="fill-warning text-[9px] font-mono font-bold">DEEP LEARNING</text>
-                <text x="660" y="318" textAnchor="middle" className="fill-foreground text-[7px] font-mono">CNN → Feature Maps → BBox</text>
-                <text x="660" y="333" textAnchor="middle" className="fill-muted-foreground text-[7px] font-mono">MobileNetV2 + SSD</text>
-                <text x="660" y="348" textAnchor="middle" className="fill-muted-foreground text-[7px] font-mono">Liu et al. (2016)</text>
-                <text x="660" y="361" textAnchor="middle" className="fill-muted-foreground text-[7px] font-mono">Sandler et al. (2018)</text>
+                {/* Branch 4: Deep Learning (bottom-right) */}
+                <line x1="475" y1="260" x2="680" y2="340" className="stroke-warning" strokeWidth="2"/>
+                <rect x="540" y="290" width="290" height="120" rx="8" className="fill-warning/8 stroke-warning" strokeWidth="1.5"/>
+                <text x="685" y="315" textAnchor="middle" className="fill-warning text-[10px] font-mono font-bold">DEEP LEARNING</text>
+                <line x1="555" y1="324" x2="815" y2="324" className="stroke-warning/30" strokeWidth="0.5"/>
+                <text x="685" y="342" textAnchor="middle" className="fill-foreground text-[8px] font-mono">CNN → Feature Maps → BBox Regression</text>
+                <text x="685" y="358" textAnchor="middle" className="fill-muted-foreground text-[7px] font-mono">MobileNetV2 + SSD — 80 COCO classes</text>
+                <text x="685" y="374" textAnchor="middle" className="fill-muted-foreground text-[7px] font-mono">Real-time inference via TensorFlow.js (WebGL)</text>
+                <text x="685" y="390" textAnchor="middle" className="fill-muted-foreground text-[7px] font-mono">(Ren et al., 2024; Howard et al., 2022)</text>
               </svg>
             </div>
           </div>
