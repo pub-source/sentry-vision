@@ -288,7 +288,7 @@ export default function HouseholdPage() {
               {mode === 'join' && (
                 <div className="space-y-1">
                   <label className="text-[10px] font-mono text-muted-foreground">Invite Code</label>
-                  <input type="text" value={inviteCode} onChange={e => setInviteCode(e.target.value)} className="w-full bg-secondary border border-border rounded px-3 py-2 text-xs font-mono text-foreground text-center tracking-widest focus:outline-none focus:border-primary" placeholder="abc12345" required />
+                  <input type="text" value={inviteCode} onChange={e => setInviteCode(normalizeInviteCode(e.target.value))} className="w-full bg-secondary border border-border rounded px-3 py-2 text-xs font-mono text-foreground text-center tracking-widest focus:outline-none focus:border-primary" placeholder="abc12345" required />
                 </div>
               )}
 
