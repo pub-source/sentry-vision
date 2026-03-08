@@ -16,8 +16,8 @@ import { useAudioAnalysis } from '@/hooks/useAudioAnalysis';
 import { useObjectDetection } from '@/hooks/useObjectDetection';
 import { useAuth } from '@/hooks/useAuth';
 import { useHousehold } from '@/hooks/useHousehold';
+import { supabase } from '@/integrations/supabase/client';
 import type { SaliencyMode, QualityMode, Alert, DetectedObject } from '@/types/dashboard';
-import { DEFAULT_PRIORITY_OBJECTS } from '@/types/dashboard';
 
 export default function Index() {
   const { user, loading: authLoading, signOut } = useAuth();
