@@ -485,7 +485,7 @@ export default function Index() {
                 α = 0.4×S + 0.3×A + 0.3×O
               </span>
             </div>
-            <div className="grid grid-cols-6 gap-2">
+            <div className="grid grid-cols-8 gap-2">
               {/* CAM 1 contribution */}
               <div className="bg-secondary/30 rounded p-2 space-y-1">
                 <p className="text-[9px] font-mono text-accent font-semibold">CAM 1</p>
@@ -541,6 +541,24 @@ export default function Index() {
                   <div className="h-full bg-destructive rounded transition-all" style={{ width: `${Math.min(100, cameras[0].objects.length * 30)}%` }} />
                 </div>
                 <p className="text-[7px] font-mono text-foreground/70">Mask</p>
+              </div>
+              {/* CAM 7 */}
+              <div className="bg-secondary/30 rounded p-2 space-y-1">
+                <p className="text-[9px] font-mono text-accent font-semibold">CAM 7</p>
+                <p className="text-[8px] font-mono text-muted-foreground">Laplacian</p>
+                <div className="h-1.5 bg-secondary/50 rounded overflow-hidden">
+                  <div className="h-full bg-accent rounded transition-all" style={{ width: `${Math.min(100, globalSaliencyScore * 1.1)}%` }} />
+                </div>
+                <p className="text-[7px] font-mono text-foreground/70">∇²I</p>
+              </div>
+              {/* CAM 8 */}
+              <div className="bg-secondary/30 rounded p-2 space-y-1">
+                <p className="text-[9px] font-mono text-accent font-semibold">CAM 8</p>
+                <p className="text-[8px] font-mono text-muted-foreground">Motion</p>
+                <div className="h-1.5 bg-secondary/50 rounded overflow-hidden">
+                  <div className="h-full bg-success rounded transition-all" style={{ width: `${Math.min(100, globalSaliencyScore * 0.9)}%` }} />
+                </div>
+                <p className="text-[7px] font-mono text-foreground/70">ΔI</p>
               </div>
             </div>
             {/* Combined score */}
