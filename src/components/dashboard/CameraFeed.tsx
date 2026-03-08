@@ -212,7 +212,7 @@ export default function CameraFeed({
         }
 
         if (simulationMode && objects.length > 0) {
-          onObjectsUpdate(objects);
+          onObjectsUpdate(camera.id, objects);
         }
       }
 
