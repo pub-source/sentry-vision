@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { UseCaseDiagram, DataFlowDiagram, ActivityDiagram, SequenceDiagram, ERDiagram, StateDiagram, ConceptualFrameworkDiagram } from '@/components/research/ResearchDiagrams';
+import saliencyExamples from '@/assets/saliency-examples.png';
 
 export default function Research() {
   const navigate = useNavigate();
