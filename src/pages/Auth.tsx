@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
@@ -16,6 +16,7 @@ export default function Auth() {
   const [joinName, setJoinName] = useState('');
   const [joinPhone, setJoinPhone] = useState('');
   const [matchedHousehold, setMatchedHousehold] = useState<{ id: string; name: string } | null>(null);
+  const [joinRequestId, setJoinRequestId] = useState<string | null>(null);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -162,17 +163,20 @@ export default function Auth() {
       return;
     }
     setSubmitting(true);
-    const { error: insertErr } = await supabase
+    const { data: inserted, error: insertErr } = await supabase
       .from('join_requests')
       .insert({
         household_id: matchedHousehold.id,
         display_name: joinName.trim(),
         phone_number: joinPhone.trim(),
         status: 'pending',
-      });
-    if (insertErr) {
-      setError(insertErr.message);
+      })
+      .select('id')
+      .single();
+    if (insertErr || !inserted) {
+      setError(insertErr?.message || 'Failed to submit request');
     } else {
+      setJoinRequestId(inserted.id);
       setMode('join-submitted');
     }
     setSubmitting(false);
@@ -445,20 +449,18 @@ export default function Auth() {
     );
   }
 
-  // Join - Submitted confirmation
-  if (mode === 'join-submitted') {
+  // Join - Submitted, waiting for admin approval with realtime
+  if (mode === 'join-submitted' && joinRequestId) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <div className="w-full max-w-sm space-y-6">
           {renderHeader()}
-          <div className="bg-card rounded-md border border-border panel-glow p-5 space-y-4 text-center">
-            <div className="text-3xl">✅</div>
-            <p className="text-xs font-mono text-primary font-bold">Request Submitted!</p>
-            <p className="text-[10px] font-mono text-muted-foreground">
-              Your request to join has been sent to the household admin. They will review and accept or reject your request.
-            </p>
-            <button onClick={() => { clearState(); setMode('choose'); }} className="w-full text-[10px] font-mono text-muted-foreground hover:text-primary transition-colors">← Back to start</button>
-          </div>
+          <JoinWaitingScreen
+            requestId={joinRequestId}
+            householdName={matchedHousehold?.name || ''}
+            memberName={joinName}
+            onBack={() => { clearState(); setMode('choose'); }}
+          />
         </div>
       </div>
     );
@@ -525,6 +527,97 @@ export default function Auth() {
           <button type="button" onClick={() => { clearState(); setMode('choose'); }} className="w-full text-[10px] font-mono text-muted-foreground hover:text-primary transition-colors">← Back</button>
         </form>
       </div>
+    </div>
+  );
+}
+
+// Waiting screen with realtime polling for admin approval
+function JoinWaitingScreen({ requestId, householdName, memberName, onBack }: {
+  requestId: string;
+  householdName: string;
+  memberName: string;
+  onBack: () => void;
+}) {
+  const navigate = useNavigate();
+  const [status, setStatus] = useState<'pending' | 'accepted' | 'rejected'>('pending');
+
+  useEffect(() => {
+    // Poll every 3 seconds for status change
+    const interval = setInterval(async () => {
+      const { data } = await supabase
+        .from('join_requests')
+        .select('status')
+        .eq('id', requestId)
+        .single();
+      if (data?.status === 'accepted') {
+        setStatus('accepted');
+        clearInterval(interval);
+        // Store guest session info
+        sessionStorage.setItem('guest_member', JSON.stringify({ name: memberName, household: householdName }));
+        setTimeout(() => navigate('/'), 1500);
+      } else if (data?.status === 'rejected') {
+        setStatus('rejected');
+        clearInterval(interval);
+      }
+    }, 3000);
+
+    // Also subscribe to realtime
+    const channel = supabase
+      .channel(`join-request-${requestId}`)
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'join_requests',
+        filter: `id=eq.${requestId}`,
+      }, (payload: any) => {
+        const newStatus = payload.new?.status;
+        if (newStatus === 'accepted') {
+          setStatus('accepted');
+          sessionStorage.setItem('guest_member', JSON.stringify({ name: memberName, household: householdName }));
+          setTimeout(() => navigate('/'), 1500);
+        } else if (newStatus === 'rejected') {
+          setStatus('rejected');
+        }
+      })
+      .subscribe();
+
+    return () => {
+      clearInterval(interval);
+      supabase.removeChannel(channel);
+    };
+  }, [requestId, memberName, householdName, navigate]);
+
+  if (status === 'accepted') {
+    return (
+      <div className="bg-card rounded-md border border-primary/30 panel-glow p-5 space-y-4 text-center">
+        <div className="text-3xl">🎉</div>
+        <p className="text-xs font-mono text-primary font-bold">Welcome, {memberName}!</p>
+        <p className="text-[10px] font-mono text-muted-foreground">You've been accepted into "{householdName}". Redirecting to dashboard...</p>
+        <div className="w-2 h-2 rounded-full bg-primary animate-pulse mx-auto" />
+      </div>
+    );
+  }
+
+  if (status === 'rejected') {
+    return (
+      <div className="bg-card rounded-md border border-destructive/30 panel-glow p-5 space-y-4 text-center">
+        <div className="text-3xl">❌</div>
+        <p className="text-xs font-mono text-destructive font-bold">Request Declined</p>
+        <p className="text-[10px] font-mono text-muted-foreground">The household admin has declined your request.</p>
+        <button onClick={onBack} className="w-full text-[10px] font-mono text-muted-foreground hover:text-primary transition-colors">← Back to start</button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-card rounded-md border border-border panel-glow p-5 space-y-4 text-center">
+      <div className="w-6 h-6 rounded-full border-2 border-primary border-t-transparent animate-spin mx-auto" />
+      <p className="text-xs font-mono text-primary font-bold">Waiting for Approval</p>
+      <p className="text-[10px] font-mono text-muted-foreground">
+        Your request to join "{householdName}" has been sent. The admin will review it shortly.
+      </p>
+      <p className="text-[9px] font-mono text-muted-foreground animate-pulse">Listening for response...</p>
+      <button onClick={onBack} className="w-full text-[10px] font-mono text-muted-foreground hover:text-primary transition-colors">← Cancel</button>
     </div>
   );
 }
