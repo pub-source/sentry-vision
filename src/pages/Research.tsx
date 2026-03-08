@@ -1,6 +1,18 @@
 import { useNavigate } from 'react-router-dom';
 import { UseCaseDiagram, DataFlowDiagram, ActivityDiagram, SequenceDiagram, ERDiagram, StateDiagram, ConceptualFrameworkDiagram } from '@/components/research/ResearchDiagrams';
 import saliencyExamples from '@/assets/saliency-examples.png';
+import camOriginal1 from '@/assets/camera-detect-original-1.jpg';
+import camOriginal2 from '@/assets/camera-detect-original-2.jpg';
+import camOriginal3 from '@/assets/camera-detect-original-3.jpg';
+import camOriginal4 from '@/assets/camera-detect-original-4.jpg';
+import camEdge1 from '@/assets/camera-detect-edge-1.jpg';
+import camEdge2 from '@/assets/camera-detect-edge-2.jpg';
+import camEdge3 from '@/assets/camera-detect-edge-3.jpg';
+import camEdge4 from '@/assets/camera-detect-edge-4.jpg';
+import camHeatmap1 from '@/assets/camera-detect-heatmap-1.jpg';
+import camHeatmap2 from '@/assets/camera-detect-heatmap-2.jpg';
+import camHeatmap3 from '@/assets/camera-detect-heatmap-3.jpg';
+import camHeatmap4 from '@/assets/camera-detect-heatmap-4.jpg';
 
 export default function Research() {
   const navigate = useNavigate();
