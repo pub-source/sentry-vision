@@ -31,7 +31,7 @@ export function useObjectDetection() {
     setStats(prev => ({ ...prev, modelLoading: true, modelError: null }));
     try {
       console.log('[ObjectDetection] Loading COCO-SSD model...');
-      const model = await cocoSsd.load({ base: 'lite_mobilenet_v2' });
+      const model = await cocoSsd.load({ base: 'mobilenet_v2' });
       modelRef.current = model;
       console.log('[ObjectDetection] Model loaded successfully.');
       setStats(prev => ({ ...prev, modelLoaded: true, modelLoading: false }));
