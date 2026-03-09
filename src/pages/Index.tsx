@@ -694,6 +694,8 @@ export default function Index() {
             onHeatmapOpacityChange={setHeatmapOpacity}
             onToggleSimulation={() => setSimulationMode(p => !p)}
             onPriorityObjectsChange={setPriorityObjects}
+            minConfidence={minConfidence}
+            onMinConfidenceChange={setMinConfidence}
             onExportCSV={exportCSV}
           />
 
