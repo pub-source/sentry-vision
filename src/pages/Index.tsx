@@ -41,6 +41,7 @@ export default function Index() {
   const [heatmapOpacity, setHeatmapOpacity] = useState(50);
   const [simulationMode, setSimulationMode] = useState(false);
   const [priorityObjects, setPriorityObjects] = useState<string[]>(DEFAULT_PRIORITY_OBJECTS);
+  const [minConfidence, setMinConfidence] = useState(20); // percentage 0-100
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [errors] = useState<string[]>([]);
   const [attentionScore, setAttentionScore] = useState(0);
