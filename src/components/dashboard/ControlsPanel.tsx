@@ -33,11 +33,11 @@ interface ControlsPanelProps {
 export default function ControlsPanel(props: ControlsPanelProps) {
   const {
     running, saliencyMode, threshold, showBoundingBoxes, showHeatmap, showAlerts,
-    quality, mirror, heatmapOpacity, simulationMode, priorityObjects,
+    quality, mirror, heatmapOpacity, simulationMode, priorityObjects, minConfidence,
     onStart, onStop, onSaliencyModeChange, onThresholdChange,
     onToggleBoundingBoxes, onToggleHeatmap, onToggleAlerts,
     onQualityChange, onToggleMirror, onHeatmapOpacityChange,
-    onToggleSimulation, onPriorityObjectsChange, onExportCSV,
+    onToggleSimulation, onPriorityObjectsChange, onMinConfidenceChange, onExportCSV,
   } = props;
 
   const togglePriority = (obj: string) => {
