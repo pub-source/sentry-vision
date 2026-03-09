@@ -44,7 +44,7 @@ export function useObjectDetection() {
 
   const detect = useCallback(async (
     source: HTMLVideoElement | HTMLCanvasElement,
-    priorityObjects: string[] = PRIORITY_OBJECTS,
+    priorityObjects: string[] = [],
   ): Promise<DetectedObject[]> => {
     const model = modelRef.current;
     if (!model || detectingRef.current) return [];
