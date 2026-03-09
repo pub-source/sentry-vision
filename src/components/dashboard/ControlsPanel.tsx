@@ -26,6 +26,7 @@ interface ControlsPanelProps {
   onHeatmapOpacityChange: (v: number) => void;
   onToggleSimulation: () => void;
   onPriorityObjectsChange: (objects: string[]) => void;
+  onMinConfidenceChange: (v: number) => void;
   onExportCSV: () => void;
 }
 
