@@ -5,7 +5,7 @@ import type { DetectedObject } from '@/types/dashboard';
 
 // No hardcoded filter — use priorityObjects param from caller
 
-const MIN_CONFIDENCE = 0.25;
+const MIN_CONFIDENCE = 0.2;
 
 interface DetectionStats {
   totalDetected: number;
@@ -54,7 +54,7 @@ export function useObjectDetection() {
 
     detectingRef.current = true;
     try {
-      const predictions = await model.detect(source);
+      const predictions = await model.detect(source, 80, MIN_CONFIDENCE);
       const totalDetected = predictions.length;
 
       console.log('[ObjectDetection] Detected class names:', predictions.map(p => p.class));
