@@ -54,7 +54,7 @@ export function useObjectDetection() {
 
     detectingRef.current = true;
     try {
-      const predictions = await model.detect(source);
+      const predictions = await model.detect(source, 80, MIN_CONFIDENCE);
       const totalDetected = predictions.length;
 
       console.log('[ObjectDetection] Detected class names:', predictions.map(p => p.class));
