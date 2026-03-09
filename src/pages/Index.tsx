@@ -46,6 +46,7 @@ export default function Index() {
   const [attentionScore, setAttentionScore] = useState(0);
   const [globalSaliencyScore, setGlobalSaliencyScore] = useState(0);
   const [researchMode, setResearchMode] = useState(false);
+  const [showExtraCams, setShowExtraCams] = useState(false);
   const [sourceCanvas, setSourceCanvas] = useState<HTMLCanvasElement | null>(null);
   const alertCooldownRef = useRef<Record<string, number>>({});
   const snapshotCooldownRef = useRef(0);
@@ -362,6 +363,16 @@ export default function Index() {
             </div>
           </div>
 
+          {/* Toggle button for extra cameras */}
+          <button
+            onClick={() => setShowExtraCams(prev => !prev)}
+            className="w-full flex items-center justify-center gap-2 py-1.5 text-[10px] font-mono text-muted-foreground hover:text-primary border border-border rounded-md hover:border-primary/50 transition-all bg-card"
+          >
+            {showExtraCams ? '▲ Hide Extra Cameras' : '▼ Show Extra Cameras (CAM 3–8)'}
+          </button>
+
+          {showExtraCams && (
+          <>
           {/* Middle row: 2 cameras */}
           <div className="grid grid-cols-2 gap-2">
             {/* CAM 3: Region Saliency */}
@@ -594,6 +605,8 @@ export default function Index() {
               </span>
             </div>
           </div>
+          </>
+          )}
 
           {/* Bottom: Timeline */}
           <div className="bg-card rounded-md border border-border panel-glow p-3">
