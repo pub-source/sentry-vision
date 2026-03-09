@@ -5,7 +5,7 @@ import type { DetectedObject } from '@/types/dashboard';
 
 // No hardcoded filter — use priorityObjects param from caller
 
-const MIN_CONFIDENCE = 0.4;
+const MIN_CONFIDENCE = 0.25;
 
 interface DetectionStats {
   totalDetected: number;
