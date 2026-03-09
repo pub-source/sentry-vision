@@ -41,6 +41,7 @@ export default function Index() {
   const [heatmapOpacity, setHeatmapOpacity] = useState(50);
   const [simulationMode, setSimulationMode] = useState(false);
   const [priorityObjects, setPriorityObjects] = useState<string[]>(DEFAULT_PRIORITY_OBJECTS);
+  const [minConfidence, setMinConfidence] = useState(20); // percentage 0-100
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [errors] = useState<string[]>([]);
   const [attentionScore, setAttentionScore] = useState(0);
@@ -188,8 +189,8 @@ export default function Index() {
   }, []);
 
   const handleDetectFrame = useCallback(async (video: HTMLVideoElement): Promise<DetectedObject[]> => {
-    return detect(video, priorityObjects);
-  }, [detect, priorityObjects]);
+    return detect(video, priorityObjects, minConfidence / 100);
+  }, [detect, priorityObjects, minConfidence]);
 
   const handleFrameCapture = useCallback((canvas: HTMLCanvasElement) => {
     setSourceCanvas(prev => prev === canvas ? prev : canvas);
@@ -693,6 +694,8 @@ export default function Index() {
             onHeatmapOpacityChange={setHeatmapOpacity}
             onToggleSimulation={() => setSimulationMode(p => !p)}
             onPriorityObjectsChange={setPriorityObjects}
+            minConfidence={minConfidence}
+            onMinConfidenceChange={setMinConfidence}
             onExportCSV={exportCSV}
           />
 

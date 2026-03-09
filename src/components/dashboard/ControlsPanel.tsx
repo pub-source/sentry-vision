@@ -12,6 +12,7 @@ interface ControlsPanelProps {
   mirror: boolean;
   heatmapOpacity: number;
   simulationMode: boolean;
+  minConfidence: number;
   priorityObjects: string[];
   onStart: () => void;
   onStop: () => void;
@@ -25,17 +26,18 @@ interface ControlsPanelProps {
   onHeatmapOpacityChange: (v: number) => void;
   onToggleSimulation: () => void;
   onPriorityObjectsChange: (objects: string[]) => void;
+  onMinConfidenceChange: (v: number) => void;
   onExportCSV: () => void;
 }
 
 export default function ControlsPanel(props: ControlsPanelProps) {
   const {
     running, saliencyMode, threshold, showBoundingBoxes, showHeatmap, showAlerts,
-    quality, mirror, heatmapOpacity, simulationMode, priorityObjects,
+    quality, mirror, heatmapOpacity, simulationMode, priorityObjects, minConfidence,
     onStart, onStop, onSaliencyModeChange, onThresholdChange,
     onToggleBoundingBoxes, onToggleHeatmap, onToggleAlerts,
     onQualityChange, onToggleMirror, onHeatmapOpacityChange,
-    onToggleSimulation, onPriorityObjectsChange, onExportCSV,
+    onToggleSimulation, onPriorityObjectsChange, onMinConfidenceChange, onExportCSV,
   } = props;
 
   const togglePriority = (obj: string) => {
@@ -154,6 +156,26 @@ export default function ControlsPanel(props: ControlsPanelProps) {
           onChange={e => onHeatmapOpacityChange(Number(e.target.value))}
           className="w-full h-1 bg-secondary rounded-full appearance-none [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary [&::-webkit-slider-thumb]:cursor-pointer"
         />
+      </div>
+
+      {/* Detection Confidence */}
+      <div className="space-y-1">
+        <div className="flex justify-between">
+          <span className="text-[10px] font-mono text-muted-foreground">Detection Sensitivity</span>
+          <span className="text-[10px] font-mono text-foreground">{minConfidence}%</span>
+        </div>
+        <input
+          type="range"
+          min={5}
+          max={90}
+          value={minConfidence}
+          onChange={e => onMinConfidenceChange(Number(e.target.value))}
+          className="w-full h-1 bg-secondary rounded-full appearance-none [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary [&::-webkit-slider-thumb]:cursor-pointer"
+        />
+        <div className="flex justify-between text-[8px] font-mono text-muted-foreground">
+          <span>More objects</span>
+          <span>Higher accuracy</span>
+        </div>
       </div>
 
       {/* Priority Objects */}

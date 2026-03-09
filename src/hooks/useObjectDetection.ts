@@ -45,6 +45,7 @@ export function useObjectDetection() {
   const detect = useCallback(async (
     source: HTMLVideoElement | HTMLCanvasElement,
     priorityObjects: string[] = [],
+    minConfidence: number = MIN_CONFIDENCE,
   ): Promise<DetectedObject[]> => {
     const model = modelRef.current;
     if (!model || detectingRef.current) return [];
@@ -54,14 +55,14 @@ export function useObjectDetection() {
 
     detectingRef.current = true;
     try {
-      const predictions = await model.detect(source, 80, MIN_CONFIDENCE);
+      const predictions = await model.detect(source, 80, minConfidence);
       const totalDetected = predictions.length;
 
       console.log('[ObjectDetection] Detected class names:', predictions.map(p => p.class));
 
       // Filter to only priority objects with sufficient confidence (empty array = all)
       const filtered = predictions.filter(p =>
-        p.score >= MIN_CONFIDENCE &&
+        p.score >= minConfidence &&
         (priorityObjects.length === 0 || priorityObjects.includes(p.class))
       );
 
