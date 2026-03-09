@@ -46,6 +46,7 @@ export default function Index() {
   const [attentionScore, setAttentionScore] = useState(0);
   const [globalSaliencyScore, setGlobalSaliencyScore] = useState(0);
   const [researchMode, setResearchMode] = useState(false);
+  const [showExtraCams, setShowExtraCams] = useState(false);
   const [sourceCanvas, setSourceCanvas] = useState<HTMLCanvasElement | null>(null);
   const alertCooldownRef = useRef<Record<string, number>>({});
   const snapshotCooldownRef = useRef(0);
