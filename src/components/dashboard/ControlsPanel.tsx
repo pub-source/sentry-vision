@@ -12,6 +12,7 @@ interface ControlsPanelProps {
   mirror: boolean;
   heatmapOpacity: number;
   simulationMode: boolean;
+  minConfidence: number;
   priorityObjects: string[];
   onStart: () => void;
   onStop: () => void;
