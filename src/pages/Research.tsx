@@ -13,6 +13,7 @@ import camHeatmap1 from '@/assets/camera-detect-heatmap-1.jpg';
 import camHeatmap2 from '@/assets/camera-detect-heatmap-2.jpg';
 import camHeatmap3 from '@/assets/camera-detect-heatmap-3.jpg';
 import camHeatmap4 from '@/assets/camera-detect-heatmap-4.jpg';
+import testingProcedureDiagram from '@/assets/testing-procedure-diagram.png';
 
 export default function Research() {
   const navigate = useNavigate();
