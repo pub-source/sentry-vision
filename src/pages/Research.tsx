@@ -13,6 +13,7 @@ import camHeatmap1 from '@/assets/camera-detect-heatmap-1.jpg';
 import camHeatmap2 from '@/assets/camera-detect-heatmap-2.jpg';
 import camHeatmap3 from '@/assets/camera-detect-heatmap-3.jpg';
 import camHeatmap4 from '@/assets/camera-detect-heatmap-4.jpg';
+import testingProcedureDiagram from '@/assets/testing-procedure-diagram.png';
 
 export default function Research() {
   const navigate = useNavigate();
@@ -2592,6 +2593,121 @@ if (db > -15 && lowEnergy > 80 && lowEnergy > midEnergy * 1.5 && zcr < 0.15) {
             </div>
           </div>
 
+        </section>
+
+        {/* ============================================================ */}
+        {/* SECTION: TESTING TOOLS AND PROCEDURE */}
+        {/* ============================================================ */}
+        <section className="space-y-6">
+          <div className="flex items-center gap-3 border-b border-border pb-3">
+            <span className="text-xs font-mono text-primary-foreground bg-primary px-2 py-1 rounded">07</span>
+            <h2 className="text-lg font-mono font-bold text-foreground">
+              Testing Tools and Procedure
+            </h2>
+          </div>
+
+          <div className="space-y-4 text-sm text-foreground/90 leading-relaxed">
+            <p>
+              The system evaluation is conducted using <strong>controlled indoor scenarios</strong> to measure 
+              the effectiveness of the multimodal detection pipeline. Testing involves the use of video cameras 
+              and microphones to simulate real-world environmental conditions such as object movement, 
+              distress speech, and fire-related visual indicators.
+            </p>
+            <p>
+              Performance metrics include <strong>detection accuracy</strong>, <strong>response time</strong>, 
+              <strong>saliency map reliability</strong>, and <strong>system usability</strong>. Experimental 
+              trials assess the system's capability to identify objects, detect emotional distress through 
+              speech signals, and recognize abnormal events within the indoor environment. The results of 
+              these evaluations provide insights into the reliability and practical applicability of the 
+              proposed multimodal saliency detection framework.
+            </p>
+          </div>
+
+          {/* Testing Procedure Diagram */}
+          <div className="bg-card border border-border rounded-md p-4">
+            <p className="text-[10px] font-mono text-primary uppercase tracking-wider mb-3">
+              Figure 7.1 — Testing Tools and Procedure Flowchart
+            </p>
+            <div className="bg-background rounded-md border border-border overflow-hidden">
+              <img 
+                src={testingProcedureDiagram} 
+                alt="Testing Tools and Procedure Flowchart showing 6 stages: Environment Setup, Input Simulation, Multimodal Detection Pipeline, Performance Measurement, Evaluation & Analysis, and Results & Validation" 
+                className="w-full h-auto"
+              />
+            </div>
+            <p className="text-[9px] font-mono text-muted-foreground mt-2">
+              The testing procedure follows a six-stage pipeline: (1) Environment Setup with cameras and microphones in controlled indoor scenarios, 
+              (2) Input Simulation of object movement, distress speech, and fire indicators, (3) Processing through the Multimodal Detection Pipeline 
+              (Saliency Engine, Audio Classifier, COCO-SSD), (4) Performance Measurement across four key metrics, (5) Evaluation & Analysis of 
+              detection rates, and (6) Results & Validation for reliability and practical applicability assessment.
+            </p>
+          </div>
+
+          {/* Detailed Procedure Steps */}
+          <div className="bg-card border border-border rounded-lg p-5 space-y-4">
+            <h3 className="text-sm font-mono font-bold text-primary">Detailed Testing Stages</h3>
+            <div className="space-y-3">
+              {[
+                { stage: '1', title: 'Environment Setup', color: 'text-info', desc: 'Configure controlled indoor space with IoT devices — webcams (video capture @ 30 FPS), microphones (audio capture @ 44.1 kHz), and consistent lighting conditions. Establish baseline environmental readings.' },
+                { stage: '2', title: 'Input Simulation', color: 'text-success', desc: 'Simulate real-world scenarios including: (a) Object movement — person entering room, placing objects; (b) Distress speech — pre-recorded emotional audio samples; (c) Fire indicators — controlled flame-colored stimuli for vision-based fire detection.' },
+                { stage: '3', title: 'Multimodal Detection Pipeline', color: 'text-warning', desc: 'Execute the full detection stack: Saliency Engine (Sobel/Laplacian/Motion), Audio Classifier (FFT + ZCR + RMS analysis), and COCO-SSD Object Detector (MobileNetV2). All three modules process simultaneously in the browser.' },
+                { stage: '4', title: 'Performance Measurement', color: 'text-accent', desc: 'Record quantitative metrics: Detection Accuracy (TP/FP/FN rates), Response Time (latency from event to alert in ms), Saliency Map Reliability (consistency across repeated trials), System Usability (SUS score from respondents).' },
+                { stage: '5', title: 'Evaluation & Analysis', color: 'text-destructive', desc: 'Analyze results: Object identification accuracy per COCO class, distress detection rate (sensitivity/specificity), abnormal event recognition rate. Compare against baseline single-modality performance.' },
+                { stage: '6', title: 'Results & Validation', color: 'text-primary', desc: 'Compile reliability assessment using Five-Point Likert Scale from respondents. Evaluate practical applicability for indoor household deployment. Statistical treatment using weighted mean and standard deviation.' },
+              ].map(({ stage, title, color, desc }) => (
+                <div key={stage} className="flex gap-3">
+                  <span className={`text-[10px] font-mono font-bold ${color} mt-0.5 shrink-0`}>S{stage}</span>
+                  <div>
+                    <p className={`text-xs font-mono font-semibold ${color}`}>{title}</p>
+                    <p className="text-xs text-foreground/70 mt-0.5">{desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Testing Metrics Table */}
+          <div className="bg-card border border-border rounded-lg p-5 space-y-4">
+            <h3 className="text-sm font-mono font-bold text-primary">Performance Metrics Summary</h3>
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs font-mono">
+                <thead>
+                  <tr className="border-b border-border">
+                    <th className="text-left py-2 px-3 text-primary">Metric</th>
+                    <th className="text-left py-2 px-3 text-primary">Description</th>
+                    <th className="text-left py-2 px-3 text-primary">Target</th>
+                  </tr>
+                </thead>
+                <tbody className="text-foreground/80">
+                  <tr className="border-b border-border/50">
+                    <td className="py-2 px-3 font-semibold">Detection Accuracy</td>
+                    <td className="py-2 px-3">Ratio of correctly identified objects/events to total events</td>
+                    <td className="py-2 px-3 text-accent">≥ 85%</td>
+                  </tr>
+                  <tr className="border-b border-border/50">
+                    <td className="py-2 px-3 font-semibold">Response Time</td>
+                    <td className="py-2 px-3">Latency from event occurrence to alert generation</td>
+                    <td className="py-2 px-3 text-accent">{'<'} 3000ms</td>
+                  </tr>
+                  <tr className="border-b border-border/50">
+                    <td className="py-2 px-3 font-semibold">Saliency Reliability</td>
+                    <td className="py-2 px-3">Consistency of saliency map output across repeated trials</td>
+                    <td className="py-2 px-3 text-accent">≥ 80%</td>
+                  </tr>
+                  <tr className="border-b border-border/50">
+                    <td className="py-2 px-3 font-semibold">System Usability</td>
+                    <td className="py-2 px-3">SUS (System Usability Scale) score from respondent evaluation</td>
+                    <td className="py-2 px-3 text-accent">≥ 70/100</td>
+                  </tr>
+                  <tr>
+                    <td className="py-2 px-3 font-semibold">Speech Detection Rate</td>
+                    <td className="py-2 px-3">Accuracy of emotional distress and wake-word recognition</td>
+                    <td className="py-2 px-3 text-accent">≥ 80%</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
         </section>
 
         {/* Footer */}
