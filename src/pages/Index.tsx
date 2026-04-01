@@ -75,6 +75,7 @@ export default function Index() {
   const handleStart = useCallback(async () => {
     await enumerateDevices();
     loadModel(); // Start loading COCO-SSD model
+    if (speechSupported) startSpeech();
     if (simulationMode) {
       setRunning(true);
       startAudio();
@@ -83,7 +84,7 @@ export default function Index() {
       await startAudio();
       setRunning(true);
     }
-  }, [simulationMode, quality, startCameras, startAudio, enumerateDevices, loadModel]);
+  }, [simulationMode, quality, startCameras, startAudio, enumerateDevices, loadModel, speechSupported, startSpeech]);
 
   const handleStop = useCallback(() => {
     setRunning(false);
