@@ -285,7 +285,7 @@ export default function HouseholdPage() {
           <h1 className="text-sm font-mono font-bold text-foreground tracking-wide">HOUSEHOLD</h1>
         </div>
         <div className="flex items-center gap-3">
-          <button onClick={() => navigate('/')} className="text-[10px] font-mono text-primary hover:underline">← Dashboard</button>
+          <button onClick={() => navigate('/dashboard')} className="text-[10px] font-mono text-primary hover:underline">← Dashboard</button>
           <span className="text-[10px] font-mono text-muted-foreground">{user.email}</span>
           <button onClick={signOut} className="text-[10px] font-mono text-muted-foreground hover:text-destructive">Sign Out</button>
         </div>
