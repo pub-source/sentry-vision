@@ -529,7 +529,7 @@ export default function HouseholdPage() {
               )}
             </div>
 
-            <button onClick={() => navigate('/')} className="w-full text-xs font-mono py-2 rounded-md bg-primary text-primary-foreground hover:bg-primary/80 transition-all">
+            <button onClick={() => navigate('/dashboard')} className="w-full text-xs font-mono py-2 rounded-md bg-primary text-primary-foreground hover:bg-primary/80 transition-all">
               ▶ GO TO MONITORING DASHBOARD
             </button>
           </div>

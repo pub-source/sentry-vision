@@ -41,7 +41,7 @@ export default function ResetPassword() {
       setError(updateError.message);
     } else {
       setSuccess(true);
-      setTimeout(() => navigate('/'), 2000);
+      setTimeout(() => navigate('/dashboard'), 2000);
     }
     setSubmitting(false);
   };

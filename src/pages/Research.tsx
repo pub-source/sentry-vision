@@ -32,7 +32,7 @@ export default function Research() {
           </span>
         </div>
         <button
-          onClick={() => navigate('/')}
+          onClick={() => navigate('/dashboard')}
           className="text-[10px] font-mono text-primary hover:underline"
         >
           ← Back to Dashboard
