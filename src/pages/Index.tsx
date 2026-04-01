@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import CameraFeed from '@/components/dashboard/CameraFeed';
+import FusedDetectionView from '@/components/dashboard/FusedDetectionView';
 import SaliencyView from '@/components/dashboard/SaliencyView';
 import ThresholdView from '@/components/dashboard/ThresholdView';
 import LowFiView from '@/components/dashboard/LowFiView';
@@ -16,6 +17,7 @@ import ResearchPanel from '@/components/dashboard/ResearchPanel';
 import { useCamera } from '@/hooks/useCamera';
 import { useAudioAnalysis } from '@/hooks/useAudioAnalysis';
 import { useObjectDetection } from '@/hooks/useObjectDetection';
+import { useSpeechRecognition } from '@/hooks/useSpeechRecognition';
 import { useAuth } from '@/hooks/useAuth';
 import { useHousehold } from '@/hooks/useHousehold';
 import type { SaliencyMode, QualityMode, Alert, DetectedObject } from '@/types/dashboard';
@@ -28,6 +30,7 @@ export default function Index() {
   const { cameras, devices, startCameras, stopCameras, updateCamera, enumerateDevices } = useCamera();
   const { audioFeatures, startAudio, stopAudio } = useAudioAnalysis();
   const { loadModel, detect, stats: detectionStats } = useObjectDetection();
+  const { transcript, interimTranscript, isListening: speechListening, supported: speechSupported, start: startSpeech, stop: stopSpeech, clear: clearSpeech } = useSpeechRecognition();
   const [showEmergency, setShowEmergency] = useState(false);
 
   const [running, setRunning] = useState(false);
@@ -72,6 +75,7 @@ export default function Index() {
   const handleStart = useCallback(async () => {
     await enumerateDevices();
     loadModel(); // Start loading COCO-SSD model
+    if (speechSupported) startSpeech();
     if (simulationMode) {
       setRunning(true);
       startAudio();
@@ -80,15 +84,22 @@ export default function Index() {
       await startAudio();
       setRunning(true);
     }
-  }, [simulationMode, quality, startCameras, startAudio, enumerateDevices, loadModel]);
+  }, [simulationMode, quality, startCameras, startAudio, enumerateDevices, loadModel, speechSupported, startSpeech]);
 
   const handleStop = useCallback(() => {
     setRunning(false);
     stopCameras();
     stopAudio();
+    stopSpeech();
+    clearSpeech();
     setAttentionScore(0);
     setGlobalSaliencyScore(0);
-  }, [stopCameras, stopAudio]);
+  }, [stopCameras, stopAudio, stopSpeech, clearSpeech]);
+
+  const toggleSpeech = useCallback(() => {
+    if (speechListening) stopSpeech();
+    else startSpeech();
+  }, [speechListening, stopSpeech, startSpeech]);
 
   const handleFpsUpdate = useCallback((cameraId: number, fps: number) => {
     updateCamera(cameraId, { fps });
@@ -334,11 +345,37 @@ export default function Index() {
               onDetectFrame={handleDetectFrame}
             />
 
-            {/* CAM 2: Saliency Heatmap */}
+            {/* CAM 2: Fused Detection (Activity + Speech) */}
+            <FusedDetectionView
+              sourceCanvas={sourceCanvas}
+              objects={cameras[0].objects}
+              audioFeatures={audioFeatures}
+              attentionScore={attentionScore}
+              saliencyScore={globalSaliencyScore}
+              active={running}
+              transcript={transcript}
+              interimTranscript={interimTranscript}
+              speechListening={speechListening}
+              onToggleSpeech={toggleSpeech}
+            />
+          </div>
+
+          {/* Toggle button for extra cameras */}
+          <button
+            onClick={() => setShowExtraCams(prev => !prev)}
+            className="w-full flex items-center justify-center gap-2 py-1.5 text-[10px] font-mono text-muted-foreground hover:text-primary border border-border rounded-md hover:border-primary/50 transition-all bg-card"
+          >
+            {showExtraCams ? '▲ Hide Extra Cameras' : '▼ Show Extra Cameras (Saliency + CAM 3–8)'}
+          </button>
+
+          {showExtraCams && (
+          <>
+          {/* Saliency Heatmap (moved from CAM 2) */}
+          <div className="grid grid-cols-2 gap-2">
             <div className="relative bg-card rounded-md overflow-hidden border border-border panel-glow">
               <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between px-2 py-1 bg-gradient-to-b from-background/80 to-transparent">
                 <span className="text-[10px] font-mono text-primary uppercase tracking-wider">
-                  CAM 2 — Saliency Heatmap
+                  Saliency Heatmap
                 </span>
                 <div className="flex items-center gap-2">
                   <span className="text-[8px] font-mono px-1 py-0.5 rounded bg-accent/20 text-accent">SOBEL</span>
@@ -362,20 +399,6 @@ export default function Index() {
                 onScoreUpdate={handleSaliencyViewScore}
               />
             </div>
-          </div>
-
-          {/* Toggle button for extra cameras */}
-          <button
-            onClick={() => setShowExtraCams(prev => !prev)}
-            className="w-full flex items-center justify-center gap-2 py-1.5 text-[10px] font-mono text-muted-foreground hover:text-primary border border-border rounded-md hover:border-primary/50 transition-all bg-card"
-          >
-            {showExtraCams ? '▲ Hide Extra Cameras' : '▼ Show Extra Cameras (CAM 3–8)'}
-          </button>
-
-          {showExtraCams && (
-          <>
-          {/* Middle row: 2 cameras */}
-          <div className="grid grid-cols-2 gap-2">
             {/* CAM 3: Region Saliency */}
             <div className="relative bg-card rounded-md overflow-hidden border border-border panel-glow">
               <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between px-2 py-1 bg-gradient-to-b from-background/80 to-transparent">
@@ -394,6 +417,10 @@ export default function Index() {
                 score={globalSaliencyScore}
               />
             </div>
+          </div>
+
+          {/* Middle row: 2 cameras */}
+          <div className="grid grid-cols-2 gap-2">
 
             {/* CAM 4: Threshold Segmentation */}
             <div className="relative bg-card rounded-md overflow-hidden border border-border panel-glow">
