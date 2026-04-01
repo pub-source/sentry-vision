@@ -365,7 +365,7 @@ export default function Index() {
             onClick={() => setShowExtraCams(prev => !prev)}
             className="w-full flex items-center justify-center gap-2 py-1.5 text-[10px] font-mono text-muted-foreground hover:text-primary border border-border rounded-md hover:border-primary/50 transition-all bg-card"
           >
-            {showExtraCams ? '▲ Hide Extra Cameras' : '▼ Show Extra Cameras (CAM 3–8)'}
+            {showExtraCams ? '▲ Hide Extra Cameras' : '▼ Show Extra Cameras (Saliency + CAM 3–8)'}
           </button>
 
           {showExtraCams && (
