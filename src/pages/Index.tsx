@@ -345,34 +345,19 @@ export default function Index() {
               onDetectFrame={handleDetectFrame}
             />
 
-            {/* CAM 2: Saliency Heatmap */}
-            <div className="relative bg-card rounded-md overflow-hidden border border-border panel-glow">
-              <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between px-2 py-1 bg-gradient-to-b from-background/80 to-transparent">
-                <span className="text-[10px] font-mono text-primary uppercase tracking-wider">
-                  CAM 2 — Saliency Heatmap
-                </span>
-                <div className="flex items-center gap-2">
-                  <span className="text-[8px] font-mono px-1 py-0.5 rounded bg-accent/20 text-accent">SOBEL</span>
-                  <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded ${
-                    globalSaliencyScore > 60 ? 'bg-destructive/80 text-destructive-foreground' :
-                    globalSaliencyScore > 30 ? 'bg-warning/80 text-warning-foreground' :
-                    'bg-secondary/80 text-secondary-foreground'
-                  }`}>
-                    S:{globalSaliencyScore}
-                  </span>
-                </div>
-              </div>
-              <SaliencyView
-                title=""
-                sourceCanvas={sourceCanvas}
-                saliencyMode={saliencyMode}
-                threshold={threshold}
-                colored={true}
-                active={running}
-                score={globalSaliencyScore}
-                onScoreUpdate={handleSaliencyViewScore}
-              />
-            </div>
+            {/* CAM 2: Fused Detection (Activity + Speech) */}
+            <FusedDetectionView
+              sourceCanvas={sourceCanvas}
+              objects={cameras[0].objects}
+              audioFeatures={audioFeatures}
+              attentionScore={attentionScore}
+              saliencyScore={globalSaliencyScore}
+              active={running}
+              transcript={transcript}
+              interimTranscript={interimTranscript}
+              speechListening={speechListening}
+              onToggleSpeech={toggleSpeech}
+            />
           </div>
 
           {/* Toggle button for extra cameras */}
