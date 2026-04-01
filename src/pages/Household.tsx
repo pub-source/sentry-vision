@@ -285,7 +285,7 @@ export default function HouseholdPage() {
           <h1 className="text-sm font-mono font-bold text-foreground tracking-wide">HOUSEHOLD</h1>
         </div>
         <div className="flex items-center gap-3">
-          <button onClick={() => navigate('/')} className="text-[10px] font-mono text-primary hover:underline">← Dashboard</button>
+          <button onClick={() => navigate('/dashboard')} className="text-[10px] font-mono text-primary hover:underline">← Dashboard</button>
           <span className="text-[10px] font-mono text-muted-foreground">{user.email}</span>
           <button onClick={signOut} className="text-[10px] font-mono text-muted-foreground hover:text-destructive">Sign Out</button>
         </div>
@@ -529,7 +529,7 @@ export default function HouseholdPage() {
               )}
             </div>
 
-            <button onClick={() => navigate('/')} className="w-full text-xs font-mono py-2 rounded-md bg-primary text-primary-foreground hover:bg-primary/80 transition-all">
+            <button onClick={() => navigate('/dashboard')} className="w-full text-xs font-mono py-2 rounded-md bg-primary text-primary-foreground hover:bg-primary/80 transition-all">
               ▶ GO TO MONITORING DASHBOARD
             </button>
           </div>
