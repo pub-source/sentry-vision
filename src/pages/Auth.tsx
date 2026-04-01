@@ -554,7 +554,7 @@ function JoinWaitingScreen({ requestId, householdName, memberName, onBack }: {
         clearInterval(interval);
         // Store guest session info
         sessionStorage.setItem('guest_member', JSON.stringify({ name: memberName, household: householdName }));
-        setTimeout(() => navigate('/'), 1500);
+        setTimeout(() => navigate('/dashboard'), 1500);
       } else if (data?.status === 'rejected') {
         setStatus('rejected');
         clearInterval(interval);
