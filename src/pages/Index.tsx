@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import CameraFeed from '@/components/dashboard/CameraFeed';
+import FusedDetectionView from '@/components/dashboard/FusedDetectionView';
 import SaliencyView from '@/components/dashboard/SaliencyView';
 import ThresholdView from '@/components/dashboard/ThresholdView';
 import LowFiView from '@/components/dashboard/LowFiView';
@@ -16,6 +17,7 @@ import ResearchPanel from '@/components/dashboard/ResearchPanel';
 import { useCamera } from '@/hooks/useCamera';
 import { useAudioAnalysis } from '@/hooks/useAudioAnalysis';
 import { useObjectDetection } from '@/hooks/useObjectDetection';
+import { useSpeechRecognition } from '@/hooks/useSpeechRecognition';
 import { useAuth } from '@/hooks/useAuth';
 import { useHousehold } from '@/hooks/useHousehold';
 import type { SaliencyMode, QualityMode, Alert, DetectedObject } from '@/types/dashboard';
