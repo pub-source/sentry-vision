@@ -90,9 +90,16 @@ export default function Index() {
     setRunning(false);
     stopCameras();
     stopAudio();
+    stopSpeech();
+    clearSpeech();
     setAttentionScore(0);
     setGlobalSaliencyScore(0);
-  }, [stopCameras, stopAudio]);
+  }, [stopCameras, stopAudio, stopSpeech, clearSpeech]);
+
+  const toggleSpeech = useCallback(() => {
+    if (speechListening) stopSpeech();
+    else startSpeech();
+  }, [speechListening, stopSpeech, startSpeech]);
 
   const handleFpsUpdate = useCallback((cameraId: number, fps: number) => {
     updateCamera(cameraId, { fps });
