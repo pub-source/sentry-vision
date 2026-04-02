@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
+import { Moon, Sun } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import CameraFeed from '@/components/dashboard/CameraFeed';
 import FusedDetectionView from '@/components/dashboard/FusedDetectionView';
@@ -30,6 +31,18 @@ export default function Index() {
   const { cameras, devices, startCameras, stopCameras, updateCamera, enumerateDevices } = useCamera();
   const { audioFeatures, startAudio, stopAudio } = useAudioAnalysis();
   const { loadModel, detect, stats: detectionStats } = useObjectDetection();
+  const [darkMode, setDarkMode] = useState(() => {
+    const saved = localStorage.getItem('safewatch-dark-mode');
+    if (saved === 'true') {
+      document.documentElement.classList.add('dark');
+      return true;
+    }
+    return false;
+  });
+
+  useEffect(() => {
+    localStorage.setItem('safewatch-dark-mode', String(darkMode));
+  }, [darkMode]);
   const { transcript, interimTranscript, isListening: speechListening, supported: speechSupported, start: startSpeech, stop: stopSpeech, clear: clearSpeech } = useSpeechRecognition();
   const [showEmergency, setShowEmergency] = useState(false);
 
@@ -275,6 +288,16 @@ export default function Index() {
           )}
         </div>
         <div className="flex items-center gap-3">
+          <button
+            onClick={() => {
+              document.documentElement.classList.toggle('dark');
+              setDarkMode(prev => !prev);
+            }}
+            className="p-1.5 rounded-md border border-border hover:bg-muted transition-colors"
+            title={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+          >
+            {darkMode ? <Sun className="w-3.5 h-3.5 text-warning" /> : <Moon className="w-3.5 h-3.5 text-muted-foreground" />}
+          </button>
           <span className={`text-[10px] font-mono ${running ? 'text-success' : 'text-muted-foreground'}`}>
             {running ? '● LIVE' : '○ STANDBY'}
           </span>
