@@ -276,6 +276,16 @@ export default function Index() {
           )}
         </div>
         <div className="flex items-center gap-3">
+          <button
+            onClick={() => {
+              document.documentElement.classList.toggle('dark');
+              setDarkMode(prev => !prev);
+            }}
+            className="p-1.5 rounded-md border border-border hover:bg-muted transition-colors"
+            title={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+          >
+            {darkMode ? <Sun className="w-3.5 h-3.5 text-warning" /> : <Moon className="w-3.5 h-3.5 text-muted-foreground" />}
+          </button>
           <span className={`text-[10px] font-mono ${running ? 'text-success' : 'text-muted-foreground'}`}>
             {running ? '● LIVE' : '○ STANDBY'}
           </span>
