@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
+import { Moon, Sun } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import CameraFeed from '@/components/dashboard/CameraFeed';
 import FusedDetectionView from '@/components/dashboard/FusedDetectionView';
