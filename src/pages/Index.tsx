@@ -31,6 +31,18 @@ export default function Index() {
   const { cameras, devices, startCameras, stopCameras, updateCamera, enumerateDevices } = useCamera();
   const { audioFeatures, startAudio, stopAudio } = useAudioAnalysis();
   const { loadModel, detect, stats: detectionStats } = useObjectDetection();
+  const [darkMode, setDarkMode] = useState(() => {
+    const saved = localStorage.getItem('safewatch-dark-mode');
+    if (saved === 'true') {
+      document.documentElement.classList.add('dark');
+      return true;
+    }
+    return false;
+  });
+
+  useEffect(() => {
+    localStorage.setItem('safewatch-dark-mode', String(darkMode));
+  }, [darkMode]);
   const { transcript, interimTranscript, isListening: speechListening, supported: speechSupported, start: startSpeech, stop: stopSpeech, clear: clearSpeech } = useSpeechRecognition();
   const [showEmergency, setShowEmergency] = useState(false);
 
