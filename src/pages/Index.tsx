@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { Moon, Sun } from 'lucide-react';
+import { Moon, Sun, Shield, Home, LogOut, LogIn, User, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import CameraFeed from '@/components/dashboard/CameraFeed';
 import FusedDetectionView from '@/components/dashboard/FusedDetectionView';
@@ -269,52 +269,59 @@ export default function Index() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       {/* Header */}
-      <header className="border-b border-border px-4 py-2 flex items-center justify-between">
+      <header className="border-b border-border bg-card/80 backdrop-blur-sm px-5 py-2.5 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-          <h1 className="text-sm font-mono font-bold text-foreground tracking-wide">
-            MULTIMODAL SALIENCY DETECTION
-          </h1>
-          <span className="text-[9px] font-mono text-muted-foreground border border-border px-1.5 py-0.5 rounded">v1.0</span>
+          <img src="/favicon.png" alt="SafeWatch" className="w-7 h-7 rounded-lg" />
+          <div className="flex flex-col">
+            <h1 className="text-sm font-semibold text-foreground leading-tight">
+              SafeWatch
+            </h1>
+            <span className="text-[10px] text-muted-foreground leading-tight">Smart Monitoring</span>
+          </div>
+          <div className="h-5 w-px bg-border mx-1" />
           {researchMode && (
-            <span className="text-[9px] font-mono text-accent border border-accent/30 bg-accent/5 px-1.5 py-0.5 rounded">
-              RESEARCH
+            <span className="text-[10px] font-medium text-accent bg-accent/10 px-2 py-0.5 rounded-full">
+              Research
             </span>
           )}
           {householdId && (
-            <span className="text-[9px] font-mono text-success border border-success/30 bg-success/5 px-1.5 py-0.5 rounded">
-              🏠 HOUSEHOLD
+            <span className="text-[10px] font-medium text-success bg-success/10 px-2 py-0.5 rounded-full flex items-center gap-1">
+              <Home className="w-3 h-3" /> Household
             </span>
           )}
+          <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full flex items-center gap-1 ${running ? 'text-success bg-success/10' : 'text-muted-foreground bg-muted'}`}>
+            <span className={`w-1.5 h-1.5 rounded-full ${running ? 'bg-success animate-pulse' : 'bg-muted-foreground'}`} />
+            {running ? 'Live' : 'Standby'}
+          </span>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <button
             onClick={() => {
               document.documentElement.classList.toggle('dark');
               setDarkMode(prev => !prev);
             }}
-            className="p-1.5 rounded-md border border-border hover:bg-muted transition-colors"
+            className="p-1.5 rounded-lg border border-border hover:bg-muted transition-colors"
             title={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
           >
-            {darkMode ? <Sun className="w-3.5 h-3.5 text-warning" /> : <Moon className="w-3.5 h-3.5 text-muted-foreground" />}
+            {darkMode ? <Sun className="w-4 h-4 text-warning" /> : <Moon className="w-4 h-4 text-muted-foreground" />}
           </button>
-          <span className={`text-[10px] font-mono ${running ? 'text-success' : 'text-muted-foreground'}`}>
-            {running ? '● LIVE' : '○ STANDBY'}
-          </span>
           {user && (
             <>
               <button
                 onClick={() => navigate('/household')}
-                className="text-[10px] font-mono text-primary hover:underline"
+                className="text-[11px] font-medium text-primary hover:bg-primary/10 px-2.5 py-1 rounded-lg transition-colors flex items-center gap-1"
               >
-                🏠 Household
+                <Home className="w-3.5 h-3.5" /> Household
               </button>
-              <span className="text-[10px] font-mono text-muted-foreground">{user.email}</span>
+              <div className="h-5 w-px bg-border" />
+              <span className="text-[11px] text-muted-foreground flex items-center gap-1">
+                <User className="w-3.5 h-3.5" /> {user.email}
+              </span>
               <button
                 onClick={signOut}
-                className="text-[10px] font-mono text-muted-foreground hover:text-destructive"
+                className="text-[11px] font-medium text-muted-foreground hover:text-destructive hover:bg-destructive/10 px-2 py-1 rounded-lg transition-colors flex items-center gap-1"
               >
-                Sign Out
+                <LogOut className="w-3.5 h-3.5" /> Sign Out
               </button>
             </>
           )}
@@ -323,21 +330,21 @@ export default function Index() {
             if (guest) {
               const { name, household } = JSON.parse(guest);
               return (
-                <span className="text-[10px] font-mono text-accent">
-                  👤 {name} • {household}
+                <span className="text-[11px] font-medium text-accent flex items-center gap-1">
+                  <User className="w-3.5 h-3.5" /> {name} • {household}
                 </span>
               );
             }
             return (
               <button
                 onClick={() => navigate('/auth')}
-                className="text-[10px] font-mono text-primary hover:underline"
+                className="text-[11px] font-medium text-primary hover:bg-primary/10 px-2.5 py-1 rounded-lg transition-colors flex items-center gap-1"
               >
-                Sign In
+                <LogIn className="w-3.5 h-3.5" /> Sign In
               </button>
             );
           })()}
-          <span className="text-[10px] font-mono text-muted-foreground">
+          <span className="text-[10px] text-muted-foreground font-mono tabular-nums">
             {new Date().toLocaleTimeString()}
           </span>
         </div>
