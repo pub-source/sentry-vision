@@ -278,7 +278,7 @@ export default function Index() {
               Multimodal Saliency Detection
             </h1>
           </div>
-          <span className="text-[9px] font-mono text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full">v1.0</span>
+          
           {researchMode && (
             <span className="text-[9px] font-medium text-accent bg-accent/10 px-2 py-0.5 rounded-full">
               Research
@@ -569,6 +569,10 @@ export default function Index() {
               )}
             </div>
           </div>
+          </>
+          )}
+
+          {/* Multimodal Fusion Output */}
           <div className="bg-card rounded-md border border-primary/30 panel-glow p-3">
             <div className="flex items-center justify-between mb-2">
               <span className="text-[10px] font-mono text-primary uppercase tracking-wider">
@@ -579,7 +583,6 @@ export default function Index() {
               </span>
             </div>
             <div className="grid grid-cols-8 gap-2">
-              {/* CAM 1 contribution */}
               <div className="bg-secondary/30 rounded p-2 space-y-1">
                 <p className="text-[9px] font-mono text-accent font-semibold">CAM 1</p>
                 <p className="text-[8px] font-mono text-muted-foreground">Detection</p>
@@ -588,18 +591,14 @@ export default function Index() {
                 </div>
                 <p className="text-[7px] font-mono text-foreground/70">{cameras[0].objects.length} obj</p>
               </div>
-              {/* CAM 2 */}
               <div className="bg-secondary/30 rounded p-2 space-y-1">
                 <p className="text-[9px] font-mono text-accent font-semibold">CAM 2</p>
                 <p className="text-[8px] font-mono text-muted-foreground">Heatmap</p>
                 <div className="h-1.5 bg-secondary/50 rounded overflow-hidden">
-                  <div className={`h-full rounded transition-all ${
-                    globalSaliencyScore > 60 ? 'bg-destructive' : globalSaliencyScore > 30 ? 'bg-warning' : 'bg-success'
-                  }`} style={{ width: `${globalSaliencyScore}%` }} />
+                  <div className={`h-full rounded transition-all ${globalSaliencyScore > 60 ? 'bg-destructive' : globalSaliencyScore > 30 ? 'bg-warning' : 'bg-success'}`} style={{ width: `${globalSaliencyScore}%` }} />
                 </div>
                 <p className="text-[7px] font-mono text-foreground/70">S:{globalSaliencyScore}</p>
               </div>
-              {/* CAM 3 */}
               <div className="bg-secondary/30 rounded p-2 space-y-1">
                 <p className="text-[9px] font-mono text-accent font-semibold">CAM 3</p>
                 <p className="text-[8px] font-mono text-muted-foreground">Region</p>
@@ -608,7 +607,6 @@ export default function Index() {
                 </div>
                 <p className="text-[7px] font-mono text-foreground/70">Edge map</p>
               </div>
-              {/* CAM 4 */}
               <div className="bg-secondary/30 rounded p-2 space-y-1">
                 <p className="text-[9px] font-mono text-accent font-semibold">CAM 4</p>
                 <p className="text-[8px] font-mono text-muted-foreground">Threshold</p>
@@ -617,7 +615,6 @@ export default function Index() {
                 </div>
                 <p className="text-[7px] font-mono text-foreground/70">τ={threshold}</p>
               </div>
-              {/* CAM 5 */}
               <div className="bg-secondary/30 rounded p-2 space-y-1">
                 <p className="text-[9px] font-mono text-accent font-semibold">CAM 5</p>
                 <p className="text-[8px] font-mono text-muted-foreground">Low-Fi</p>
@@ -626,7 +623,6 @@ export default function Index() {
                 </div>
                 <p className="text-[7px] font-mono text-foreground/70">Superpixel</p>
               </div>
-              {/* CAM 6 */}
               <div className="bg-secondary/30 rounded p-2 space-y-1">
                 <p className="text-[9px] font-mono text-accent font-semibold">CAM 6</p>
                 <p className="text-[8px] font-mono text-muted-foreground">Shader</p>
@@ -635,7 +631,6 @@ export default function Index() {
                 </div>
                 <p className="text-[7px] font-mono text-foreground/70">Mask</p>
               </div>
-              {/* CAM 7 */}
               <div className="bg-secondary/30 rounded p-2 space-y-1">
                 <p className="text-[9px] font-mono text-accent font-semibold">CAM 7</p>
                 <p className="text-[8px] font-mono text-muted-foreground">Laplacian</p>
@@ -644,7 +639,6 @@ export default function Index() {
                 </div>
                 <p className="text-[7px] font-mono text-foreground/70">∇²I</p>
               </div>
-              {/* CAM 8 */}
               <div className="bg-secondary/30 rounded p-2 space-y-1">
                 <p className="text-[9px] font-mono text-accent font-semibold">CAM 8</p>
                 <p className="text-[8px] font-mono text-muted-foreground">Motion</p>
@@ -654,30 +648,19 @@ export default function Index() {
                 <p className="text-[7px] font-mono text-foreground/70">ΔI</p>
               </div>
             </div>
-            {/* Combined score */}
             <div className="mt-2 flex items-center gap-3 bg-secondary/20 rounded p-2">
               <span className="text-[9px] font-mono text-muted-foreground">FUSED α =</span>
-              <span className={`text-sm font-mono font-bold ${
-                attentionScore > 70 ? 'text-destructive' : attentionScore > 40 ? 'text-warning' : 'text-success'
-              }`}>
+              <span className={`text-sm font-mono font-bold ${attentionScore > 70 ? 'text-destructive' : attentionScore > 40 ? 'text-warning' : 'text-success'}`}>
                 {attentionScore}
               </span>
               <div className="flex-1 h-2 bg-secondary/50 rounded overflow-hidden">
-                <div className={`h-full rounded transition-all ${
-                  attentionScore > 70 ? 'bg-destructive' : attentionScore > 40 ? 'bg-warning' : 'bg-success'
-                }`} style={{ width: `${attentionScore}%` }} />
+                <div className={`h-full rounded transition-all ${attentionScore > 70 ? 'bg-destructive' : attentionScore > 40 ? 'bg-warning' : 'bg-success'}`} style={{ width: `${attentionScore}%` }} />
               </div>
-              <span className={`text-[9px] font-mono px-1.5 py-0.5 rounded ${
-                attentionScore > 70 ? 'bg-destructive/20 text-destructive' :
-                attentionScore > 40 ? 'bg-warning/20 text-warning' :
-                'bg-success/20 text-success'
-              }`}>
+              <span className={`text-[9px] font-mono px-1.5 py-0.5 rounded ${attentionScore > 70 ? 'bg-destructive/20 text-destructive' : attentionScore > 40 ? 'bg-warning/20 text-warning' : 'bg-success/20 text-success'}`}>
                 {attentionScore > 70 ? 'ALERT' : attentionScore > 40 ? 'ELEVATED' : 'NORMAL'}
               </span>
             </div>
           </div>
-          </>
-          )}
 
           {/* Bottom: Timeline */}
           <div className="bg-card rounded-md border border-border panel-glow p-3">
@@ -740,6 +723,28 @@ export default function Index() {
 
         {/* Right sidebar */}
         <div className="w-72 border-l border-border p-2 space-y-2 overflow-y-auto">
+          {/* Start/Stop */}
+          <div className="bg-card rounded-md border border-border panel-glow p-3">
+            <button
+              onClick={running ? handleStop : handleStart}
+              className={`w-full text-xs font-mono py-2.5 px-3 rounded-md transition-all font-semibold ${
+                running
+                  ? 'bg-destructive text-destructive-foreground hover:bg-destructive/80'
+                  : 'bg-primary text-primary-foreground hover:bg-primary/80'
+              }`}
+            >
+              {running ? '■ STOP MONITORING' : '▶ START MONITORING'}
+            </button>
+          </div>
+
+          <AttentionGauge score={attentionScore} />
+
+          <AudioMeter features={audioFeatures} active={running} />
+
+          <AlertLog alerts={alerts} visible={showAlerts} snapshots={snapshots} />
+
+          <DebugPanel cameras={cameras} devices={devices} errors={errors} detectionStats={detectionStats} />
+
           <ControlsPanel
             running={running}
             saliencyMode={saliencyMode}
@@ -769,10 +774,6 @@ export default function Index() {
             onExportCSV={exportCSV}
           />
 
-          <AttentionGauge score={attentionScore} />
-
-          <AudioMeter features={audioFeatures} active={running} />
-
           <ResearchPanel
             active={running}
             researchMode={researchMode}
@@ -785,8 +786,6 @@ export default function Index() {
             alerts={alerts}
             onToggleResearch={() => setResearchMode(p => !p)}
           />
-
-          <AlertLog alerts={alerts} visible={showAlerts} snapshots={snapshots} />
 
           {/* Auto-Snapshots */}
           {snapshots.length > 0 && (
@@ -828,8 +827,6 @@ export default function Index() {
               </div>
             </div>
           )}
-
-          <DebugPanel cameras={cameras} devices={devices} errors={errors} detectionStats={detectionStats} />
         </div>
       </div>
     </div>
