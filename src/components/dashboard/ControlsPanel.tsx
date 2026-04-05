@@ -52,19 +52,6 @@ export default function ControlsPanel(props: ControlsPanelProps) {
     <div className="bg-card rounded-md border border-border panel-glow p-3 space-y-3">
       <span className="text-[10px] font-mono text-primary uppercase tracking-wider">Controls</span>
 
-      {/* Start/Stop */}
-      <div className="flex gap-2">
-        <button
-          onClick={running ? onStop : onStart}
-          className={`flex-1 text-xs font-mono py-2 px-3 rounded-md transition-all ${
-            running
-              ? 'bg-destructive text-destructive-foreground hover:bg-destructive/80'
-              : 'bg-primary text-primary-foreground hover:bg-primary/80'
-          }`}
-        >
-          {running ? '■ STOP' : '▶ START'}
-        </button>
-      </div>
 
       {/* Toggles grid */}
       <div className="grid grid-cols-2 gap-1.5">
