@@ -723,6 +723,28 @@ export default function Index() {
 
         {/* Right sidebar */}
         <div className="w-72 border-l border-border p-2 space-y-2 overflow-y-auto">
+          {/* Start/Stop */}
+          <div className="bg-card rounded-md border border-border panel-glow p-3">
+            <button
+              onClick={running ? handleStop : handleStart}
+              className={`w-full text-xs font-mono py-2.5 px-3 rounded-md transition-all font-semibold ${
+                running
+                  ? 'bg-destructive text-destructive-foreground hover:bg-destructive/80'
+                  : 'bg-primary text-primary-foreground hover:bg-primary/80'
+              }`}
+            >
+              {running ? '■ STOP MONITORING' : '▶ START MONITORING'}
+            </button>
+          </div>
+
+          <AttentionGauge score={attentionScore} />
+
+          <AudioMeter features={audioFeatures} active={running} />
+
+          <AlertLog alerts={alerts} visible={showAlerts} snapshots={snapshots} />
+
+          <DebugPanel cameras={cameras} devices={devices} errors={errors} detectionStats={detectionStats} />
+
           <ControlsPanel
             running={running}
             saliencyMode={saliencyMode}
@@ -752,10 +774,6 @@ export default function Index() {
             onExportCSV={exportCSV}
           />
 
-          <AttentionGauge score={attentionScore} />
-
-          <AudioMeter features={audioFeatures} active={running} />
-
           <ResearchPanel
             active={running}
             researchMode={researchMode}
@@ -768,8 +786,6 @@ export default function Index() {
             alerts={alerts}
             onToggleResearch={() => setResearchMode(p => !p)}
           />
-
-          <AlertLog alerts={alerts} visible={showAlerts} snapshots={snapshots} />
 
           {/* Auto-Snapshots */}
           {snapshots.length > 0 && (
@@ -811,8 +827,6 @@ export default function Index() {
               </div>
             </div>
           )}
-
-          <DebugPanel cameras={cameras} devices={devices} errors={errors} detectionStats={detectionStats} />
         </div>
       </div>
     </div>
