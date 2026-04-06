@@ -19,6 +19,21 @@ import testingProcedureDiagram from '@/assets/testing-procedure-diagram.png';
 
 export default function Research() {
   const navigate = useNavigate();
+  const [darkMode, setDarkMode] = useState(() => {
+    const saved = localStorage.getItem('safewatch-dark-mode');
+    if (saved === 'true') return true;
+    if (saved === 'false') return false;
+    return document.documentElement.classList.contains('dark');
+  });
+
+  useEffect(() => {
+    if (darkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+    localStorage.setItem('safewatch-dark-mode', String(darkMode));
+  }, [darkMode]);
 
   return (
     <div className="min-h-screen bg-background text-foreground">
