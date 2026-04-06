@@ -48,12 +48,21 @@ export default function Research() {
             CSP111
           </span>
         </div>
-        <button
-          onClick={() => navigate('/dashboard')}
-          className="text-[10px] font-mono text-primary hover:underline"
-        >
-          ← Back to Dashboard
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setDarkMode(prev => !prev)}
+            className="p-2 rounded-lg hover:bg-muted transition-colors"
+            title={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+          >
+            {darkMode ? <Sun className="w-4 h-4 text-foreground" /> : <Moon className="w-4 h-4 text-foreground" />}
+          </button>
+          <button
+            onClick={() => navigate('/dashboard')}
+            className="text-[10px] font-mono text-primary hover:underline"
+          >
+            ← Back to Dashboard
+          </button>
+        </div>
       </header>
 
       {/* Title Section */}
