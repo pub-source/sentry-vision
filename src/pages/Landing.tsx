@@ -1,6 +1,7 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
-import { Shield, Eye, Wifi, Bell, Cpu, Users, ArrowRight, CheckCircle2, Lock, Zap, MonitorSmartphone } from 'lucide-react';
+import { Shield, Eye, Wifi, Bell, Cpu, Users, ArrowRight, CheckCircle2, Lock, Zap, MonitorSmartphone, Sun, Moon } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const features = [
