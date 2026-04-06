@@ -1,4 +1,6 @@
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Sun, Moon } from 'lucide-react';
 import { UseCaseDiagram, DataFlowDiagram, ActivityDiagram, SequenceDiagram, ERDiagram, StateDiagram, ConceptualFrameworkDiagram } from '@/components/research/ResearchDiagrams';
 import saliencyExamples from '@/assets/saliency-examples.png';
 import camOriginal1 from '@/assets/camera-detect-original-1.jpg';
@@ -17,6 +19,21 @@ import testingProcedureDiagram from '@/assets/testing-procedure-diagram.png';
 
 export default function Research() {
   const navigate = useNavigate();
+  const [darkMode, setDarkMode] = useState(() => {
+    const saved = localStorage.getItem('safewatch-dark-mode');
+    if (saved === 'true') return true;
+    if (saved === 'false') return false;
+    return document.documentElement.classList.contains('dark');
+  });
+
+  useEffect(() => {
+    if (darkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+    localStorage.setItem('safewatch-dark-mode', String(darkMode));
+  }, [darkMode]);
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -31,12 +48,21 @@ export default function Research() {
             CSP111
           </span>
         </div>
-        <button
-          onClick={() => navigate('/dashboard')}
-          className="text-[10px] font-mono text-primary hover:underline"
-        >
-          ← Back to Dashboard
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setDarkMode(prev => !prev)}
+            className="p-2 rounded-lg hover:bg-muted transition-colors"
+            title={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+          >
+            {darkMode ? <Sun className="w-4 h-4 text-foreground" /> : <Moon className="w-4 h-4 text-foreground" />}
+          </button>
+          <button
+            onClick={() => navigate('/dashboard')}
+            className="text-[10px] font-mono text-primary hover:underline"
+          >
+            ← Back to Dashboard
+          </button>
+        </div>
       </header>
 
       {/* Title Section */}
