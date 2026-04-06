@@ -1,4 +1,6 @@
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Sun, Moon } from 'lucide-react';
 import { UseCaseDiagram, DataFlowDiagram, ActivityDiagram, SequenceDiagram, ERDiagram, StateDiagram, ConceptualFrameworkDiagram } from '@/components/research/ResearchDiagrams';
 import saliencyExamples from '@/assets/saliency-examples.png';
 import camOriginal1 from '@/assets/camera-detect-original-1.jpg';
