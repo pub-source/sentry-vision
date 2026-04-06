@@ -62,6 +62,12 @@ const fadeIn = {
 export default function Landing() {
   const navigate = useNavigate();
   const { user, loading } = useAuth();
+  const [darkMode, setDarkMode] = useState(() => {
+    const saved = localStorage.getItem('safewatch-dark-mode');
+    if (saved === 'true') return true;
+    if (saved === 'false') return false;
+    return document.documentElement.classList.contains('dark');
+  });
 
   return (
     <div className="min-h-screen bg-background">
