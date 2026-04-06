@@ -1,6 +1,7 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
-import { Shield, Eye, Wifi, Bell, Cpu, Users, ArrowRight, CheckCircle2, Lock, Zap, MonitorSmartphone } from 'lucide-react';
+import { Shield, Eye, Wifi, Bell, Cpu, Users, ArrowRight, CheckCircle2, Lock, Zap, MonitorSmartphone, Sun, Moon } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const features = [
@@ -61,6 +62,12 @@ const fadeIn = {
 export default function Landing() {
   const navigate = useNavigate();
   const { user, loading } = useAuth();
+  const [darkMode, setDarkMode] = useState(() => {
+    const saved = localStorage.getItem('safewatch-dark-mode');
+    if (saved === 'true') return true;
+    if (saved === 'false') return false;
+    return document.documentElement.classList.contains('dark');
+  });
 
   return (
     <div className="min-h-screen bg-background">
@@ -74,6 +81,19 @@ export default function Landing() {
             <span className="text-lg font-bold text-foreground tracking-tight">SafeWatch</span>
           </div>
           <div className="flex items-center gap-3">
+            <button
+              onClick={() => {
+                document.documentElement.classList.toggle('dark');
+                setDarkMode(prev => {
+                  localStorage.setItem('safewatch-dark-mode', String(!prev));
+                  return !prev;
+                });
+              }}
+              className="p-2 rounded-lg hover:bg-muted transition-colors"
+              title={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+            >
+              {darkMode ? <Sun className="w-4 h-4 text-foreground" /> : <Moon className="w-4 h-4 text-foreground" />}
+            </button>
             <button
               onClick={() => navigate('/research')}
               className="text-sm text-muted-foreground hover:text-foreground transition-colors px-3 py-2"
