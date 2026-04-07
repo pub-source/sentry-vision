@@ -106,12 +106,16 @@ export default function Auth() {
     e.preventDefault();
     setError('');
     setSuccess('');
+    if (!email.trim().toLowerCase().endsWith('@gmail.com')) {
+      setError('Only @gmail.com email addresses are allowed.');
+      return;
+    }
     setSubmitting(true);
     const { error: authError } = await signUp(email, password);
     if (authError) {
       setError(authError.message);
     } else {
-      setSuccess('Account created! Check your email to confirm, then sign in.');
+      setSuccess('Account created successfully! You can now sign in.');
     }
     setSubmitting(false);
   };
