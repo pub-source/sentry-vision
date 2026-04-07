@@ -134,6 +134,25 @@ export default function Auth() {
     setSubmitting(false);
   };
 
+  const handleGoogleSignIn = async () => {
+    setError('');
+    setSubmitting(true);
+    try {
+      const result = await lovable.auth.signInWithOAuth("google", {
+        redirect_uri: window.location.origin,
+      });
+      if (result.error) {
+        setError(result.error instanceof Error ? result.error.message : String(result.error));
+      }
+      if (result.redirected) {
+        return;
+      }
+    } catch (err: any) {
+      setError(err?.message || 'Google sign-in failed');
+    }
+    setSubmitting(false);
+  };
+
   const handleJoinWithCode = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
