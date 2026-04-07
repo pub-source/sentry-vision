@@ -578,6 +578,7 @@ export default function Auth() {
           {error && <p className="text-[10px] font-mono text-destructive">{error}</p>}
           {success && <p className="text-[10px] font-mono text-success">{success}</p>}
           <button type="submit" disabled={submitting} className="w-full text-xs font-mono py-2 px-3 rounded-md bg-primary text-primary-foreground hover:bg-primary/80 transition-all disabled:opacity-50">{submitting ? '...' : '▶ CREATE ACCOUNT'}</button>
+          {renderGoogleButton()}
           <button type="button" onClick={() => { clearState(); setMode('login'); }} className="w-full text-[10px] font-mono text-muted-foreground hover:text-primary transition-colors">Already have an account? Sign in</button>
           <button type="button" onClick={() => { clearState(); setMode('choose'); }} className="w-full text-[10px] font-mono text-muted-foreground hover:text-primary transition-colors">← Back</button>
         </form>
