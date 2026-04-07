@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { lovable } from '@/integrations/lovable/index';
+
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
 
 type AuthMode = 'choose' | 'create' | 'join-qr' | 'join-name' | 'join-submitted' | 'login' | 'forgot';
