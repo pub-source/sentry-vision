@@ -540,6 +540,7 @@ export default function Auth() {
             </div>
             {error && <p className="text-[10px] font-mono text-destructive">{error}</p>}
             <button type="submit" disabled={submitting} className="w-full text-xs font-mono py-2 px-3 rounded-md bg-primary text-primary-foreground hover:bg-primary/80 transition-all disabled:opacity-50">{submitting ? '...' : '▶ SIGN IN'}</button>
+            {renderGoogleButton()}
             <button type="button" onClick={() => { setMode('forgot'); setError(''); }} className="w-full text-[10px] font-mono text-muted-foreground hover:text-primary transition-colors">Forgot password?</button>
             <button type="button" onClick={() => { clearState(); setMode('choose'); }} className="w-full text-[10px] font-mono text-muted-foreground hover:text-primary transition-colors">← Back</button>
           </form>
