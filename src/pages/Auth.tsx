@@ -138,19 +138,18 @@ export default function Auth() {
     setError('');
     setSubmitting(true);
     try {
-      const result = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: window.location.origin,
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: { redirectTo: window.location.origin },
       });
-      if (result.error) {
-        setError(result.error instanceof Error ? result.error.message : String(result.error));
-      }
-      if (result.redirected) {
-        return;
+      if (error) {
+        setError(error.message);
+        setSubmitting(false);
       }
     } catch (err: any) {
       setError(err?.message || 'Google sign-in failed');
+      setSubmitting(false);
     }
-    setSubmitting(false);
   };
 
   const handleJoinWithCode = async (e: React.FormEvent) => {
