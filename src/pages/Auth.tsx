@@ -123,6 +123,10 @@ export default function Auth() {
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    if (!email.trim().toLowerCase().endsWith('@gmail.com')) {
+      setError('Only @gmail.com email addresses are allowed.');
+      return;
+    }
     setSubmitting(true);
     const { error: authError } = await signIn(email, password);
     if (authError) setError(authError.message);
