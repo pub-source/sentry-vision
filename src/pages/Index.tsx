@@ -123,7 +123,7 @@ export default function Index() {
     return () => clearTimeout(timeout);
   }, [transcript, running, checkForWakeWord, addAlert, logAlert, logNotification]);
 
-
+  const handleStart = useCallback(async () => {
     await enumerateDevices();
     loadModel(); // Start loading COCO-SSD model
     if (speechSupported) startSpeech();
