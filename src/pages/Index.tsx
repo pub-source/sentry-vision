@@ -190,12 +190,6 @@ export default function Index() {
       }
       if (audioFeatures.speechDetected) {
         addAlert('Speech detected', 'low', 0);
-        wakeWords.forEach(ww => {
-          if (ww.is_emergency && audioFeatures.audioEvent === 'scream') {
-            setShowEmergency(true);
-            logAlert('emergency_trigger', `Emergency wake word triggered: "${ww.phrase}"`);
-          }
-        });
       }
       if (audioFeatures.decibel > -10) {
         addAlert('High noise level', 'medium', 0);
