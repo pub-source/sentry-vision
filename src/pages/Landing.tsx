@@ -78,7 +78,7 @@ export default function Landing() {
             <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
               <Eye className="w-4 h-4 text-primary-foreground" />
             </div>
-            <span className="text-lg font-bold text-foreground tracking-tight">SafeWatch</span>
+            <span className="text-lg font-bold text-foreground tracking-tight">MSDSystem</span>
           </div>
           <div className="flex items-center gap-3">
             <button
@@ -93,12 +93,6 @@ export default function Landing() {
               title={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
             >
               {darkMode ? <Sun className="w-4 h-4 text-foreground" /> : <Moon className="w-4 h-4 text-foreground" />}
-            </button>
-            <button
-              onClick={() => navigate('/research')}
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors px-3 py-2"
-            >
-              Research
             </button>
             {!loading && (
               user ? (
@@ -163,12 +157,6 @@ export default function Landing() {
             >
               {user ? 'Open Dashboard' : 'Get Started Free'}
               <ArrowRight className="w-4 h-4" />
-            </button>
-            <button
-              onClick={() => navigate('/research')}
-              className="inline-flex items-center gap-2 text-base font-medium text-foreground px-8 py-3.5 rounded-xl border border-border hover:border-primary/30 hover:bg-primary/5 transition-all"
-            >
-              View Research
             </button>
           </motion.div>
         </div>
@@ -282,7 +270,7 @@ export default function Landing() {
             <div className="w-6 h-6 rounded-md bg-primary flex items-center justify-center">
               <Eye className="w-3 h-3 text-primary-foreground" />
             </div>
-            <span className="text-sm font-semibold text-foreground">SafeWatch</span>
+            <span className="text-sm font-semibold text-foreground">MSDSystem</span>
           </div>
           <p className="text-xs text-muted-foreground">
             © {new Date().getFullYear()} Multimodal Saliency Detection System. All rights reserved.
