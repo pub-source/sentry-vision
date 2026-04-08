@@ -1,8 +1,8 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
+import { Shield, UserPlus, QrCode, LogIn, ArrowLeft, Mail, Lock, User, Phone, Camera, Send, KeyRound } from 'lucide-react';
 
 type AuthMode = 'choose' | 'create' | 'join-qr' | 'join-name' | 'join-submitted' | 'login' | 'forgot';
 
@@ -27,7 +27,6 @@ export default function Auth() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
-  // Handle URL invite code from /join/:code route
   useEffect(() => {
     if (urlCode && !inviteCode) {
       const normalized = normalizeInviteCode(urlCode);
@@ -38,7 +37,6 @@ export default function Auth() {
     }
   }, [urlCode, inviteCode]);
 
-  // Cleanup camera on unmount or mode change
   useEffect(() => {
     return () => {
       if (streamRef.current) {
@@ -60,7 +58,10 @@ export default function Auth() {
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-10 h-10 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+          <span className="text-xs font-mono text-muted-foreground">Loading...</span>
+        </div>
       </div>
     );
   }
@@ -85,9 +86,7 @@ export default function Auth() {
   const extractInviteCode = (rawValue: string) => {
     const raw = rawValue.trim();
     const joinMatch = raw.match(/\/join\/([a-z0-9]{8})/i);
-    if (joinMatch?.[1]) {
-      return normalizeInviteCode(joinMatch[1]);
-    }
+    if (joinMatch?.[1]) return normalizeInviteCode(joinMatch[1]);
     return normalizeInviteCode(raw);
   };
 
@@ -134,28 +133,23 @@ export default function Auth() {
     setSubmitting(false);
   };
 
-
   const handleJoinWithCode = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-
     const normalizedCode = normalizeInviteCode(inviteCode);
     if (normalizedCode.length !== 8) {
       setError('Invite code must be 8 characters');
       return;
     }
-
     const { data: hh } = await supabase
       .from('households')
       .select('id, name')
       .eq('invite_code', normalizedCode)
       .maybeSingle();
-
     if (!hh) {
       setError('Invalid invite code. Ask your household admin for a valid code.');
       return;
     }
-
     setInviteCode(normalizedCode);
     setMatchedHousehold({ id: hh.id, name: hh.name });
     setMode('join-name');
@@ -164,14 +158,8 @@ export default function Auth() {
   const handleSubmitJoinRequest = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    if (!joinName.trim()) {
-      setError('Please enter your name');
-      return;
-    }
-    if (!matchedHousehold) {
-      setError('No household selected');
-      return;
-    }
+    if (!joinName.trim()) { setError('Please enter your name'); return; }
+    if (!matchedHousehold) { setError('No household selected'); return; }
     setSubmitting(true);
     const { data: inserted, error: insertErr } = await supabase
       .from('join_requests')
@@ -196,18 +184,12 @@ export default function Auth() {
     setScanning(true);
     setError('');
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'environment' },
-      });
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
       streamRef.current = stream;
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        // Wait for video to actually load before scanning
-        videoRef.current.onloadedmetadata = () => {
-          videoRef.current?.play().catch(() => {});
-        };
+        videoRef.current.onloadedmetadata = () => { videoRef.current?.play().catch(() => {}); };
       }
-      // Use BarcodeDetector API if available
       if ('BarcodeDetector' in window) {
         const detector = new (window as any).BarcodeDetector({ formats: ['qr_code'] });
         const scanLoop = async () => {
@@ -218,25 +200,20 @@ export default function Auth() {
           try {
             const barcodes = await detector.detect(videoRef.current);
             if (barcodes.length > 0) {
-              const rawCode = barcodes[0].rawValue || '';
-              const normalizedCode = extractInviteCode(rawCode);
-              if (!normalizedCode) {
-                setError('Could not read a valid invite code from QR. Try again.');
-                return;
-              }
+              const normalizedCode = extractInviteCode(barcodes[0].rawValue || '');
+              if (!normalizedCode) { setError('Could not read a valid invite code from QR.'); return; }
               setInviteCode(normalizedCode);
               setScanning(false);
               streamRef.current?.getTracks().forEach(t => t.stop());
               streamRef.current = null;
               return;
             }
-          } catch { /* ignore scan errors */ }
+          } catch {}
           if (streamRef.current) requestAnimationFrame(scanLoop);
         };
-        // Start scanning after a short delay to ensure video is ready
         setTimeout(() => requestAnimationFrame(scanLoop), 500);
       } else {
-        setError('QR scanning not supported in this browser. Enter the code manually.');
+        setError('QR scanning not supported. Enter the code manually.');
         setScanning(false);
         stream.getTracks().forEach(t => t.stop());
         streamRef.current = null;
@@ -247,300 +224,325 @@ export default function Auth() {
     }
   };
 
-  const renderHeader = () => (
-    <div className="text-center space-y-2">
-      <div className="flex items-center justify-center gap-2">
-        <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-        <h1 className="text-sm font-mono font-bold text-foreground tracking-wide">
-          SALIENCY GUARD
-        </h1>
+  // Shared layout wrapper
+  const PageWrapper = ({ children }: { children: React.ReactNode }) => (
+    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+      <div className="w-full max-w-md space-y-6">
+        {/* Header */}
+        <div className="text-center space-y-3">
+          <div className="flex items-center justify-center gap-2.5">
+            <Shield className="w-6 h-6 text-primary" />
+            <h1 className="text-lg font-semibold text-foreground tracking-tight">
+              MSDSystem
+            </h1>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Multimodal Saliency Detection System
+          </p>
+        </div>
+        {children}
       </div>
-      <p className="text-[10px] font-mono text-muted-foreground">
-        Household Security Monitoring System
-      </p>
     </div>
   );
 
+  const ErrorMsg = ({ msg }: { msg: string }) => msg ? (
+    <div className="flex items-center gap-2 bg-destructive/10 border border-destructive/20 rounded-lg px-3 py-2.5">
+      <span className="text-destructive text-sm">⚠</span>
+      <p className="text-xs text-destructive">{msg}</p>
+    </div>
+  ) : null;
 
-  // Forgot password screen
+  const SuccessMsg = ({ msg }: { msg: string }) => msg ? (
+    <div className="flex items-center gap-2 bg-success/10 border border-success/20 rounded-lg px-3 py-2.5">
+      <span className="text-success text-sm">✓</span>
+      <p className="text-xs text-success">{msg}</p>
+    </div>
+  ) : null;
+
+  const InputField = ({ icon: Icon, label, ...props }: { icon: any; label: string } & React.InputHTMLAttributes<HTMLInputElement>) => (
+    <div className="space-y-1.5">
+      <label className="text-xs font-medium text-muted-foreground">{label}</label>
+      <div className="relative">
+        <Icon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/60" />
+        <input
+          {...props}
+          className="w-full bg-secondary/60 border border-border rounded-lg pl-10 pr-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
+        />
+      </div>
+    </div>
+  );
+
+  const PrimaryButton = ({ children, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement>) => (
+    <button
+      {...props}
+      className="w-full flex items-center justify-center gap-2 text-sm font-medium py-3 px-4 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 active:scale-[0.98] transition-all disabled:opacity-50 disabled:pointer-events-none shadow-sm"
+    />
+  );
+
+  const BackButton = ({ onClick, label = '← Back' }: { onClick: () => void; label?: string }) => (
+    <button
+      type="button"
+      onClick={onClick}
+      className="w-full flex items-center justify-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors py-2"
+    >
+      <ArrowLeft className="w-3 h-3" />
+      {label}
+    </button>
+  );
+
+  // Forgot password
   if (mode === 'forgot') {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <div className="w-full max-w-sm space-y-6">
-          {renderHeader()}
-          {resetSent ? (
-            <div className="bg-card rounded-md border border-border panel-glow p-4 space-y-3 text-center">
-              <p className="text-xs font-mono text-primary">Recovery email sent!</p>
-              <p className="text-[10px] font-mono text-muted-foreground">Check your inbox for a password reset link.</p>
-              <button type="button" onClick={() => { setMode('login'); setResetSent(false); setResetEmail(''); }} className="text-[10px] font-mono text-muted-foreground hover:text-primary transition-colors">← Back to sign in</button>
+      <PageWrapper>
+        {resetSent ? (
+          <div className="bg-card rounded-xl border border-border shadow-sm p-6 space-y-4 text-center">
+            <div className="w-12 h-12 rounded-full bg-success/10 flex items-center justify-center mx-auto">
+              <Mail className="w-6 h-6 text-success" />
             </div>
-          ) : (
-            <form onSubmit={handleForgotPassword} className="bg-card rounded-md border border-border panel-glow p-4 space-y-4">
-              <span className="text-[10px] font-mono text-primary uppercase tracking-wider">Reset Password</span>
-              <div className="space-y-1">
-                <label className="text-[10px] font-mono text-muted-foreground">Email</label>
-                <input type="email" value={resetEmail} onChange={e => setResetEmail(e.target.value)} required className="w-full bg-secondary border border-border rounded px-3 py-2 text-xs font-mono text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary" placeholder="your@email.com" />
-              </div>
-              {error && <p className="text-[10px] font-mono text-destructive">{error}</p>}
-              <button type="submit" disabled={submitting} className="w-full text-xs font-mono py-2 px-3 rounded-md bg-primary text-primary-foreground hover:bg-primary/80 transition-all disabled:opacity-50">{submitting ? '...' : '▶ SEND RESET LINK'}</button>
-              <button type="button" onClick={() => { setMode('login'); setError(''); }} className="w-full text-[10px] font-mono text-muted-foreground hover:text-primary transition-colors">← Back to sign in</button>
-            </form>
-          )}
-        </div>
-      </div>
+            <h2 className="text-base font-semibold text-foreground">Check your inbox</h2>
+            <p className="text-xs text-muted-foreground">We sent a password reset link to your email.</p>
+            <BackButton onClick={() => { setMode('login'); setResetSent(false); setResetEmail(''); }} label="Back to sign in" />
+          </div>
+        ) : (
+          <form onSubmit={handleForgotPassword} className="bg-card rounded-xl border border-border shadow-sm p-6 space-y-5">
+            <div className="space-y-1">
+              <h2 className="text-base font-semibold text-foreground">Reset Password</h2>
+              <p className="text-xs text-muted-foreground">Enter your email to receive a reset link</p>
+            </div>
+            <InputField icon={Mail} label="Email" type="email" value={resetEmail} onChange={e => setResetEmail(e.target.value)} required placeholder="your@gmail.com" />
+            <ErrorMsg msg={error} />
+            <PrimaryButton type="submit" disabled={submitting}>
+              <KeyRound className="w-4 h-4" />
+              {submitting ? 'Sending...' : 'Send Reset Link'}
+            </PrimaryButton>
+            <BackButton onClick={() => { setMode('login'); setError(''); }} label="Back to sign in" />
+          </form>
+        )}
+      </PageWrapper>
     );
   }
 
-  // Choose screen: Create Account or Scan QR Code
+  // Choose screen
   if (mode === 'choose') {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <div className="w-full max-w-sm space-y-6">
-          {renderHeader()}
+      <PageWrapper>
+        <div className="bg-card rounded-xl border border-border shadow-sm p-6 space-y-5">
+          <div className="space-y-1">
+            <h2 className="text-base font-semibold text-foreground">Get Started</h2>
+            <p className="text-xs text-muted-foreground">Choose how you'd like to begin</p>
+          </div>
 
-          <div className="bg-card rounded-md border border-border panel-glow p-5 space-y-4">
-            <span className="text-[10px] font-mono text-primary uppercase tracking-wider">
-              How would you like to get started?
-            </span>
-
+          <div className="space-y-3">
             <button
               onClick={() => { clearState(); setMode('create'); }}
-              className="w-full text-left bg-secondary/50 hover:bg-secondary border border-border hover:border-primary rounded-md p-4 transition-all group"
+              className="w-full flex items-center gap-4 p-4 rounded-lg border border-border bg-secondary/30 hover:bg-secondary/60 hover:border-primary/30 transition-all group"
             >
-              <div className="flex items-center gap-3">
-                <span className="text-lg">🏠</span>
-                <div>
-                  <p className="text-xs font-mono font-bold text-foreground group-hover:text-primary transition-colors">
-                    Create Account
-                  </p>
-                  <p className="text-[9px] font-mono text-muted-foreground mt-0.5">
-                    Set up a new household as admin
-                  </p>
-                </div>
+              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                <UserPlus className="w-5 h-5 text-primary" />
+              </div>
+              <div className="text-left">
+                <p className="text-sm font-medium text-foreground group-hover:text-primary transition-colors">
+                  Create Account
+                </p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Set up a new household as admin
+                </p>
               </div>
             </button>
 
             <button
               onClick={() => { clearState(); setMode('join-qr'); }}
-              className="w-full text-left bg-secondary/50 hover:bg-secondary border border-border hover:border-accent rounded-md p-4 transition-all group"
+              className="w-full flex items-center gap-4 p-4 rounded-lg border border-border bg-secondary/30 hover:bg-secondary/60 hover:border-accent/30 transition-all group"
             >
-              <div className="flex items-center gap-3">
-                <span className="text-lg">📱</span>
-                <div>
-                  <p className="text-xs font-mono font-bold text-foreground group-hover:text-accent transition-colors">
-                    Scan QR Code to Join
-                  </p>
-                  <p className="text-[9px] font-mono text-muted-foreground mt-0.5">
-                    Join an existing household with invite code
-                  </p>
-                </div>
+              <div className="w-10 h-10 rounded-lg bg-accent/10 flex items-center justify-center group-hover:bg-accent/20 transition-colors">
+                <QrCode className="w-5 h-5 text-accent" />
+              </div>
+              <div className="text-left">
+                <p className="text-sm font-medium text-foreground group-hover:text-accent transition-colors">
+                  Scan QR Code to Join
+                </p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Join an existing household with invite code
+                </p>
               </div>
             </button>
+          </div>
 
-
-            <div className="border-t border-border pt-3">
-              <button
-                onClick={() => { clearState(); setMode('login'); }}
-                className="w-full text-[10px] font-mono text-muted-foreground hover:text-primary transition-colors"
-              >
-                Already have an account? Sign in →
-              </button>
-            </div>
+          <div className="border-t border-border pt-4">
+            <button
+              onClick={() => { clearState(); setMode('login'); }}
+              className="w-full flex items-center justify-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors"
+            >
+              <LogIn className="w-3.5 h-3.5" />
+              Already have an account? Sign in
+            </button>
           </div>
         </div>
-      </div>
+      </PageWrapper>
     );
   }
 
   // Join via QR / Invite Code
   if (mode === 'join-qr') {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <div className="w-full max-w-sm space-y-6">
-          {renderHeader()}
-
-          <div className="bg-card rounded-md border border-border panel-glow p-4 space-y-4">
-            <span className="text-[10px] font-mono text-primary uppercase tracking-wider">
-              Join Household
-            </span>
-
-            {/* QR Scanner */}
-            {scanning ? (
-              <div className="space-y-2">
-                <div className="relative rounded overflow-hidden border border-border aspect-square bg-background">
-                  <video ref={videoRef} className="w-full h-full object-cover" autoPlay playsInline muted />
-                  <div className="absolute inset-0 border-2 border-primary/30 rounded" />
-                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 border-2 border-primary rounded-lg animate-pulse" />
-                </div>
-                <p className="text-[9px] font-mono text-muted-foreground text-center">Point camera at the QR code</p>
-                <button onClick={() => setScanning(false)} className="w-full text-[10px] font-mono text-muted-foreground hover:text-primary transition-colors">Cancel scan</button>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                <button
-                  onClick={startQrScan}
-                  className="w-full text-xs font-mono py-3 rounded-md border border-accent bg-accent/10 text-accent hover:bg-accent/20 transition-all flex items-center justify-center gap-2"
-                >
-                  📷 SCAN QR CODE
-                </button>
-
-                <div className="flex items-center gap-3">
-                  <div className="flex-1 border-t border-border" />
-                  <span className="text-[9px] font-mono text-muted-foreground">OR</span>
-                  <div className="flex-1 border-t border-border" />
-                </div>
-
-                <form onSubmit={handleJoinWithCode} className="space-y-3">
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-mono text-muted-foreground">Enter Invite Code</label>
-                    <input
-                      type="text"
-                      value={inviteCode}
-                      onChange={e => setInviteCode(normalizeInviteCode(e.target.value))}
-                      className="w-full bg-secondary border border-border rounded px-3 py-2 text-xs font-mono text-foreground text-center tracking-widest focus:outline-none focus:border-primary"
-                      placeholder="abc12345"
-                      maxLength={8}
-                      required
-                    />
-                  </div>
-
-                  {error && <p className="text-[10px] font-mono text-destructive">{error}</p>}
-                  {success && <p className="text-[10px] font-mono text-success">{success}</p>}
-
-                  <button type="submit" disabled={submitting} className="w-full text-xs font-mono py-2 rounded-md bg-primary text-primary-foreground hover:bg-primary/80 transition-all disabled:opacity-50">
-                    ▶ VERIFY CODE
-                  </button>
-                </form>
-              </div>
-            )}
-
-            <button
-              type="button"
-              onClick={() => { clearState(); setMode('choose'); }}
-              className="w-full text-[10px] font-mono text-muted-foreground hover:text-primary transition-colors"
-            >
-              ← Back
-            </button>
+      <PageWrapper>
+        <div className="bg-card rounded-xl border border-border shadow-sm p-6 space-y-5">
+          <div className="space-y-1">
+            <h2 className="text-base font-semibold text-foreground">Join Household</h2>
+            <p className="text-xs text-muted-foreground">Scan a QR code or enter an invite code</p>
           </div>
+
+          {scanning ? (
+            <div className="space-y-3">
+              <div className="relative rounded-lg overflow-hidden border border-border aspect-square bg-background">
+                <video ref={videoRef} className="w-full h-full object-cover" autoPlay playsInline muted />
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="w-40 h-40 border-2 border-primary rounded-xl animate-pulse" />
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground text-center">Point camera at the QR code</p>
+              <button onClick={() => setScanning(false)} className="w-full text-xs text-muted-foreground hover:text-foreground transition-colors py-2">Cancel scan</button>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <button
+                onClick={startQrScan}
+                className="w-full flex items-center justify-center gap-2 py-3 rounded-lg border-2 border-dashed border-accent/40 text-accent hover:bg-accent/5 hover:border-accent/60 transition-all text-sm font-medium"
+              >
+                <Camera className="w-4 h-4" />
+                Scan QR Code
+              </button>
+
+              <div className="flex items-center gap-3">
+                <div className="flex-1 border-t border-border" />
+                <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">or enter code</span>
+                <div className="flex-1 border-t border-border" />
+              </div>
+
+              <form onSubmit={handleJoinWithCode} className="space-y-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-muted-foreground">Invite Code</label>
+                  <input
+                    type="text"
+                    value={inviteCode}
+                    onChange={e => setInviteCode(normalizeInviteCode(e.target.value))}
+                    className="w-full bg-secondary/60 border border-border rounded-lg px-4 py-3 text-base font-mono text-foreground text-center tracking-[0.3em] focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
+                    placeholder="abc12345"
+                    maxLength={8}
+                    required
+                  />
+                </div>
+                <ErrorMsg msg={error} />
+                <SuccessMsg msg={success} />
+                <PrimaryButton type="submit" disabled={submitting}>
+                  {submitting ? 'Verifying...' : 'Verify Code'}
+                </PrimaryButton>
+              </form>
+            </div>
+          )}
+          <BackButton onClick={() => { clearState(); setMode('choose'); }} />
         </div>
-      </div>
+      </PageWrapper>
     );
   }
 
   // Join - Enter Name
   if (mode === 'join-name') {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <div className="w-full max-w-sm space-y-6">
-          {renderHeader()}
-          <form onSubmit={handleSubmitJoinRequest} className="bg-card rounded-md border border-border panel-glow p-4 space-y-4">
-            <span className="text-[10px] font-mono text-primary uppercase tracking-wider">Join Household</span>
-            {matchedHousehold && (
-              <div className="bg-accent/10 border border-accent/30 rounded px-3 py-2">
-                <p className="text-[9px] font-mono text-accent">
-                  ✓ Household: "{matchedHousehold.name}"
-                </p>
-              </div>
-            )}
-            <div className="space-y-3">
-              <div className="space-y-1">
-                <label className="text-[10px] font-mono text-muted-foreground">Your Name</label>
-                <input type="text" value={joinName} onChange={e => setJoinName(e.target.value)} required className="w-full bg-secondary border border-border rounded px-3 py-2 text-xs font-mono text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary" placeholder="John" />
-              </div>
-              <div className="space-y-1">
-                <label className="text-[10px] font-mono text-muted-foreground">Phone Number (optional)</label>
-                <input type="tel" value={joinPhone} onChange={e => setJoinPhone(e.target.value)} className="w-full bg-secondary border border-border rounded px-3 py-2 text-xs font-mono text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary" placeholder="+1 555-123-4567" />
-              </div>
-            </div>
-            {error && <p className="text-[10px] font-mono text-destructive">{error}</p>}
-            <button type="submit" disabled={submitting} className="w-full text-xs font-mono py-2 px-3 rounded-md bg-primary text-primary-foreground hover:bg-primary/80 transition-all disabled:opacity-50">{submitting ? '...' : '▶ REQUEST TO JOIN'}</button>
-            <button type="button" onClick={() => { clearState(); setMode('join-qr'); }} className="w-full text-[10px] font-mono text-muted-foreground hover:text-primary transition-colors">← Back</button>
-          </form>
-        </div>
-      </div>
-    );
-  }
-
-  // Join - Submitted, waiting for admin approval with realtime
-  if (mode === 'join-submitted' && joinRequestId) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <div className="w-full max-w-sm space-y-6">
-          {renderHeader()}
-          <JoinWaitingScreen
-            requestId={joinRequestId}
-            householdName={matchedHousehold?.name || ''}
-            memberName={joinName}
-            onBack={() => { clearState(); setMode('choose'); }}
-          />
-        </div>
-      </div>
-    );
-  }
-
-  // Sign In screen
-  if (mode === 'login') {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <div className="w-full max-w-sm space-y-6">
-          {renderHeader()}
-          <form onSubmit={handleSignIn} className="bg-card rounded-md border border-border panel-glow p-4 space-y-4">
-            <span className="text-[10px] font-mono text-primary uppercase tracking-wider">Sign In</span>
-            <div className="space-y-3">
-              <div className="space-y-1">
-                <label className="text-[10px] font-mono text-muted-foreground">Email</label>
-                <input type="email" value={email} onChange={e => setEmail(e.target.value)} required className="w-full bg-secondary border border-border rounded px-3 py-2 text-xs font-mono text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary" placeholder="your@email.com" />
-              </div>
-              <div className="space-y-1">
-                <label className="text-[10px] font-mono text-muted-foreground">Password</label>
-                <input type="password" value={password} onChange={e => setPassword(e.target.value)} required minLength={6} className="w-full bg-secondary border border-border rounded px-3 py-2 text-xs font-mono text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary" placeholder="••••••••" />
-              </div>
-            </div>
-            {error && <p className="text-[10px] font-mono text-destructive">{error}</p>}
-            <button type="submit" disabled={submitting} className="w-full text-xs font-mono py-2 px-3 rounded-md bg-primary text-primary-foreground hover:bg-primary/80 transition-all disabled:opacity-50">{submitting ? '...' : '▶ SIGN IN'}</button>
-            <button type="button" onClick={() => { setMode('forgot'); setError(''); }} className="w-full text-[10px] font-mono text-muted-foreground hover:text-primary transition-colors">Forgot password?</button>
-            <button type="button" onClick={() => { clearState(); setMode('choose'); }} className="w-full text-[10px] font-mono text-muted-foreground hover:text-primary transition-colors">← Back</button>
-          </form>
-        </div>
-      </div>
-    );
-  }
-
-  // Create Account screen
-  return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <div className="w-full max-w-sm space-y-6">
-        {renderHeader()}
-        <form onSubmit={handleCreateAccount} className="bg-card rounded-md border border-border panel-glow p-4 space-y-4">
-          <span className="text-[10px] font-mono text-primary uppercase tracking-wider">Create Account</span>
-
-          {sessionStorage.getItem('pending_invite_code') && (
-            <div className="bg-accent/10 border border-accent/30 rounded px-3 py-2">
-              <p className="text-[9px] font-mono text-accent">
-                ✓ Joining with invite code: {sessionStorage.getItem('pending_invite_code')}
-              </p>
+      <PageWrapper>
+        <form onSubmit={handleSubmitJoinRequest} className="bg-card rounded-xl border border-border shadow-sm p-6 space-y-5">
+          <div className="space-y-1">
+            <h2 className="text-base font-semibold text-foreground">Join Household</h2>
+            <p className="text-xs text-muted-foreground">Enter your details to request access</p>
+          </div>
+          {matchedHousehold && (
+            <div className="flex items-center gap-2 bg-accent/10 border border-accent/20 rounded-lg px-3 py-2.5">
+              <span className="text-accent text-sm">✓</span>
+              <p className="text-xs text-accent font-medium">Joining: {matchedHousehold.name}</p>
             </div>
           )}
-
-          <div className="space-y-3">
-            <div className="space-y-1">
-              <label className="text-[10px] font-mono text-muted-foreground">Email</label>
-              <input type="email" value={email} onChange={e => setEmail(e.target.value)} required className="w-full bg-secondary border border-border rounded px-3 py-2 text-xs font-mono text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary" placeholder="your@email.com" />
-            </div>
-            <div className="space-y-1">
-              <label className="text-[10px] font-mono text-muted-foreground">Password</label>
-              <input type="password" value={password} onChange={e => setPassword(e.target.value)} required minLength={6} className="w-full bg-secondary border border-border rounded px-3 py-2 text-xs font-mono text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary" placeholder="••••••••" />
-            </div>
-          </div>
-          {error && <p className="text-[10px] font-mono text-destructive">{error}</p>}
-          {success && <p className="text-[10px] font-mono text-success">{success}</p>}
-          <button type="submit" disabled={submitting} className="w-full text-xs font-mono py-2 px-3 rounded-md bg-primary text-primary-foreground hover:bg-primary/80 transition-all disabled:opacity-50">{submitting ? '...' : '▶ CREATE ACCOUNT'}</button>
-          
-          <button type="button" onClick={() => { clearState(); setMode('login'); }} className="w-full text-[10px] font-mono text-muted-foreground hover:text-primary transition-colors">Already have an account? Sign in</button>
-          <button type="button" onClick={() => { clearState(); setMode('choose'); }} className="w-full text-[10px] font-mono text-muted-foreground hover:text-primary transition-colors">← Back</button>
+          <InputField icon={User} label="Your Name" type="text" value={joinName} onChange={e => setJoinName(e.target.value)} required placeholder="John Doe" />
+          <InputField icon={Phone} label="Phone Number (optional)" type="tel" value={joinPhone} onChange={e => setJoinPhone(e.target.value)} placeholder="+1 555-123-4567" />
+          <ErrorMsg msg={error} />
+          <PrimaryButton type="submit" disabled={submitting}>
+            <Send className="w-4 h-4" />
+            {submitting ? 'Submitting...' : 'Request to Join'}
+          </PrimaryButton>
+          <BackButton onClick={() => { clearState(); setMode('join-qr'); }} />
         </form>
-      </div>
-    </div>
+      </PageWrapper>
+    );
+  }
+
+  // Join - Submitted waiting
+  if (mode === 'join-submitted' && joinRequestId) {
+    return (
+      <PageWrapper>
+        <JoinWaitingScreen
+          requestId={joinRequestId}
+          householdName={matchedHousehold?.name || ''}
+          memberName={joinName}
+          onBack={() => { clearState(); setMode('choose'); }}
+        />
+      </PageWrapper>
+    );
+  }
+
+  // Sign In
+  if (mode === 'login') {
+    return (
+      <PageWrapper>
+        <form onSubmit={handleSignIn} className="bg-card rounded-xl border border-border shadow-sm p-6 space-y-5">
+          <div className="space-y-1">
+            <h2 className="text-base font-semibold text-foreground">Welcome Back</h2>
+            <p className="text-xs text-muted-foreground">Sign in to your account</p>
+          </div>
+          <InputField icon={Mail} label="Email" type="email" value={email} onChange={e => setEmail(e.target.value)} required placeholder="your@gmail.com" />
+          <InputField icon={Lock} label="Password" type="password" value={password} onChange={e => setPassword(e.target.value)} required minLength={6} placeholder="••••••••" />
+          <ErrorMsg msg={error} />
+          <PrimaryButton type="submit" disabled={submitting}>
+            <LogIn className="w-4 h-4" />
+            {submitting ? 'Signing in...' : 'Sign In'}
+          </PrimaryButton>
+          <button type="button" onClick={() => { setMode('forgot'); setError(''); }} className="w-full text-xs text-muted-foreground hover:text-primary transition-colors py-1">
+            Forgot password?
+          </button>
+          <BackButton onClick={() => { clearState(); setMode('choose'); }} />
+        </form>
+      </PageWrapper>
+    );
+  }
+
+  // Create Account
+  return (
+    <PageWrapper>
+      <form onSubmit={handleCreateAccount} className="bg-card rounded-xl border border-border shadow-sm p-6 space-y-5">
+        <div className="space-y-1">
+          <h2 className="text-base font-semibold text-foreground">Create Account</h2>
+          <p className="text-xs text-muted-foreground">Set up your admin account to get started</p>
+        </div>
+
+        {sessionStorage.getItem('pending_invite_code') && (
+          <div className="flex items-center gap-2 bg-accent/10 border border-accent/20 rounded-lg px-3 py-2.5">
+            <span className="text-accent text-sm">✓</span>
+            <p className="text-xs text-accent font-medium">Joining with code: {sessionStorage.getItem('pending_invite_code')}</p>
+          </div>
+        )}
+
+        <InputField icon={Mail} label="Email" type="email" value={email} onChange={e => setEmail(e.target.value)} required placeholder="your@gmail.com" />
+        <InputField icon={Lock} label="Password" type="password" value={password} onChange={e => setPassword(e.target.value)} required minLength={6} placeholder="••••••••" />
+        <ErrorMsg msg={error} />
+        <SuccessMsg msg={success} />
+        <PrimaryButton type="submit" disabled={submitting}>
+          <UserPlus className="w-4 h-4" />
+          {submitting ? 'Creating...' : 'Create Account'}
+        </PrimaryButton>
+        <button type="button" onClick={() => { clearState(); setMode('login'); }} className="w-full text-xs text-muted-foreground hover:text-primary transition-colors py-1">
+          Already have an account? Sign in
+        </button>
+        <BackButton onClick={() => { clearState(); setMode('choose'); }} />
+      </form>
+    </PageWrapper>
   );
 }
 
@@ -555,7 +557,6 @@ function JoinWaitingScreen({ requestId, householdName, memberName, onBack }: {
   const [status, setStatus] = useState<'pending' | 'accepted' | 'rejected'>('pending');
 
   useEffect(() => {
-    // Poll every 3 seconds for status change
     const interval = setInterval(async () => {
       const { data } = await supabase
         .from('join_requests')
@@ -565,7 +566,6 @@ function JoinWaitingScreen({ requestId, householdName, memberName, onBack }: {
       if (data?.status === 'accepted') {
         setStatus('accepted');
         clearInterval(interval);
-        // Store guest session info
         sessionStorage.setItem('guest_member', JSON.stringify({ name: memberName, household: householdName }));
         setTimeout(() => navigate('/dashboard'), 1500);
       } else if (data?.status === 'rejected') {
@@ -574,7 +574,6 @@ function JoinWaitingScreen({ requestId, householdName, memberName, onBack }: {
       }
     }, 3000);
 
-    // Also subscribe to realtime
     const channel = supabase
       .channel(`join-request-${requestId}`)
       .on('postgres_changes', {
@@ -602,35 +601,39 @@ function JoinWaitingScreen({ requestId, householdName, memberName, onBack }: {
 
   if (status === 'accepted') {
     return (
-      <div className="bg-card rounded-md border border-primary/30 panel-glow p-5 space-y-4 text-center">
-        <div className="text-3xl">🎉</div>
-        <p className="text-xs font-mono text-primary font-bold">Welcome, {memberName}!</p>
-        <p className="text-[10px] font-mono text-muted-foreground">You've been accepted into "{householdName}". Redirecting to dashboard...</p>
-        <div className="w-2 h-2 rounded-full bg-primary animate-pulse mx-auto" />
+      <div className="bg-card rounded-xl border border-success/30 shadow-sm p-8 space-y-4 text-center">
+        <div className="w-16 h-16 rounded-full bg-success/10 flex items-center justify-center mx-auto">
+          <span className="text-3xl">🎉</span>
+        </div>
+        <h2 className="text-base font-semibold text-foreground">Welcome, {memberName}!</h2>
+        <p className="text-xs text-muted-foreground">You've been accepted into "{householdName}". Redirecting...</p>
+        <div className="w-8 h-8 rounded-full border-2 border-primary border-t-transparent animate-spin mx-auto" />
       </div>
     );
   }
 
   if (status === 'rejected') {
     return (
-      <div className="bg-card rounded-md border border-destructive/30 panel-glow p-5 space-y-4 text-center">
-        <div className="text-3xl">❌</div>
-        <p className="text-xs font-mono text-destructive font-bold">Request Declined</p>
-        <p className="text-[10px] font-mono text-muted-foreground">The household admin has declined your request.</p>
-        <button onClick={onBack} className="w-full text-[10px] font-mono text-muted-foreground hover:text-primary transition-colors">← Back to start</button>
+      <div className="bg-card rounded-xl border border-destructive/30 shadow-sm p-8 space-y-4 text-center">
+        <div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center mx-auto">
+          <span className="text-3xl">❌</span>
+        </div>
+        <h2 className="text-base font-semibold text-destructive">Request Declined</h2>
+        <p className="text-xs text-muted-foreground">The household admin has declined your request.</p>
+        <button onClick={onBack} className="text-xs text-muted-foreground hover:text-primary transition-colors">← Back to start</button>
       </div>
     );
   }
 
   return (
-    <div className="bg-card rounded-md border border-border panel-glow p-5 space-y-4 text-center">
-      <div className="w-6 h-6 rounded-full border-2 border-primary border-t-transparent animate-spin mx-auto" />
-      <p className="text-xs font-mono text-primary font-bold">Waiting for Approval</p>
-      <p className="text-[10px] font-mono text-muted-foreground">
-        Your request to join "{householdName}" has been sent. The admin will review it shortly.
+    <div className="bg-card rounded-xl border border-border shadow-sm p-8 space-y-5 text-center">
+      <div className="w-12 h-12 rounded-full border-2 border-primary border-t-transparent animate-spin mx-auto" />
+      <h2 className="text-base font-semibold text-foreground">Waiting for Approval</h2>
+      <p className="text-xs text-muted-foreground">
+        Your request to join "<span className="font-medium text-foreground">{householdName}</span>" has been sent.
       </p>
-      <p className="text-[9px] font-mono text-muted-foreground animate-pulse">Listening for response...</p>
-      <button onClick={onBack} className="w-full text-[10px] font-mono text-muted-foreground hover:text-primary transition-colors">← Cancel</button>
+      <p className="text-[10px] text-muted-foreground animate-pulse">Listening for response...</p>
+      <button onClick={onBack} className="text-xs text-muted-foreground hover:text-primary transition-colors">← Cancel</button>
     </div>
   );
 }
