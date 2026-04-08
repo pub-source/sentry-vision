@@ -14,7 +14,7 @@ import AlertLog from '@/components/dashboard/AlertLog';
 import ControlsPanel from '@/components/dashboard/ControlsPanel';
 import DebugPanel from '@/components/dashboard/DebugPanel';
 import AttentionGauge from '@/components/dashboard/AttentionGauge';
-import ResearchPanel from '@/components/dashboard/ResearchPanel';
+
 import { useCamera } from '@/hooks/useCamera';
 import { useAudioAnalysis } from '@/hooks/useAudioAnalysis';
 import { useObjectDetection } from '@/hooks/useObjectDetection';
