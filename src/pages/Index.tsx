@@ -278,12 +278,6 @@ export default function Index() {
               Multimodal Saliency Detection
             </h1>
           </div>
-          
-          {researchMode && (
-            <span className="text-[9px] font-medium text-accent bg-accent/10 px-2 py-0.5 rounded-full">
-              Research
-            </span>
-          )}
         </div>
 
         {/* Center: Status */}
