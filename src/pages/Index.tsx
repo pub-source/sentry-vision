@@ -27,7 +27,7 @@ import { DEFAULT_PRIORITY_OBJECTS } from '@/types/dashboard';
 export default function Index() {
   const { user, loading: authLoading, signOut } = useAuth();
   const navigate = useNavigate();
-  const { householdId, wakeWords, members, checkForWakeWord, logAlert } = useHousehold(user?.id);
+  const { householdId, wakeWords, members, checkForWakeWord, logAlert, logNotification } = useHousehold(user?.id);
   const { cameras, devices, startCameras, stopCameras, updateCamera, enumerateDevices } = useCamera();
   const { audioFeatures, startAudio, stopAudio } = useAudioAnalysis();
   const { loadModel, detect, stats: detectionStats } = useObjectDetection();
