@@ -45,6 +45,26 @@ export default function Index() {
   }, [darkMode]);
   const { transcript, interimTranscript, isListening: speechListening, supported: speechSupported, start: startSpeech, stop: stopSpeech, clear: clearSpeech } = useSpeechRecognition();
   const [showEmergency, setShowEmergency] = useState(false);
+  const lastMatchedPhraseRef = useRef<string>('');
+
+  // Wake word detection against live speech transcript
+  useEffect(() => {
+    if (!running || !transcript) return;
+    const match = checkForWakeWord(transcript);
+    if (match.matched && match.phrase !== lastMatchedPhraseRef.current) {
+      lastMatchedPhraseRef.current = match.phrase;
+      addAlert(`🔊 Wake word detected: "${match.phrase}"`, match.isEmergency ? 'critical' : 'high', 0);
+      logAlert('wake_word', `Wake word detected: "${match.phrase}"`);
+      logNotification(match.wakeWordId, match.phrase, match.actionType, match.isEmergency);
+      if (match.isEmergency) {
+        setShowEmergency(true);
+        logAlert('emergency_trigger', `Emergency phrase triggered: "${match.phrase}"`);
+      }
+    }
+    // Reset matched phrase after 10s so it can trigger again
+    const timeout = setTimeout(() => { lastMatchedPhraseRef.current = ''; }, 10000);
+    return () => clearTimeout(timeout);
+  }, [transcript, running, checkForWakeWord, addAlert, logAlert, logNotification]);
 
   const [running, setRunning] = useState(false);
   const [saliencyMode, setSaliencyMode] = useState<SaliencyMode>('sobel');
