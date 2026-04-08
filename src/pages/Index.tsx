@@ -27,7 +27,7 @@ import { DEFAULT_PRIORITY_OBJECTS } from '@/types/dashboard';
 export default function Index() {
   const { user, loading: authLoading, signOut } = useAuth();
   const navigate = useNavigate();
-  const { householdId, wakeWords, members, checkForWakeWord, logAlert } = useHousehold(user?.id);
+  const { householdId, wakeWords, members, checkForWakeWord, logAlert, logNotification } = useHousehold(user?.id);
   const { cameras, devices, startCameras, stopCameras, updateCamera, enumerateDevices } = useCamera();
   const { audioFeatures, startAudio, stopAudio } = useAudioAnalysis();
   const { loadModel, detect, stats: detectionStats } = useObjectDetection();
@@ -84,6 +84,27 @@ export default function Index() {
       snapshotId,
     }, ...prev].slice(0, 200));
   }, []);
+
+  const lastMatchedPhraseRef = useRef<string>('');
+
+  // Wake word detection against live speech transcript
+  useEffect(() => {
+    if (!running || !transcript) return;
+    const match = checkForWakeWord(transcript);
+    if (match.matched && match.phrase !== lastMatchedPhraseRef.current) {
+      lastMatchedPhraseRef.current = match.phrase;
+      addAlert(`🔊 Wake word detected: "${match.phrase}"`, match.isEmergency ? 'critical' : 'high', 0);
+      logAlert('wake_word', `Wake word detected: "${match.phrase}"`);
+      logNotification(match.wakeWordId, match.phrase, match.actionType, match.isEmergency);
+      if (match.isEmergency) {
+        setShowEmergency(true);
+        logAlert('emergency_trigger', `Emergency phrase triggered: "${match.phrase}"`);
+      }
+    }
+    // Reset matched phrase after 10s so it can trigger again
+    const timeout = setTimeout(() => { lastMatchedPhraseRef.current = ''; }, 10000);
+    return () => clearTimeout(timeout);
+  }, [transcript, running, checkForWakeWord, addAlert, logAlert, logNotification]);
 
   const handleStart = useCallback(async () => {
     await enumerateDevices();
@@ -169,12 +190,6 @@ export default function Index() {
       }
       if (audioFeatures.speechDetected) {
         addAlert('Speech detected', 'low', 0);
-        wakeWords.forEach(ww => {
-          if (ww.is_emergency && audioFeatures.audioEvent === 'scream') {
-            setShowEmergency(true);
-            logAlert('emergency_trigger', `Emergency wake word triggered: "${ww.phrase}"`);
-          }
-        });
       }
       if (audioFeatures.decibel > -10) {
         addAlert('High noise level', 'medium', 0);
