@@ -94,12 +94,6 @@ export default function Landing() {
             >
               {darkMode ? <Sun className="w-4 h-4 text-foreground" /> : <Moon className="w-4 h-4 text-foreground" />}
             </button>
-            <button
-              onClick={() => navigate('/research')}
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors px-3 py-2"
-            >
-              Research
-            </button>
             {!loading && (
               user ? (
                 <button
