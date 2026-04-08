@@ -78,7 +78,7 @@ export default function Landing() {
             <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
               <Eye className="w-4 h-4 text-primary-foreground" />
             </div>
-            <span className="text-lg font-bold text-foreground tracking-tight">SafeWatch</span>
+            <span className="text-lg font-bold text-foreground tracking-tight">MSDSystem</span>
           </div>
           <div className="flex items-center gap-3">
             <button
