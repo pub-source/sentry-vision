@@ -105,7 +105,25 @@ export default function Index() {
     }, ...prev].slice(0, 200));
   }, []);
 
-  const handleStart = useCallback(async () => {
+  // Wake word detection against live speech transcript
+  const lastMatchedPhraseRef = useRef<string>('');
+  useEffect(() => {
+    if (!running || !transcript) return;
+    const match = checkForWakeWord(transcript);
+    if (match.matched && match.phrase !== lastMatchedPhraseRef.current) {
+      lastMatchedPhraseRef.current = match.phrase;
+      addAlert(`🔊 Wake word: "${match.phrase}"`, match.isEmergency ? 'critical' : 'high', 0);
+      logAlert('wake_word', `Wake word detected: "${match.phrase}"`);
+      logNotification(match.wakeWordId, match.phrase, match.actionType, match.isEmergency);
+      if (match.isEmergency) {
+        setShowEmergency(true);
+      }
+    }
+    const timeout = setTimeout(() => { lastMatchedPhraseRef.current = ''; }, 10000);
+    return () => clearTimeout(timeout);
+  }, [transcript, running, checkForWakeWord, addAlert, logAlert, logNotification]);
+
+
     await enumerateDevices();
     loadModel(); // Start loading COCO-SSD model
     if (speechSupported) startSpeech();
