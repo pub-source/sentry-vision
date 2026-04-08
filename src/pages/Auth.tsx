@@ -337,7 +337,6 @@ export default function Auth() {
               </div>
             </button>
 
-            {renderGoogleButton()}
 
             <div className="border-t border-border pt-3">
               <button
