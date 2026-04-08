@@ -270,7 +270,7 @@ export default function Landing() {
             <div className="w-6 h-6 rounded-md bg-primary flex items-center justify-center">
               <Eye className="w-3 h-3 text-primary-foreground" />
             </div>
-            <span className="text-sm font-semibold text-foreground">SafeWatch</span>
+            <span className="text-sm font-semibold text-foreground">MSDSystem</span>
           </div>
           <p className="text-xs text-muted-foreground">
             © {new Date().getFullYear()} Multimodal Saliency Detection System. All rights reserved.

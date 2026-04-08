@@ -134,23 +134,6 @@ export default function Auth() {
     setSubmitting(false);
   };
 
-  const handleGoogleSignIn = async () => {
-    setError('');
-    setSubmitting(true);
-    try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: { redirectTo: window.location.origin },
-      });
-      if (error) {
-        setError(error.message);
-        setSubmitting(false);
-      }
-    } catch (err: any) {
-      setError(err?.message || 'Google sign-in failed');
-      setSubmitting(false);
-    }
-  };
 
   const handleJoinWithCode = async (e: React.FormEvent) => {
     e.preventDefault();

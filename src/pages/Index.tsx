@@ -774,18 +774,6 @@ export default function Index() {
             onExportCSV={exportCSV}
           />
 
-          <ResearchPanel
-            active={running}
-            researchMode={researchMode}
-            attentionScore={attentionScore}
-            saliencyScore={globalSaliencyScore}
-            decibel={audioFeatures.decibel}
-            speechDetected={audioFeatures.speechDetected}
-            objectCount={cameras.reduce((sum, c) => sum + c.objects.length, 0)}
-            fps={cameras[0].fps}
-            alerts={alerts}
-            onToggleResearch={() => setResearchMode(p => !p)}
-          />
 
           {/* Auto-Snapshots */}
           {snapshots.length > 0 && (
