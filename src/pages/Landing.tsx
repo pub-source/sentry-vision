@@ -158,12 +158,6 @@ export default function Landing() {
               {user ? 'Open Dashboard' : 'Get Started Free'}
               <ArrowRight className="w-4 h-4" />
             </button>
-            <button
-              onClick={() => navigate('/research')}
-              className="inline-flex items-center gap-2 text-base font-medium text-foreground px-8 py-3.5 rounded-xl border border-border hover:border-primary/30 hover:bg-primary/5 transition-all"
-            >
-              View Research
-            </button>
           </motion.div>
         </div>
       </section>
