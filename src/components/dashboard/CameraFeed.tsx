@@ -68,10 +68,7 @@ export default function CameraFeed({
     if (!video || !camera.stream) return;
     video.srcObject = camera.stream;
     video.play().catch(() => {});
-    console.log('[CameraFeed] Camera stream initialized for', camera.label);
-    return () => {
-      video.srcObject = null;
-    };
+    return () => { video.srcObject = null; };
   }, [camera.stream, camera.label]);
 
   // Object detection loop (separate from render loop, runs every 200ms)
@@ -80,26 +77,19 @@ export default function CameraFeed({
     const video = videoRef.current;
     if (!video) return;
 
-    console.log('[CameraFeed] Detection loop starting for', camera.label);
-
     const runDetection = async () => {
       if (video.readyState >= 2) {
-        console.log('[CameraFeed] Detection loop running.');
         const objects = await onDetectFrame(video);
         detectedObjectsRef.current = objects;
         onObjectsUpdate(camera.id, objects);
       }
     };
 
-    // Run detection every 200ms (5 FPS detection, separate from render)
     detectionIntervalRef.current = window.setInterval(runDetection, 200);
-
-    return () => {
-      window.clearInterval(detectionIntervalRef.current);
-    };
+    return () => { window.clearInterval(detectionIntervalRef.current); };
   }, [camera.active, camera.label, simulationMode, onDetectFrame, onObjectsUpdate]);
 
-  // Main render loop
+  // Main render loop — CAM 1 shows RAW feed only (no bounding boxes)
   useEffect(() => {
     if (!camera.active && !simulationMode) return;
 
@@ -148,76 +138,22 @@ export default function CameraFeed({
         ctx.putImageData(imgData, 0, 0);
       }
 
-      // Compute saliency
+      // Compute saliency score silently (no overlay on CAM 1)
       try {
         const frameData = ctx.getImageData(0, 0, w, h);
         const saliencyData = computeSaliency(frameData, prevFrameRef.current, saliencyMode, threshold);
         prevFrameRef.current = frameData;
-
         const score = computeSaliencyScore(saliencyData);
         onSaliencyScoreUpdate(camera.id, score);
+      } catch {}
 
-        if (showHeatmap) {
-          const heatmap = applyHeatmapColor(saliencyData);
-          const tempCanvas = document.createElement('canvas');
-          tempCanvas.width = w;
-          tempCanvas.height = h;
-          const tempCtx = tempCanvas.getContext('2d');
-          if (tempCtx) {
-            tempCtx.putImageData(heatmap, 0, 0);
-            ctx.globalAlpha = heatmapOpacity / 100;
-            ctx.drawImage(tempCanvas, 0, 0);
-            ctx.globalAlpha = 1;
-          }
-        }
-      } catch {
-        // Skip saliency on error
-      }
-
-      // Draw bounding boxes for priority objects
-      if (showBoundingBoxes) {
-        const objects = simulationMode ? simObjects : detectedObjectsRef.current;
-        if (objects.length > 0) {
-          objects.forEach(obj => {
-            const [bx, by, bw, bh] = obj.bbox;
-            // Scale bbox to canvas size
-            const sx = w / (video?.videoWidth || w);
-            const sy = h / (video?.videoHeight || h);
-            const dx = simulationMode ? bx : bx * sx;
-            const dy = simulationMode ? by : by * sy;
-            const dw = simulationMode ? bw : bw * sx;
-            const dh = simulationMode ? bh : bh * sy;
-
-            ctx.strokeStyle = obj.confidence > 0.8 ? '#00e5ff' : obj.confidence > 0.5 ? '#ffab00' : '#ff1744';
-            ctx.lineWidth = 2;
-            ctx.strokeRect(dx, dy, dw, dh);
-
-            const labelText = `${obj.label} ${(obj.confidence * 100).toFixed(0)}%`;
-            ctx.font = '11px "JetBrains Mono", monospace';
-            const tm = ctx.measureText(labelText);
-            ctx.fillStyle = 'rgba(0,0,0,0.7)';
-            ctx.fillRect(dx, dy - 16, tm.width + 8, 16);
-            ctx.fillStyle = ctx.strokeStyle;
-            ctx.fillText(labelText, dx + 4, dy - 4);
-          });
-        } else if (!simulationMode && camera.active) {
-          // Show "No Priority Object Detected" message
-          ctx.font = '12px "JetBrains Mono", monospace';
-          ctx.fillStyle = 'rgba(0,0,0,0.6)';
-          const msg = 'No Priority Object Detected';
-          const tm = ctx.measureText(msg);
-          ctx.fillRect(w / 2 - tm.width / 2 - 6, h - 28, tm.width + 12, 20);
-          ctx.fillStyle = '#888888';
-          ctx.fillText(msg, w / 2 - tm.width / 2, h - 14);
-        }
-
-        if (simulationMode && objects.length > 0) {
-          onObjectsUpdate(camera.id, objects);
-        }
-      }
-
-      // Capture frame for saliency panel
+      // Capture frame for other panels
       onFrameCapture?.(canvas);
+
+      // Simulation mode: still report objects for other panels
+      if (simulationMode && simObjects.length > 0) {
+        onObjectsUpdate(camera.id, simObjects);
+      }
 
       // FPS counter
       fpsCountRef.current++;
@@ -237,14 +173,14 @@ export default function CameraFeed({
       running = false;
       cancelAnimationFrame(animRef.current);
     };
-  }, [camera.active, simulationMode, mirror, showBoundingBoxes, showHeatmap, heatmapOpacity, saliencyMode, threshold, simObjects, onFpsUpdate, onObjectsUpdate, onSaliencyScoreUpdate, onFrameCapture]);
+  }, [camera.active, simulationMode, mirror, saliencyMode, threshold, simObjects, onFpsUpdate, onObjectsUpdate, onSaliencyScoreUpdate, onFrameCapture]);
 
   return (
     <div className="relative bg-card rounded-md overflow-hidden border border-border panel-glow group">
       {/* Header */}
       <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between px-2 py-1 bg-gradient-to-b from-background/80 to-transparent">
         <span className="text-[10px] font-mono text-primary uppercase tracking-wider">
-          {camera.label}
+          CAM 1 — Raw Feed
         </span>
         <div className="flex items-center gap-2">
           <span className="text-[10px] font-mono text-muted-foreground">
@@ -255,15 +191,9 @@ export default function CameraFeed({
       </div>
 
       {/* Video (hidden, used as source) */}
-      <video
-        ref={videoRef}
-        className="hidden"
-        autoPlay
-        playsInline
-        muted
-      />
+      <video ref={videoRef} className="hidden" autoPlay playsInline muted />
 
-      {/* Canvas (displayed) */}
+      {/* Canvas (displayed) — clean raw feed */}
       <canvas
         ref={canvasRef}
         width={camera.active ? 640 : 320}
@@ -271,7 +201,7 @@ export default function CameraFeed({
         className="w-full h-full object-contain aspect-video bg-background"
       />
 
-      {/* Detection stats badge */}
+      {/* Status badges */}
       <div className="absolute bottom-1 left-1 z-10 flex gap-1">
         <span className={`text-[9px] font-mono px-1 py-0.5 rounded ${
           detectionStats.modelLoaded ? 'bg-success/20 text-success' :
@@ -298,7 +228,6 @@ export default function CameraFeed({
         </span>
       </div>
 
-      {/* Model error overlay */}
       {detectionStats.modelError && (
         <div className="absolute top-8 left-1 right-1 z-10">
           <span className="text-[9px] font-mono text-destructive bg-destructive/10 px-1.5 py-0.5 rounded block truncate">
@@ -307,7 +236,6 @@ export default function CameraFeed({
         </div>
       )}
 
-      {/* Inactive overlay */}
       {!camera.active && !simulationMode && (
         <div className="absolute inset-0 flex items-center justify-center bg-background/80">
           <span className="text-xs font-mono text-muted-foreground">NO SIGNAL</span>
