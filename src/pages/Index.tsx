@@ -254,32 +254,7 @@ export default function Index() {
   const activeCameras = cameras.filter(c => c.active || (simulationMode && running));
   const maxSaliencyCamera = cameras.reduce((max, c) => c.saliencyScore > max.saliencyScore ? c : max, cameras[0]);
 
-  // Emergency 911 overlay
-  if (showEmergency) {
-    return (
-      <div className="min-h-screen bg-destructive/10 flex items-center justify-center p-4">
-        <div className="text-center space-y-6 max-w-sm">
-          <div className="text-6xl animate-pulse">🚨</div>
-          <h1 className="text-2xl font-mono font-bold text-destructive">EMERGENCY DETECTED</h1>
-          <p className="text-sm font-mono text-foreground">
-            An emergency wake word was triggered. All household members will be notified.
-          </p>
-          <a
-            href="tel:911"
-            className="block w-full py-4 px-6 bg-destructive text-destructive-foreground font-mono font-bold text-lg rounded-md hover:bg-destructive/80 transition-all"
-          >
-            📞 CALL 911
-          </a>
-          <button
-            onClick={() => setShowEmergency(false)}
-            className="text-xs font-mono text-muted-foreground hover:text-foreground"
-          >
-            Dismiss (false alarm)
-          </button>
-        </div>
-      </div>
-    );
-  }
+  // Emergency is now a floating overlay, not a full-screen takeover
 
   return (
     <div className="min-h-screen bg-background text-foreground">
