@@ -130,10 +130,8 @@ export default function Index() {
     setGlobalSaliencyScore(0);
   }, [stopCameras, stopAudio, stopSpeech, clearSpeech]);
 
-  const toggleSpeech = useCallback(() => {
-    if (speechListening) stopSpeech();
-    else startSpeech();
-  }, [speechListening, stopSpeech, startSpeech]);
+  // Speech recognition is always on when running — no toggle needed
+  // It auto-starts in handleStart and auto-stops in handleStop
 
   const handleFpsUpdate = useCallback((cameraId: number, fps: number) => {
     updateCamera(cameraId, { fps });
