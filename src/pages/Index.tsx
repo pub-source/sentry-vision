@@ -86,14 +86,20 @@ export default function Index() {
   }, []);
 
   const lastMatchedPhraseRef = useRef<string>('');
+  const lastMatchedTimeRef = useRef<number>(0);
 
-  // Wake word detection against live speech transcript
+  // Low-latency wake word detection — checks both transcript and interim
   useEffect(() => {
-    if (!running || !transcript) return;
-    const match = checkForWakeWord(transcript);
-    if (match.matched && match.phrase !== lastMatchedPhraseRef.current) {
+    if (!running) return;
+    const combinedText = `${transcript} ${interimTranscript}`.trim();
+    if (!combinedText) return;
+    
+    const match = checkForWakeWord(combinedText);
+    const now = Date.now();
+    if (match.matched && (match.phrase !== lastMatchedPhraseRef.current || now - lastMatchedTimeRef.current > 5000)) {
       lastMatchedPhraseRef.current = match.phrase;
-      addAlert(`🔊 Wake word detected: "${match.phrase}"`, match.isEmergency ? 'critical' : 'high', 0);
+      lastMatchedTimeRef.current = now;
+      addAlert(`🔊 Wake word: "${match.phrase}"`, match.isEmergency ? 'critical' : 'high', 0);
       logAlert('wake_word', `Wake word detected: "${match.phrase}"`);
       logNotification(match.wakeWordId, match.phrase, match.actionType, match.isEmergency);
       if (match.isEmergency) {
@@ -101,10 +107,7 @@ export default function Index() {
         logAlert('emergency_trigger', `Emergency phrase triggered: "${match.phrase}"`);
       }
     }
-    // Reset matched phrase after 10s so it can trigger again
-    const timeout = setTimeout(() => { lastMatchedPhraseRef.current = ''; }, 10000);
-    return () => clearTimeout(timeout);
-  }, [transcript, running, checkForWakeWord, addAlert, logAlert, logNotification]);
+  }, [transcript, interimTranscript, running, checkForWakeWord, addAlert, logAlert, logNotification]);
 
   const handleStart = useCallback(async () => {
     await enumerateDevices();
@@ -130,10 +133,8 @@ export default function Index() {
     setGlobalSaliencyScore(0);
   }, [stopCameras, stopAudio, stopSpeech, clearSpeech]);
 
-  const toggleSpeech = useCallback(() => {
-    if (speechListening) stopSpeech();
-    else startSpeech();
-  }, [speechListening, stopSpeech, startSpeech]);
+  // Speech recognition is always on when running — no toggle needed
+  // It auto-starts in handleStart and auto-stops in handleStop
 
   const handleFpsUpdate = useCallback((cameraId: number, fps: number) => {
     updateCamera(cameraId, { fps });
@@ -254,35 +255,34 @@ export default function Index() {
   const activeCameras = cameras.filter(c => c.active || (simulationMode && running));
   const maxSaliencyCamera = cameras.reduce((max, c) => c.saliencyScore > max.saliencyScore ? c : max, cameras[0]);
 
-  // Emergency 911 overlay
-  if (showEmergency) {
-    return (
-      <div className="min-h-screen bg-destructive/10 flex items-center justify-center p-4">
-        <div className="text-center space-y-6 max-w-sm">
-          <div className="text-6xl animate-pulse">🚨</div>
-          <h1 className="text-2xl font-mono font-bold text-destructive">EMERGENCY DETECTED</h1>
-          <p className="text-sm font-mono text-foreground">
-            An emergency wake word was triggered. All household members will be notified.
+  // Emergency is now a floating overlay, not a full-screen takeover
+
+  return (
+    <div className="min-h-screen bg-background text-foreground relative">
+      {/* Floating Emergency Popup */}
+      {showEmergency && (
+        <div className="fixed bottom-4 right-4 z-50 w-80 bg-destructive/95 backdrop-blur-md text-destructive-foreground rounded-xl shadow-2xl border-2 border-destructive p-4 space-y-3 animate-in slide-in-from-bottom-5">
+          <div className="flex items-center gap-2">
+            <span className="text-2xl animate-pulse">🚨</span>
+            <h3 className="text-sm font-mono font-bold">EMERGENCY DETECTED</h3>
+          </div>
+          <p className="text-xs font-mono opacity-90">
+            An emergency wake word was triggered. Household members notified.
           </p>
           <a
             href="tel:911"
-            className="block w-full py-4 px-6 bg-destructive text-destructive-foreground font-mono font-bold text-lg rounded-md hover:bg-destructive/80 transition-all"
+            className="block w-full py-2.5 px-4 bg-background text-destructive font-mono font-bold text-sm rounded-lg text-center hover:bg-background/90 transition-all"
           >
             📞 CALL 911
           </a>
           <button
             onClick={() => setShowEmergency(false)}
-            className="text-xs font-mono text-muted-foreground hover:text-foreground"
+            className="w-full text-[10px] font-mono opacity-70 hover:opacity-100 transition-opacity"
           >
             Dismiss (false alarm)
           </button>
         </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="min-h-screen bg-background text-foreground">
+      )}
       {/* Header */}
       <header className="border-b border-border bg-card/60 backdrop-blur-sm px-4 py-2.5 flex items-center justify-between">
         {/* Left: Brand */}
@@ -408,7 +408,7 @@ export default function Index() {
               transcript={transcript}
               interimTranscript={interimTranscript}
               speechListening={speechListening}
-              onToggleSpeech={toggleSpeech}
+              onToggleSpeech={() => {}}
             />
           </div>
 
