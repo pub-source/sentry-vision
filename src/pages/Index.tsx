@@ -405,7 +405,7 @@ export default function Index() {
               transcript={transcript}
               interimTranscript={interimTranscript}
               speechListening={speechListening}
-              onToggleSpeech={toggleSpeech}
+              onToggleSpeech={() => {}}
             />
           </div>
 
