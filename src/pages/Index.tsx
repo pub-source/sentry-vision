@@ -86,14 +86,20 @@ export default function Index() {
   }, []);
 
   const lastMatchedPhraseRef = useRef<string>('');
+  const lastMatchedTimeRef = useRef<number>(0);
 
-  // Wake word detection against live speech transcript
+  // Low-latency wake word detection — checks both transcript and interim
   useEffect(() => {
-    if (!running || !transcript) return;
-    const match = checkForWakeWord(transcript);
-    if (match.matched && match.phrase !== lastMatchedPhraseRef.current) {
+    if (!running) return;
+    const combinedText = `${transcript} ${interimTranscript}`.trim();
+    if (!combinedText) return;
+    
+    const match = checkForWakeWord(combinedText);
+    const now = Date.now();
+    if (match.matched && (match.phrase !== lastMatchedPhraseRef.current || now - lastMatchedTimeRef.current > 5000)) {
       lastMatchedPhraseRef.current = match.phrase;
-      addAlert(`🔊 Wake word detected: "${match.phrase}"`, match.isEmergency ? 'critical' : 'high', 0);
+      lastMatchedTimeRef.current = now;
+      addAlert(`🔊 Wake word: "${match.phrase}"`, match.isEmergency ? 'critical' : 'high', 0);
       logAlert('wake_word', `Wake word detected: "${match.phrase}"`);
       logNotification(match.wakeWordId, match.phrase, match.actionType, match.isEmergency);
       if (match.isEmergency) {
@@ -101,10 +107,7 @@ export default function Index() {
         logAlert('emergency_trigger', `Emergency phrase triggered: "${match.phrase}"`);
       }
     }
-    // Reset matched phrase after 10s so it can trigger again
-    const timeout = setTimeout(() => { lastMatchedPhraseRef.current = ''; }, 10000);
-    return () => clearTimeout(timeout);
-  }, [transcript, running, checkForWakeWord, addAlert, logAlert, logNotification]);
+  }, [transcript, interimTranscript, running, checkForWakeWord, addAlert, logAlert, logNotification]);
 
   const handleStart = useCallback(async () => {
     await enumerateDevices();
