@@ -257,7 +257,31 @@ export default function Index() {
   // Emergency is now a floating overlay, not a full-screen takeover
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen bg-background text-foreground relative">
+      {/* Floating Emergency Popup */}
+      {showEmergency && (
+        <div className="fixed bottom-4 right-4 z-50 w-80 bg-destructive/95 backdrop-blur-md text-destructive-foreground rounded-xl shadow-2xl border-2 border-destructive p-4 space-y-3 animate-in slide-in-from-bottom-5">
+          <div className="flex items-center gap-2">
+            <span className="text-2xl animate-pulse">🚨</span>
+            <h3 className="text-sm font-mono font-bold">EMERGENCY DETECTED</h3>
+          </div>
+          <p className="text-xs font-mono opacity-90">
+            An emergency wake word was triggered. Household members notified.
+          </p>
+          <a
+            href="tel:911"
+            className="block w-full py-2.5 px-4 bg-background text-destructive font-mono font-bold text-sm rounded-lg text-center hover:bg-background/90 transition-all"
+          >
+            📞 CALL 911
+          </a>
+          <button
+            onClick={() => setShowEmergency(false)}
+            className="w-full text-[10px] font-mono opacity-70 hover:opacity-100 transition-opacity"
+          >
+            Dismiss (false alarm)
+          </button>
+        </div>
+      )}
       {/* Header */}
       <header className="border-b border-border bg-card/60 backdrop-blur-sm px-4 py-2.5 flex items-center justify-between">
         {/* Left: Brand */}
