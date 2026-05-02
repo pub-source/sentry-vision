@@ -70,7 +70,7 @@ export function useFaceDistress(active: boolean) {
         return a > biggest.detection.box.area ? d : biggest;
       });
 
-      const expr = main.expressions as Record<string, number>;
+      const expr = main.expressions as unknown as Record<string, number>;
       // Distress = sad + fearful + angry + disgusted ; positive = happy + surprised + neutral
       const sad = expr.sad ?? 0;
       const fearful = expr.fearful ?? 0;

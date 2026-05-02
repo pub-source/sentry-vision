@@ -96,8 +96,7 @@ export function useIpCamera() {
           };
         };
         loop();
-        // @ts-expect-error captureStream exists on canvas in modern browsers
-        const ms: MediaStream = canvas.captureStream(15);
+        const ms: MediaStream = (canvas as HTMLCanvasElement & { captureStream: (fps?: number) => MediaStream }).captureStream(15);
         setStream(ms);
       }
       setConnected(true);
