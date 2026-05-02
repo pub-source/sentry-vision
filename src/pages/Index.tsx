@@ -1,14 +1,8 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { Moon, Sun, Home, LogOut, LogIn, Shield, Clock } from 'lucide-react';
+import { Moon, Sun, Home, LogOut, LogIn, Shield, Clock, Wifi, X, Flame } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import CameraFeed from '@/components/dashboard/CameraFeed';
 import FusedDetectionView from '@/components/dashboard/FusedDetectionView';
-import SaliencyView from '@/components/dashboard/SaliencyView';
-import ThresholdView from '@/components/dashboard/ThresholdView';
-import LowFiView from '@/components/dashboard/LowFiView';
-import ObjectShaderView from '@/components/dashboard/ObjectShaderView';
-import LaplacianView from '@/components/dashboard/LaplacianView';
-import MotionView from '@/components/dashboard/MotionView';
 import AudioMeter from '@/components/dashboard/AudioMeter';
 import AlertLog from '@/components/dashboard/AlertLog';
 import ControlsPanel from '@/components/dashboard/ControlsPanel';
@@ -21,6 +15,9 @@ import { useObjectDetection } from '@/hooks/useObjectDetection';
 import { useSpeechRecognition } from '@/hooks/useSpeechRecognition';
 import { useAuth } from '@/hooks/useAuth';
 import { useHousehold } from '@/hooks/useHousehold';
+import { useIpCamera } from '@/hooks/useIpCamera';
+import { useFaceDistress } from '@/hooks/useFaceDistress';
+import { detectFire, createFireState } from '@/lib/fireDetection';
 import type { SaliencyMode, QualityMode, Alert, DetectedObject } from '@/types/dashboard';
 import { DEFAULT_PRIORITY_OBJECTS } from '@/types/dashboard';
 
@@ -28,7 +25,7 @@ export default function Index() {
   const { user, loading: authLoading, signOut } = useAuth();
   const navigate = useNavigate();
   const { householdId, wakeWords, members, checkForWakeWord, logAlert, logNotification } = useHousehold(user?.id);
-  const { cameras, devices, startCameras, stopCameras, updateCamera, enumerateDevices } = useCamera();
+  const { cameras, devices, startCameras, stopCameras, updateCamera, attachStream, enumerateDevices } = useCamera();
   const { audioFeatures, startAudio, stopAudio } = useAudioAnalysis();
   const { loadModel, detect, stats: detectionStats } = useObjectDetection();
   const [darkMode, setDarkMode] = useState(() => {
@@ -62,9 +59,27 @@ export default function Index() {
   const [errors] = useState<string[]>([]);
   const [attentionScore, setAttentionScore] = useState(0);
   const [globalSaliencyScore, setGlobalSaliencyScore] = useState(0);
-  
-  const [showExtraCams, setShowExtraCams] = useState(false);
+
   const [sourceCanvas, setSourceCanvas] = useState<HTMLCanvasElement | null>(null);
+  const [cam2SourceCanvas, setCam2SourceCanvas] = useState<HTMLCanvasElement | null>(null);
+
+  // IP camera state
+  const [showIpDialog, setShowIpDialog] = useState(false);
+  const [ipUrl, setIpUrl] = useState('');
+  const [ipKind, setIpKind] = useState<'hls' | 'mjpeg' | 'image'>('hls');
+  const [ipTargetSlot, setIpTargetSlot] = useState<number>(2);
+  const ipCam = useIpCamera();
+
+  // Fire detection state
+  const fireStateRef = useRef(createFireState());
+  const [fireStatus, setFireStatus] = useState<{ detected: boolean; confidence: number; reason?: string }>({
+    detected: false,
+    confidence: 0,
+  });
+
+  // Facial distress (cam 2)
+  const faceDistress = useFaceDistress(running);
+
   const alertCooldownRef = useRef<Record<string, number>>({});
   const snapshotCooldownRef = useRef(0);
   const [snapshots, setSnapshots] = useState<{ id: string; timestamp: Date; dataUrl: string; reason: string }[]>([]);
@@ -236,6 +251,60 @@ export default function Index() {
     setSourceCanvas(prev => prev === canvas ? prev : canvas);
   }, []);
 
+  const handleCam2FrameCapture = useCallback((canvas: HTMLCanvasElement) => {
+    setCam2SourceCanvas(prev => prev === canvas ? prev : canvas);
+  }, []);
+
+  // Attach IP camera stream into the chosen camera slot
+  useEffect(() => {
+    if (ipCam.stream && ipCam.connected) {
+      attachStream(ipTargetSlot, ipCam.stream, `IP Cam (${ipKind.toUpperCase()})`);
+    }
+  }, [ipCam.stream, ipCam.connected, ipTargetSlot, ipKind, attachStream]);
+
+  // Fire detection — runs on cam 1 source frames every ~500ms
+  useEffect(() => {
+    if (!running || !sourceCanvas) return;
+    const fireCooldown = { current: 0 };
+    const interval = window.setInterval(() => {
+      try {
+        const ctx = sourceCanvas.getContext('2d');
+        if (!ctx) return;
+        const frame = ctx.getImageData(0, 0, sourceCanvas.width, sourceCanvas.height);
+        const result = detectFire(frame, fireStateRef.current, cameras[0].objects);
+        setFireStatus({ detected: result.detected, confidence: result.confidence, reason: result.rejectedReason });
+        if (result.detected && Date.now() - fireCooldown.current > 5000) {
+          fireCooldown.current = Date.now();
+          addAlert(`🔥 Fire detected (${Math.round(result.confidence * 100)}% conf)`, 'critical', 1);
+          logAlert('fire', `Fire signature confirmed (ratio ${result.firePixelRatio.toFixed(3)}, flicker ${result.flickerScore.toExponential(2)})`);
+        }
+      } catch (err) {
+        // Canvas may be tainted by cross-origin IP cam — skip silently
+      }
+    }, 500);
+    return () => window.clearInterval(interval);
+  }, [running, sourceCanvas, cameras, addAlert, logAlert]);
+
+  // Facial distress — runs on cam 2 source (or cam 1 fallback) every ~700ms
+  useEffect(() => {
+    if (!running || !faceDistress.ready) return;
+    const target = cam2SourceCanvas || sourceCanvas;
+    if (!target) return;
+    const lastAlertRef = { current: 0 };
+    const interval = window.setInterval(() => {
+      faceDistress.analyze(target);
+    }, 700);
+    return () => window.clearInterval(interval);
+  }, [running, faceDistress.ready, faceDistress, cam2SourceCanvas, sourceCanvas]);
+
+  // Alert on severe facial distress
+  useEffect(() => {
+    if (faceDistress.distress.distressLevel === 'severe' && running) {
+      addAlert(`😟 Facial distress: ${faceDistress.distress.expression} (${faceDistress.distress.distressScore}%)`, 'high', 2);
+      logAlert('facial_distress', `Facial distress detected: ${faceDistress.distress.expression}`);
+    }
+  }, [faceDistress.distress.distressLevel, faceDistress.distress.expression, faceDistress.distress.distressScore, running, addAlert, logAlert]);
+
   const exportCSV = useCallback(() => {
     const rows = [
       ['Timestamp', 'Message', 'Severity', 'Camera'],
@@ -259,6 +328,104 @@ export default function Index() {
 
   return (
     <div className="min-h-screen bg-background text-foreground relative">
+      {/* IP Camera connect dialog */}
+      {showIpDialog && (
+        <div
+          className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4"
+          onClick={() => setShowIpDialog(false)}
+        >
+          <div
+            className="bg-card border border-border rounded-xl shadow-2xl w-full max-w-md p-5 space-y-4"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                <Wifi className="w-4 h-4 text-primary" /> Connect CCTV / IP Camera
+              </h3>
+              <button onClick={() => setShowIpDialog(false)} className="p-1 rounded hover:bg-muted">
+                <X className="w-4 h-4 text-muted-foreground" />
+              </button>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-[10px] font-mono text-muted-foreground uppercase">Stream type</label>
+              <div className="grid grid-cols-3 gap-1">
+                {(['hls', 'mjpeg', 'image'] as const).map(k => (
+                  <button
+                    key={k}
+                    onClick={() => setIpKind(k)}
+                    className={`text-[10px] font-mono py-1.5 rounded border transition-all ${
+                      ipKind === k
+                        ? 'bg-primary text-primary-foreground border-primary'
+                        : 'bg-secondary/30 border-border text-foreground/70 hover:border-primary/50'
+                    }`}
+                  >
+                    {k.toUpperCase()}
+                  </button>
+                ))}
+              </div>
+              <p className="text-[9px] font-mono text-muted-foreground italic">
+                {ipKind === 'hls' && 'HLS .m3u8 — most modern IP cams via gateway/converter'}
+                {ipKind === 'mjpeg' && 'MJPEG stream URL (e.g. /video, /mjpg/video.mjpg)'}
+                {ipKind === 'image' && 'Snapshot URL polled at 10fps (e.g. /shot.jpg)'}
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-[10px] font-mono text-muted-foreground uppercase">Camera URL</label>
+              <input
+                type="url"
+                value={ipUrl}
+                onChange={e => setIpUrl(e.target.value)}
+                placeholder={ipKind === 'hls' ? 'https://example.com/stream.m3u8' : 'http://192.168.1.50/video'}
+                className="w-full text-[11px] font-mono px-3 py-2 rounded border border-input bg-background focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-[10px] font-mono text-muted-foreground uppercase">Assign to slot</label>
+              <select
+                value={ipTargetSlot}
+                onChange={e => setIpTargetSlot(parseInt(e.target.value, 10))}
+                className="w-full text-[11px] font-mono px-3 py-2 rounded border border-input bg-background focus:outline-none focus:ring-2 focus:ring-primary"
+              >
+                <option value={1}>CAM 1 (Raw feed)</option>
+                <option value={2}>CAM 2 (Fused detection)</option>
+              </select>
+            </div>
+
+            {ipCam.error && (
+              <div className="text-[10px] font-mono text-destructive bg-destructive/10 px-2 py-1 rounded">
+                ⚠ {ipCam.error}
+              </div>
+            )}
+            <p className="text-[9px] font-mono text-muted-foreground">
+              ⚠ Browsers can't play raw RTSP. Use an HLS gateway (e.g. <code>go2rtc</code>, <code>MediaMTX</code>) or your camera's MJPEG snapshot URL. The URL must be served over HTTPS and allow CORS.
+            </p>
+
+            <div className="flex gap-2">
+              <button
+                onClick={() => setShowIpDialog(false)}
+                className="flex-1 text-xs font-mono py-2 rounded border border-border hover:bg-muted transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  if (!ipUrl.trim()) return;
+                  const ok = await ipCam.connect({ url: ipUrl.trim(), kind: ipKind });
+                  if (ok) setShowIpDialog(false);
+                }}
+                disabled={!ipUrl.trim()}
+                className="flex-1 text-xs font-mono py-2 rounded bg-primary text-primary-foreground hover:bg-primary/80 transition-all disabled:opacity-50"
+              >
+                Connect
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Floating Emergency Popup */}
       {showEmergency && (
         <div className="fixed bottom-4 right-4 z-50 w-80 bg-destructive/95 backdrop-blur-md text-destructive-foreground rounded-xl shadow-2xl border-2 border-destructive p-4 space-y-3 animate-in slide-in-from-bottom-5">
@@ -399,7 +566,7 @@ export default function Index() {
 
             {/* CAM 2: Fused Detection (Activity + Speech) */}
             <FusedDetectionView
-              sourceCanvas={sourceCanvas}
+              sourceCanvas={cam2SourceCanvas || sourceCanvas}
               objects={cameras[0].objects}
               audioFeatures={audioFeatures}
               attentionScore={attentionScore}
@@ -412,262 +579,139 @@ export default function Index() {
             />
           </div>
 
-          {/* Toggle button for extra cameras */}
-          <button
-            onClick={() => setShowExtraCams(prev => !prev)}
-            className="w-full flex items-center justify-center gap-2 py-1.5 text-[10px] font-mono text-muted-foreground hover:text-primary border border-border rounded-md hover:border-primary/50 transition-all bg-card"
-          >
-            {showExtraCams ? '▲ Hide Extra Cameras' : '▼ Show Extra Cameras (Saliency + CAM 3–8)'}
-          </button>
-
-          {showExtraCams && (
-          <>
-          {/* Saliency Heatmap (moved from CAM 2) */}
-          <div className="grid grid-cols-2 gap-2">
-            <div className="relative bg-card rounded-md overflow-hidden border border-border panel-glow">
-              <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between px-2 py-1 bg-gradient-to-b from-background/80 to-transparent">
-                <span className="text-[10px] font-mono text-primary uppercase tracking-wider">
-                  Saliency Heatmap
-                </span>
-                <div className="flex items-center gap-2">
-                  <span className="text-[8px] font-mono px-1 py-0.5 rounded bg-accent/20 text-accent">SOBEL</span>
-                  <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded ${
-                    globalSaliencyScore > 60 ? 'bg-destructive/80 text-destructive-foreground' :
-                    globalSaliencyScore > 30 ? 'bg-warning/80 text-warning-foreground' :
-                    'bg-secondary/80 text-secondary-foreground'
-                  }`}>
-                    S:{globalSaliencyScore}
-                  </span>
-                </div>
-              </div>
-              <SaliencyView
-                title=""
-                sourceCanvas={sourceCanvas}
+          {/* Hidden CAM 2 raw capture — only when cam 2 has its own stream */}
+          {cameras[1].active && (
+            <div className="hidden">
+              <CameraFeed
+                camera={cameras[1]}
+                mirror={false}
+                showBoundingBoxes={false}
+                showHeatmap={false}
+                heatmapOpacity={0}
                 saliencyMode={saliencyMode}
                 threshold={threshold}
-                colored={true}
-                active={running}
-                score={globalSaliencyScore}
-                onScoreUpdate={handleSaliencyViewScore}
+                simulationMode={false}
+                priorityObjects={priorityObjects}
+                detectionStats={detectionStats}
+                onFpsUpdate={handleFpsUpdate}
+                onObjectsUpdate={handleObjectsUpdate}
+                onSaliencyScoreUpdate={handleCameraSaliencyScore}
+                onFrameCapture={handleCam2FrameCapture}
+                onDetectFrame={handleDetectFrame}
               />
             </div>
-            {/* CAM 3: Region Saliency */}
-            <div className="relative bg-card rounded-md overflow-hidden border border-border panel-glow">
-              <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between px-2 py-1 bg-gradient-to-b from-background/80 to-transparent">
-                <span className="text-[10px] font-mono text-primary uppercase tracking-wider">
-                  CAM 3 — Region Saliency
-                </span>
-                <span className="text-[8px] font-mono px-1 py-0.5 rounded bg-info/20 text-info">GRAYSCALE</span>
-              </div>
-              <SaliencyView
-                title=""
-                sourceCanvas={sourceCanvas}
-                saliencyMode={saliencyMode}
-                threshold={threshold}
-                colored={false}
-                active={running}
-                score={globalSaliencyScore}
-              />
-            </div>
-          </div>
-
-          {/* Middle row: 2 cameras */}
-          <div className="grid grid-cols-2 gap-2">
-
-            {/* CAM 4: Threshold Segmentation */}
-            <div className="relative bg-card rounded-md overflow-hidden border border-border panel-glow">
-              <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between px-2 py-1 bg-gradient-to-b from-background/80 to-transparent">
-                <span className="text-[10px] font-mono text-primary uppercase tracking-wider">
-                  CAM 4 — Threshold Segmentation
-                </span>
-                <span className="text-[8px] font-mono px-1 py-0.5 rounded bg-warning/20 text-warning">BINARY</span>
-              </div>
-              <ThresholdView
-                title=""
-                sourceCanvas={sourceCanvas}
-                saliencyMode={saliencyMode}
-                threshold={threshold}
-                active={running}
-              />
-            </div>
-          </div>
-
-          {/* Bottom row: 2 new cameras */}
-          <div className="grid grid-cols-2 gap-2">
-            {/* CAM 5: Low-Fi Region Saliency */}
-            <div className="relative bg-card rounded-md overflow-hidden border border-border panel-glow">
-              <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between px-2 py-1 bg-gradient-to-b from-background/80 to-transparent">
-                <span className="text-[10px] font-mono text-primary uppercase tracking-wider">
-                  CAM 5 — Low-Fi Saliency
-                </span>
-                <span className="text-[8px] font-mono px-1 py-0.5 rounded bg-secondary/40 text-foreground/70">SUPERPIXEL</span>
-              </div>
-              <LowFiView
-                sourceCanvas={sourceCanvas}
-                saliencyMode={saliencyMode}
-                threshold={threshold}
-                active={running}
-              />
-              {!running && (
-                <div className="absolute inset-0 flex items-center justify-center bg-background/80">
-                  <span className="text-xs font-mono text-muted-foreground">OFFLINE</span>
-                </div>
-              )}
-            </div>
-
-            {/* CAM 6: Object Shader */}
-            <div className="relative bg-card rounded-md overflow-hidden border border-border panel-glow">
-              <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between px-2 py-1 bg-gradient-to-b from-background/80 to-transparent">
-                <span className="text-[10px] font-mono text-primary uppercase tracking-wider">
-                  CAM 6 — Object Shader
-                </span>
-                <span className="text-[8px] font-mono px-1 py-0.5 rounded bg-destructive/20 text-destructive">MASK</span>
-              </div>
-              <ObjectShaderView
-                sourceCanvas={sourceCanvas}
-                objects={cameras[0].objects}
-                active={running}
-              />
-              {!running && (
-                <div className="absolute inset-0 flex items-center justify-center bg-background/80">
-                  <span className="text-xs font-mono text-muted-foreground">OFFLINE</span>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* 4th row: Laplacian + Motion */}
-          <div className="grid grid-cols-2 gap-2">
-            {/* CAM 7: Laplacian Detection */}
-            <div className="relative bg-card rounded-md overflow-hidden border border-border panel-glow">
-              <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between px-2 py-1 bg-gradient-to-b from-background/80 to-transparent">
-                <span className="text-[10px] font-mono text-primary uppercase tracking-wider">
-                  CAM 7 — Laplacian Detection
-                </span>
-                <span className="text-[8px] font-mono px-1 py-0.5 rounded bg-accent/20 text-accent">∇²I</span>
-              </div>
-              <LaplacianView
-                sourceCanvas={sourceCanvas}
-                threshold={threshold}
-                active={running}
-              />
-              {!running && (
-                <div className="absolute inset-0 flex items-center justify-center bg-background/80">
-                  <span className="text-xs font-mono text-muted-foreground">OFFLINE</span>
-                </div>
-              )}
-            </div>
-
-            {/* CAM 8: Motion Detection */}
-            <div className="relative bg-card rounded-md overflow-hidden border border-border panel-glow">
-              <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between px-2 py-1 bg-gradient-to-b from-background/80 to-transparent">
-                <span className="text-[10px] font-mono text-primary uppercase tracking-wider">
-                  CAM 8 — Motion Detection
-                </span>
-                <span className="text-[8px] font-mono px-1 py-0.5 rounded bg-success/20 text-success">ΔI</span>
-              </div>
-              <MotionView
-                sourceCanvas={sourceCanvas}
-                threshold={threshold}
-                active={running}
-              />
-              {!running && (
-                <div className="absolute inset-0 flex items-center justify-center bg-background/80">
-                  <span className="text-xs font-mono text-muted-foreground">OFFLINE</span>
-                </div>
-              )}
-            </div>
-          </div>
-          </>
           )}
 
-          {/* Multimodal Fusion Output */}
+          {/* IP / CCTV camera connect */}
+          <div className="bg-card rounded-md border border-border panel-glow p-3 flex items-center gap-2">
+            <Wifi className="w-4 h-4 text-primary" />
+            <span className="text-[10px] font-mono text-foreground flex-1">
+              {ipCam.connected
+                ? `🟢 IP Cam connected → CAM ${ipTargetSlot}`
+                : 'Connect a CCTV / IP camera (HLS .m3u8 or MJPEG/snapshot URL)'}
+            </span>
+            {ipCam.connected ? (
+              <button
+                onClick={() => { ipCam.disconnect(); attachStream(ipTargetSlot, null); }}
+                className="text-[10px] font-mono px-2 py-1 rounded bg-destructive/20 text-destructive hover:bg-destructive/30"
+              >
+                Disconnect
+              </button>
+            ) : (
+              <button
+                onClick={() => setShowIpDialog(true)}
+                className="text-[10px] font-mono px-2 py-1 rounded bg-primary/20 text-primary hover:bg-primary/30"
+              >
+                + Connect
+              </button>
+            )}
+          </div>
+
+          {/* Saliency-% breakdown — replaces the multimodal fusion output */}
           <div className="bg-card rounded-md border border-primary/30 panel-glow p-3">
             <div className="flex items-center justify-between mb-2">
               <span className="text-[10px] font-mono text-primary uppercase tracking-wider">
-                ⚡ Multimodal Fusion Output
+                📊 Saliency Score Calculation
               </span>
               <span className="text-[9px] font-mono text-muted-foreground">
-                α = 0.4×S + 0.3×A + 0.3×O
+                α = 0.40·S + 0.30·A + 0.30·O
               </span>
             </div>
-            <div className="grid grid-cols-8 gap-2">
-              <div className="bg-secondary/30 rounded p-2 space-y-1">
-                <p className="text-[9px] font-mono text-accent font-semibold">CAM 1</p>
-                <p className="text-[8px] font-mono text-muted-foreground">Detection</p>
-                <div className="h-1.5 bg-secondary/50 rounded overflow-hidden">
-                  <div className="h-full bg-primary rounded transition-all" style={{ width: `${Math.min(100, cameras[0].objects.length * 25)}%` }} />
+
+            {(() => {
+              const audioComponent = audioFeatures.speechDetected
+                ? Math.min(100, Math.abs(audioFeatures.decibel) + 20)
+                : Math.min(100, Math.max(0, (audioFeatures.decibel + 50) * 1.5));
+              const objectComponent = cameras[0].objects.length > 0
+                ? Math.min(100, cameras[0].objects.reduce((s, o) => s + o.confidence * 100, 0) / cameras[0].objects.length)
+                : 0;
+              const sContrib = Math.round(0.4 * globalSaliencyScore);
+              const aContrib = Math.round(0.3 * audioComponent);
+              const oContrib = Math.round(0.3 * objectComponent);
+              const rows: Array<{ label: string; value: number; weight: number; contrib: number; color: string; explain: string }> = [
+                { label: 'Visual Saliency (S)', value: globalSaliencyScore, weight: 40, contrib: sContrib, color: 'bg-primary',     explain: 'Edge + motion energy from CAM 1 frame' },
+                { label: 'Audio Energy (A)',    value: Math.round(audioComponent), weight: 30, contrib: aContrib, color: 'bg-warning',     explain: audioFeatures.speechDetected ? 'Speech + dB level' : 'Ambient dB level' },
+                { label: 'Object Confidence (O)', value: Math.round(objectComponent), weight: 30, contrib: oContrib, color: 'bg-accent',    explain: `${cameras[0].objects.length} object(s) avg confidence` },
+              ];
+              return (
+                <div className="space-y-1.5">
+                  {rows.map(r => (
+                    <div key={r.label} className="space-y-0.5">
+                      <div className="flex items-center justify-between text-[9px] font-mono">
+                        <span className="text-foreground/80">{r.label} <span className="text-muted-foreground">× {r.weight}%</span></span>
+                        <span className="text-foreground">
+                          {r.value}% <span className="text-muted-foreground">→ +{r.contrib}</span>
+                        </span>
+                      </div>
+                      <div className="h-1.5 bg-secondary/50 rounded overflow-hidden relative">
+                        <div className={`h-full ${r.color} rounded transition-all`} style={{ width: `${r.value}%` }} />
+                      </div>
+                      <p className="text-[8px] font-mono text-muted-foreground italic">{r.explain}</p>
+                    </div>
+                  ))}
+                  <div className="mt-2 flex items-center gap-3 bg-secondary/20 rounded p-2">
+                    <span className="text-[9px] font-mono text-muted-foreground">FUSED α =</span>
+                    <span className={`text-sm font-mono font-bold ${attentionScore > 70 ? 'text-destructive' : attentionScore > 40 ? 'text-warning' : 'text-success'}`}>
+                      {attentionScore}%
+                    </span>
+                    <div className="flex-1 h-2 bg-secondary/50 rounded overflow-hidden">
+                      <div className={`h-full rounded transition-all ${attentionScore > 70 ? 'bg-destructive' : attentionScore > 40 ? 'bg-warning' : 'bg-success'}`} style={{ width: `${attentionScore}%` }} />
+                    </div>
+                    <span className={`text-[9px] font-mono px-1.5 py-0.5 rounded ${attentionScore > 70 ? 'bg-destructive/20 text-destructive' : attentionScore > 40 ? 'bg-warning/20 text-warning' : 'bg-success/20 text-success'}`}>
+                      {attentionScore > 70 ? 'ALERT' : attentionScore > 40 ? 'ELEVATED' : 'NORMAL'}
+                    </span>
+                  </div>
                 </div>
-                <p className="text-[7px] font-mono text-foreground/70">{cameras[0].objects.length} obj</p>
-              </div>
-              <div className="bg-secondary/30 rounded p-2 space-y-1">
-                <p className="text-[9px] font-mono text-accent font-semibold">CAM 2</p>
-                <p className="text-[8px] font-mono text-muted-foreground">Heatmap</p>
-                <div className="h-1.5 bg-secondary/50 rounded overflow-hidden">
-                  <div className={`h-full rounded transition-all ${globalSaliencyScore > 60 ? 'bg-destructive' : globalSaliencyScore > 30 ? 'bg-warning' : 'bg-success'}`} style={{ width: `${globalSaliencyScore}%` }} />
+              );
+            })()}
+
+            {/* Fire + Face distress strip */}
+            <div className="mt-2 grid grid-cols-2 gap-2">
+              <div className={`rounded p-2 border ${fireStatus.detected ? 'border-destructive/60 bg-destructive/10' : 'border-border bg-secondary/20'}`}>
+                <div className="flex items-center gap-1.5 mb-0.5">
+                  <Flame className={`w-3 h-3 ${fireStatus.detected ? 'text-destructive animate-pulse' : 'text-muted-foreground'}`} />
+                  <span className="text-[9px] font-mono text-foreground/80">Fire ({Math.round(fireStatus.confidence * 100)}%)</span>
                 </div>
-                <p className="text-[7px] font-mono text-foreground/70">S:{globalSaliencyScore}</p>
+                <p className="text-[8px] font-mono text-muted-foreground italic">
+                  {fireStatus.detected
+                    ? '⚠ Real fire signature (color + flicker)'
+                    : fireStatus.reason || 'No fire signature'}
+                </p>
               </div>
-              <div className="bg-secondary/30 rounded p-2 space-y-1">
-                <p className="text-[9px] font-mono text-accent font-semibold">CAM 3</p>
-                <p className="text-[8px] font-mono text-muted-foreground">Region</p>
-                <div className="h-1.5 bg-secondary/50 rounded overflow-hidden">
-                  <div className="h-full bg-info rounded transition-all" style={{ width: `${Math.min(100, globalSaliencyScore * 1.2)}%` }} />
+              <div className={`rounded p-2 border ${faceDistress.distress.distressLevel === 'severe' ? 'border-destructive/60 bg-destructive/10' : faceDistress.distress.distressLevel === 'mild' ? 'border-warning/60 bg-warning/10' : 'border-border bg-secondary/20'}`}>
+                <div className="flex items-center gap-1.5 mb-0.5">
+                  <span className={`text-[10px] ${faceDistress.distress.distressLevel === 'severe' ? 'animate-pulse' : ''}`}>😟</span>
+                  <span className="text-[9px] font-mono text-foreground/80">
+                    Facial Distress ({faceDistress.distress.distressScore}%)
+                  </span>
                 </div>
-                <p className="text-[7px] font-mono text-foreground/70">Edge map</p>
+                <p className="text-[8px] font-mono text-muted-foreground italic">
+                  {!faceDistress.ready ? 'Loading model…' :
+                   faceDistress.error ? `⚠ ${faceDistress.error}` :
+                   !faceDistress.distress.hasFace ? 'No face detected' :
+                   `${faceDistress.distress.expression} (${Math.round(faceDistress.distress.probability * 100)}%)`}
+                </p>
               </div>
-              <div className="bg-secondary/30 rounded p-2 space-y-1">
-                <p className="text-[9px] font-mono text-accent font-semibold">CAM 4</p>
-                <p className="text-[8px] font-mono text-muted-foreground">Threshold</p>
-                <div className="h-1.5 bg-secondary/50 rounded overflow-hidden">
-                  <div className="h-full bg-warning rounded transition-all" style={{ width: `${Math.min(100, threshold * 3)}%` }} />
-                </div>
-                <p className="text-[7px] font-mono text-foreground/70">τ={threshold}</p>
-              </div>
-              <div className="bg-secondary/30 rounded p-2 space-y-1">
-                <p className="text-[9px] font-mono text-accent font-semibold">CAM 5</p>
-                <p className="text-[8px] font-mono text-muted-foreground">Low-Fi</p>
-                <div className="h-1.5 bg-secondary/50 rounded overflow-hidden">
-                  <div className="h-full bg-secondary rounded transition-all" style={{ width: `${Math.min(100, globalSaliencyScore * 0.8)}%` }} />
-                </div>
-                <p className="text-[7px] font-mono text-foreground/70">Superpixel</p>
-              </div>
-              <div className="bg-secondary/30 rounded p-2 space-y-1">
-                <p className="text-[9px] font-mono text-accent font-semibold">CAM 6</p>
-                <p className="text-[8px] font-mono text-muted-foreground">Shader</p>
-                <div className="h-1.5 bg-secondary/50 rounded overflow-hidden">
-                  <div className="h-full bg-destructive rounded transition-all" style={{ width: `${Math.min(100, cameras[0].objects.length * 30)}%` }} />
-                </div>
-                <p className="text-[7px] font-mono text-foreground/70">Mask</p>
-              </div>
-              <div className="bg-secondary/30 rounded p-2 space-y-1">
-                <p className="text-[9px] font-mono text-accent font-semibold">CAM 7</p>
-                <p className="text-[8px] font-mono text-muted-foreground">Laplacian</p>
-                <div className="h-1.5 bg-secondary/50 rounded overflow-hidden">
-                  <div className="h-full bg-accent rounded transition-all" style={{ width: `${Math.min(100, globalSaliencyScore * 1.1)}%` }} />
-                </div>
-                <p className="text-[7px] font-mono text-foreground/70">∇²I</p>
-              </div>
-              <div className="bg-secondary/30 rounded p-2 space-y-1">
-                <p className="text-[9px] font-mono text-accent font-semibold">CAM 8</p>
-                <p className="text-[8px] font-mono text-muted-foreground">Motion</p>
-                <div className="h-1.5 bg-secondary/50 rounded overflow-hidden">
-                  <div className="h-full bg-success rounded transition-all" style={{ width: `${Math.min(100, globalSaliencyScore * 0.9)}%` }} />
-                </div>
-                <p className="text-[7px] font-mono text-foreground/70">ΔI</p>
-              </div>
-            </div>
-            <div className="mt-2 flex items-center gap-3 bg-secondary/20 rounded p-2">
-              <span className="text-[9px] font-mono text-muted-foreground">FUSED α =</span>
-              <span className={`text-sm font-mono font-bold ${attentionScore > 70 ? 'text-destructive' : attentionScore > 40 ? 'text-warning' : 'text-success'}`}>
-                {attentionScore}
-              </span>
-              <div className="flex-1 h-2 bg-secondary/50 rounded overflow-hidden">
-                <div className={`h-full rounded transition-all ${attentionScore > 70 ? 'bg-destructive' : attentionScore > 40 ? 'bg-warning' : 'bg-success'}`} style={{ width: `${attentionScore}%` }} />
-              </div>
-              <span className={`text-[9px] font-mono px-1.5 py-0.5 rounded ${attentionScore > 70 ? 'bg-destructive/20 text-destructive' : attentionScore > 40 ? 'bg-warning/20 text-warning' : 'bg-success/20 text-success'}`}>
-                {attentionScore > 70 ? 'ALERT' : attentionScore > 40 ? 'ELEVATED' : 'NORMAL'}
-              </span>
             </div>
           </div>
 

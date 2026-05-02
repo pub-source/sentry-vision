@@ -31,36 +31,21 @@ export function useCamera() {
     const newCameras: CameraState[] = [];
     const streams: MediaStream[] = [];
 
-    // Get primary stream
-    let primaryStream: MediaStream | null = null;
-    try {
-      const deviceId = videoDevices[0]?.deviceId;
-      primaryStream = await navigator.mediaDevices.getUserMedia({
-        video: deviceId ? { deviceId: { exact: deviceId }, ...constraints } : constraints,
-        audio: false,
-      });
-    } catch {
-      // If camera fails, we'll use simulation mode
-    }
-
+    // Each camera gets its OWN device. If a slot has no real device, it stays
+    // OFFLINE — cams work independently or together depending on what's available.
     for (let i = 0; i < 4; i++) {
       const device = videoDevices[i];
       let stream: MediaStream | null = null;
 
-      if (device && i < videoDevices.length) {
+      if (device) {
         try {
-          stream = i === 0 && primaryStream
-            ? primaryStream
-            : await navigator.mediaDevices.getUserMedia({
-                video: { deviceId: { exact: device.deviceId }, ...constraints },
-                audio: false,
-              });
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: { deviceId: { exact: device.deviceId }, ...constraints },
+            audio: false,
+          });
         } catch {
-          stream = primaryStream; // fallback to clone
+          stream = null;
         }
-      } else {
-        // Clone primary stream for remaining panels
-        stream = primaryStream;
       }
 
       if (stream) streams.push(stream);
@@ -68,7 +53,7 @@ export function useCamera() {
       newCameras.push({
         id: i + 1,
         deviceId: device?.deviceId || null,
-        label: device?.label || `Camera ${i + 1}${!device ? ' (cloned)' : ''}`,
+        label: device?.label || `Camera ${i + 1}`,
         fps: 0,
         active: !!stream,
         stream,
@@ -100,6 +85,14 @@ export function useCamera() {
     setCameras(prev => prev.map(c => c.id === id ? { ...c, ...update } : c));
   }, []);
 
+  // Attach an external stream (e.g. an IP camera) to a specific slot.
+  const attachStream = useCallback((id: number, stream: MediaStream | null, label?: string) => {
+    setCameras(prev => prev.map(c => c.id === id
+      ? { ...c, stream, active: !!stream, label: label ?? (stream ? `IP Cam ${id}` : c.label), fps: 0 }
+      : c));
+    if (stream) streamsRef.current.push(stream);
+  }, []);
+
   useEffect(() => {
     return () => {
       const stopped = new Set<string>();
@@ -114,5 +107,5 @@ export function useCamera() {
     };
   }, []);
 
-  return { cameras, devices, startCameras, stopCameras, updateCamera, enumerateDevices };
+  return { cameras, devices, startCameras, stopCameras, updateCamera, attachStream, enumerateDevices };
 }
