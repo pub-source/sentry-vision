@@ -59,9 +59,27 @@ export default function Index() {
   const [errors] = useState<string[]>([]);
   const [attentionScore, setAttentionScore] = useState(0);
   const [globalSaliencyScore, setGlobalSaliencyScore] = useState(0);
-  
-  const [showExtraCams, setShowExtraCams] = useState(false);
+
   const [sourceCanvas, setSourceCanvas] = useState<HTMLCanvasElement | null>(null);
+  const [cam2SourceCanvas, setCam2SourceCanvas] = useState<HTMLCanvasElement | null>(null);
+
+  // IP camera state
+  const [showIpDialog, setShowIpDialog] = useState(false);
+  const [ipUrl, setIpUrl] = useState('');
+  const [ipKind, setIpKind] = useState<'hls' | 'mjpeg' | 'image'>('hls');
+  const [ipTargetSlot, setIpTargetSlot] = useState<number>(2);
+  const ipCam = useIpCamera();
+
+  // Fire detection state
+  const fireStateRef = useRef(createFireState());
+  const [fireStatus, setFireStatus] = useState<{ detected: boolean; confidence: number; reason?: string }>({
+    detected: false,
+    confidence: 0,
+  });
+
+  // Facial distress (cam 2)
+  const faceDistress = useFaceDistress(running);
+
   const alertCooldownRef = useRef<Record<string, number>>({});
   const snapshotCooldownRef = useRef(0);
   const [snapshots, setSnapshots] = useState<{ id: string; timestamp: Date; dataUrl: string; reason: string }[]>([]);
