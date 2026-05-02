@@ -251,6 +251,60 @@ export default function Index() {
     setSourceCanvas(prev => prev === canvas ? prev : canvas);
   }, []);
 
+  const handleCam2FrameCapture = useCallback((canvas: HTMLCanvasElement) => {
+    setCam2SourceCanvas(prev => prev === canvas ? prev : canvas);
+  }, []);
+
+  // Attach IP camera stream into the chosen camera slot
+  useEffect(() => {
+    if (ipCam.stream && ipCam.connected) {
+      attachStream(ipTargetSlot, ipCam.stream, `IP Cam (${ipKind.toUpperCase()})`);
+    }
+  }, [ipCam.stream, ipCam.connected, ipTargetSlot, ipKind, attachStream]);
+
+  // Fire detection — runs on cam 1 source frames every ~500ms
+  useEffect(() => {
+    if (!running || !sourceCanvas) return;
+    const fireCooldown = { current: 0 };
+    const interval = window.setInterval(() => {
+      try {
+        const ctx = sourceCanvas.getContext('2d');
+        if (!ctx) return;
+        const frame = ctx.getImageData(0, 0, sourceCanvas.width, sourceCanvas.height);
+        const result = detectFire(frame, fireStateRef.current, cameras[0].objects);
+        setFireStatus({ detected: result.detected, confidence: result.confidence, reason: result.rejectedReason });
+        if (result.detected && Date.now() - fireCooldown.current > 5000) {
+          fireCooldown.current = Date.now();
+          addAlert(`🔥 Fire detected (${Math.round(result.confidence * 100)}% conf)`, 'critical', 1);
+          logAlert('fire', `Fire signature confirmed (ratio ${result.firePixelRatio.toFixed(3)}, flicker ${result.flickerScore.toExponential(2)})`);
+        }
+      } catch (err) {
+        // Canvas may be tainted by cross-origin IP cam — skip silently
+      }
+    }, 500);
+    return () => window.clearInterval(interval);
+  }, [running, sourceCanvas, cameras, addAlert, logAlert]);
+
+  // Facial distress — runs on cam 2 source (or cam 1 fallback) every ~700ms
+  useEffect(() => {
+    if (!running || !faceDistress.ready) return;
+    const target = cam2SourceCanvas || sourceCanvas;
+    if (!target) return;
+    const lastAlertRef = { current: 0 };
+    const interval = window.setInterval(() => {
+      faceDistress.analyze(target);
+    }, 700);
+    return () => window.clearInterval(interval);
+  }, [running, faceDistress.ready, faceDistress, cam2SourceCanvas, sourceCanvas]);
+
+  // Alert on severe facial distress
+  useEffect(() => {
+    if (faceDistress.distress.distressLevel === 'severe' && running) {
+      addAlert(`😟 Facial distress: ${faceDistress.distress.expression} (${faceDistress.distress.distressScore}%)`, 'high', 2);
+      logAlert('facial_distress', `Facial distress detected: ${faceDistress.distress.expression}`);
+    }
+  }, [faceDistress.distress.distressLevel, faceDistress.distress.expression, faceDistress.distress.distressScore, running, addAlert, logAlert]);
+
   const exportCSV = useCallback(() => {
     const rows = [
       ['Timestamp', 'Message', 'Severity', 'Camera'],
