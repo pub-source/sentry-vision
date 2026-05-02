@@ -1,14 +1,8 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { Moon, Sun, Home, LogOut, LogIn, Shield, Clock } from 'lucide-react';
+import { Moon, Sun, Home, LogOut, LogIn, Shield, Clock, Wifi, X, Flame } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import CameraFeed from '@/components/dashboard/CameraFeed';
 import FusedDetectionView from '@/components/dashboard/FusedDetectionView';
-import SaliencyView from '@/components/dashboard/SaliencyView';
-import ThresholdView from '@/components/dashboard/ThresholdView';
-import LowFiView from '@/components/dashboard/LowFiView';
-import ObjectShaderView from '@/components/dashboard/ObjectShaderView';
-import LaplacianView from '@/components/dashboard/LaplacianView';
-import MotionView from '@/components/dashboard/MotionView';
 import AudioMeter from '@/components/dashboard/AudioMeter';
 import AlertLog from '@/components/dashboard/AlertLog';
 import ControlsPanel from '@/components/dashboard/ControlsPanel';
@@ -21,6 +15,9 @@ import { useObjectDetection } from '@/hooks/useObjectDetection';
 import { useSpeechRecognition } from '@/hooks/useSpeechRecognition';
 import { useAuth } from '@/hooks/useAuth';
 import { useHousehold } from '@/hooks/useHousehold';
+import { useIpCamera } from '@/hooks/useIpCamera';
+import { useFaceDistress } from '@/hooks/useFaceDistress';
+import { detectFire, createFireState } from '@/lib/fireDetection';
 import type { SaliencyMode, QualityMode, Alert, DetectedObject } from '@/types/dashboard';
 import { DEFAULT_PRIORITY_OBJECTS } from '@/types/dashboard';
 
@@ -28,7 +25,7 @@ export default function Index() {
   const { user, loading: authLoading, signOut } = useAuth();
   const navigate = useNavigate();
   const { householdId, wakeWords, members, checkForWakeWord, logAlert, logNotification } = useHousehold(user?.id);
-  const { cameras, devices, startCameras, stopCameras, updateCamera, enumerateDevices } = useCamera();
+  const { cameras, devices, startCameras, stopCameras, updateCamera, attachStream, enumerateDevices } = useCamera();
   const { audioFeatures, startAudio, stopAudio } = useAudioAnalysis();
   const { loadModel, detect, stats: detectionStats } = useObjectDetection();
   const [darkMode, setDarkMode] = useState(() => {
