@@ -468,7 +468,7 @@ export default function Index() {
 
             {/* CAM 2: Fused Detection (Activity + Speech) */}
             <FusedDetectionView
-              sourceCanvas={sourceCanvas}
+              sourceCanvas={cam2SourceCanvas || sourceCanvas}
               objects={cameras[0].objects}
               audioFeatures={audioFeatures}
               attentionScore={attentionScore}
@@ -480,6 +480,29 @@ export default function Index() {
               onToggleSpeech={() => {}}
             />
           </div>
+
+          {/* Hidden CAM 2 raw capture — only when cam 2 has its own stream */}
+          {cameras[1].active && (
+            <div className="hidden">
+              <CameraFeed
+                camera={cameras[1]}
+                mirror={false}
+                showBoundingBoxes={false}
+                showHeatmap={false}
+                heatmapOpacity={0}
+                saliencyMode={saliencyMode}
+                threshold={threshold}
+                simulationMode={false}
+                priorityObjects={priorityObjects}
+                detectionStats={detectionStats}
+                onFpsUpdate={handleFpsUpdate}
+                onObjectsUpdate={handleObjectsUpdate}
+                onSaliencyScoreUpdate={handleCameraSaliencyScore}
+                onFrameCapture={handleCam2FrameCapture}
+                onDetectFrame={handleDetectFrame}
+              />
+            </div>
+          )}
 
           {/* IP / CCTV camera connect */}
           <div className="bg-card rounded-md border border-border panel-glow p-3 flex items-center gap-2">
