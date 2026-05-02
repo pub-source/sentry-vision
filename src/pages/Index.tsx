@@ -328,6 +328,104 @@ export default function Index() {
 
   return (
     <div className="min-h-screen bg-background text-foreground relative">
+      {/* IP Camera connect dialog */}
+      {showIpDialog && (
+        <div
+          className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4"
+          onClick={() => setShowIpDialog(false)}
+        >
+          <div
+            className="bg-card border border-border rounded-xl shadow-2xl w-full max-w-md p-5 space-y-4"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                <Wifi className="w-4 h-4 text-primary" /> Connect CCTV / IP Camera
+              </h3>
+              <button onClick={() => setShowIpDialog(false)} className="p-1 rounded hover:bg-muted">
+                <X className="w-4 h-4 text-muted-foreground" />
+              </button>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-[10px] font-mono text-muted-foreground uppercase">Stream type</label>
+              <div className="grid grid-cols-3 gap-1">
+                {(['hls', 'mjpeg', 'image'] as const).map(k => (
+                  <button
+                    key={k}
+                    onClick={() => setIpKind(k)}
+                    className={`text-[10px] font-mono py-1.5 rounded border transition-all ${
+                      ipKind === k
+                        ? 'bg-primary text-primary-foreground border-primary'
+                        : 'bg-secondary/30 border-border text-foreground/70 hover:border-primary/50'
+                    }`}
+                  >
+                    {k.toUpperCase()}
+                  </button>
+                ))}
+              </div>
+              <p className="text-[9px] font-mono text-muted-foreground italic">
+                {ipKind === 'hls' && 'HLS .m3u8 — most modern IP cams via gateway/converter'}
+                {ipKind === 'mjpeg' && 'MJPEG stream URL (e.g. /video, /mjpg/video.mjpg)'}
+                {ipKind === 'image' && 'Snapshot URL polled at 10fps (e.g. /shot.jpg)'}
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-[10px] font-mono text-muted-foreground uppercase">Camera URL</label>
+              <input
+                type="url"
+                value={ipUrl}
+                onChange={e => setIpUrl(e.target.value)}
+                placeholder={ipKind === 'hls' ? 'https://example.com/stream.m3u8' : 'http://192.168.1.50/video'}
+                className="w-full text-[11px] font-mono px-3 py-2 rounded border border-input bg-background focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-[10px] font-mono text-muted-foreground uppercase">Assign to slot</label>
+              <select
+                value={ipTargetSlot}
+                onChange={e => setIpTargetSlot(parseInt(e.target.value, 10))}
+                className="w-full text-[11px] font-mono px-3 py-2 rounded border border-input bg-background focus:outline-none focus:ring-2 focus:ring-primary"
+              >
+                <option value={1}>CAM 1 (Raw feed)</option>
+                <option value={2}>CAM 2 (Fused detection)</option>
+              </select>
+            </div>
+
+            {ipCam.error && (
+              <div className="text-[10px] font-mono text-destructive bg-destructive/10 px-2 py-1 rounded">
+                ⚠ {ipCam.error}
+              </div>
+            )}
+            <p className="text-[9px] font-mono text-muted-foreground">
+              ⚠ Browsers can't play raw RTSP. Use an HLS gateway (e.g. <code>go2rtc</code>, <code>MediaMTX</code>) or your camera's MJPEG snapshot URL. The URL must be served over HTTPS and allow CORS.
+            </p>
+
+            <div className="flex gap-2">
+              <button
+                onClick={() => setShowIpDialog(false)}
+                className="flex-1 text-xs font-mono py-2 rounded border border-border hover:bg-muted transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  if (!ipUrl.trim()) return;
+                  const ok = await ipCam.connect({ url: ipUrl.trim(), kind: ipKind });
+                  if (ok) setShowIpDialog(false);
+                }}
+                disabled={!ipUrl.trim()}
+                className="flex-1 text-xs font-mono py-2 rounded bg-primary text-primary-foreground hover:bg-primary/80 transition-all disabled:opacity-50"
+              >
+                Connect
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Floating Emergency Popup */}
       {showEmergency && (
         <div className="fixed bottom-4 right-4 z-50 w-80 bg-destructive/95 backdrop-blur-md text-destructive-foreground rounded-xl shadow-2xl border-2 border-destructive p-4 space-y-3 animate-in slide-in-from-bottom-5">
