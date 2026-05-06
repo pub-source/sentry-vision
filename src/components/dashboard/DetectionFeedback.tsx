@@ -25,15 +25,17 @@ export default function DetectionFeedback({
     setBusy(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      await supabase.from('detection_feedback').insert([{
+      const row: Record<string, unknown> = {
         household_id: householdId,
-        submitted_by: user?.id ?? null,
         event_type: eventType,
         label,
         confidence,
         audio_event: audioEvent ?? null,
-        visual_context: (visualContext ?? {}) as never,
-      }]);
+        visual_context: visualContext ?? {},
+      };
+      if (user?.id) row.submitted_by = user.id;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await supabase.from('detection_feedback').insert(row as any);
       setSubmitted(label);
     } catch (err) {
       console.error('[DetectionFeedback] insert failed', err);
