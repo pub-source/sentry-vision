@@ -25,15 +25,15 @@ export default function DetectionFeedback({
     setBusy(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      await supabase.from('detection_feedback').insert({
+      await supabase.from('detection_feedback').insert([{
         household_id: householdId,
         submitted_by: user?.id ?? null,
         event_type: eventType,
         label,
         confidence,
         audio_event: audioEvent ?? null,
-        visual_context: visualContext ?? {},
-      });
+        visual_context: (visualContext ?? {}) as never,
+      }]);
       setSubmitted(label);
     } catch (err) {
       console.error('[DetectionFeedback] insert failed', err);
