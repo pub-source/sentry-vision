@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <!-- TODO: Set the document title to the name of your application -->
     <link rel="icon" href="/favicon.png" type="image/png" />
+    <!-- Preconnect to ML model CDNs to cut TLS/DNS latency on first load -->
+    <link rel="preconnect" href="https://storage.googleapis.com" crossorigin />
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+    <link rel="dns-prefetch" href="https://tfhub.dev" />
     <title>MSDSystem - Multimodal Saliency Detection</title>
     <meta name="description" content="Real-time context-aware indoor awareness with multi-camera saliency detection and audio analysis" />
     <meta name="author" content="Lovable" />
