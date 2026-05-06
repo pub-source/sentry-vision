@@ -38,6 +38,7 @@ export function useFaceDistress(active: boolean) {
   const [error, setError] = useState<string | null>(null);
   const [distress, setDistress] = useState<FaceDistress>(EMPTY);
   const busyRef = useRef(false);
+  const historyRef = useRef<number[]>([]);
 
   useEffect(() => {
     if (!active) return;
@@ -77,7 +78,13 @@ export function useFaceDistress(active: boolean) {
       const angry = expr.angry ?? 0;
       const disgusted = expr.disgusted ?? 0;
       const distressRaw = sad * 1.0 + fearful * 1.4 + angry * 0.8 + disgusted * 0.7;
-      const distressScore = Math.min(100, Math.round(distressRaw * 100));
+      const instant = Math.min(100, Math.round(distressRaw * 100));
+      // Temporal smoothing — rolling avg over last 5 samples to suppress flicker
+      historyRef.current.push(instant);
+      if (historyRef.current.length > 5) historyRef.current.shift();
+      const distressScore = Math.round(
+        historyRef.current.reduce((a, b) => a + b, 0) / historyRef.current.length
+      );
 
       let dominant = 'neutral';
       let dominantProb = 0;
@@ -90,7 +97,7 @@ export function useFaceDistress(active: boolean) {
         expression: dominant,
         probability: dominantProb,
         distressScore,
-        distressLevel: distressScore > 65 ? 'severe' : distressScore > 35 ? 'mild' : 'none',
+        distressLevel: distressScore > 55 ? 'severe' : distressScore > 25 ? 'mild' : 'none',
       });
     } catch (err) {
       console.error('[FaceDistress] analyze error:', err);

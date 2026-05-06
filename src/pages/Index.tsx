@@ -8,6 +8,8 @@ import AlertLog from '@/components/dashboard/AlertLog';
 import ControlsPanel from '@/components/dashboard/ControlsPanel';
 import DebugPanel from '@/components/dashboard/DebugPanel';
 import AttentionGauge from '@/components/dashboard/AttentionGauge';
+import DatasetReferences from '@/components/dashboard/DatasetReferences';
+import DetectionFeedback from '@/components/dashboard/DetectionFeedback';
 
 import { useCamera } from '@/hooks/useCamera';
 import { useAudioAnalysis } from '@/hooks/useAudioAnalysis';
@@ -697,6 +699,14 @@ export default function Index() {
                     ? '⚠ Real fire signature (color + flicker)'
                     : fireStatus.reason || 'No fire signature'}
                 </p>
+                {fireStatus.detected && (
+                  <DetectionFeedback
+                    householdId={householdId}
+                    eventType="fire"
+                    confidence={fireStatus.confidence}
+                    visualContext={{ reason: fireStatus.reason }}
+                  />
+                )}
               </div>
               <div className={`rounded p-2 border ${faceDistress.distress.distressLevel === 'severe' ? 'border-destructive/60 bg-destructive/10' : faceDistress.distress.distressLevel === 'mild' ? 'border-warning/60 bg-warning/10' : 'border-border bg-secondary/20'}`}>
                 <div className="flex items-center gap-1.5 mb-0.5">
@@ -711,7 +721,24 @@ export default function Index() {
                    !faceDistress.distress.hasFace ? 'No face detected' :
                    `${faceDistress.distress.expression} (${Math.round(faceDistress.distress.probability * 100)}%)`}
                 </p>
+                {faceDistress.distress.distressLevel !== 'none' && (
+                  <DetectionFeedback
+                    householdId={householdId}
+                    eventType="facial_distress"
+                    confidence={faceDistress.distress.probability}
+                    audioEvent={audioFeatures.audioEvent}
+                    visualContext={{
+                      expression: faceDistress.distress.expression,
+                      score: faceDistress.distress.distressScore,
+                    }}
+                  />
+                )}
               </div>
+            </div>
+
+            {/* Public dataset references — academic basis */}
+            <div className="mt-2">
+              <DatasetReferences />
             </div>
           </div>
 
