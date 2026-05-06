@@ -137,6 +137,45 @@ export type Database = {
           },
         ]
       }
+      detection_feedback: {
+        Row: {
+          audio_event: string | null
+          confidence: number | null
+          created_at: string
+          event_type: string
+          household_id: string
+          id: string
+          label: string
+          note: string | null
+          submitted_by: string | null
+          visual_context: Json | null
+        }
+        Insert: {
+          audio_event?: string | null
+          confidence?: number | null
+          created_at?: string
+          event_type: string
+          household_id: string
+          id?: string
+          label: string
+          note?: string | null
+          submitted_by?: string | null
+          visual_context?: Json | null
+        }
+        Update: {
+          audio_event?: string | null
+          confidence?: number | null
+          created_at?: string
+          event_type?: string
+          household_id?: string
+          id?: string
+          label?: string
+          note?: string | null
+          submitted_by?: string | null
+          visual_context?: Json | null
+        }
+        Relationships: []
+      }
       detection_sessions: {
         Row: {
           avg_attention: number | null
