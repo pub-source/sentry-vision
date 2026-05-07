@@ -10,6 +10,7 @@ import DebugPanel from '@/components/dashboard/DebugPanel';
 import AttentionGauge from '@/components/dashboard/AttentionGauge';
 import DatasetReferences from '@/components/dashboard/DatasetReferences';
 import DetectionFeedback from '@/components/dashboard/DetectionFeedback';
+import ModelCachePanel from '@/components/dashboard/ModelCachePanel';
 
 import { useCamera } from '@/hooks/useCamera';
 import { useAudioAnalysis } from '@/hooks/useAudioAnalysis';
@@ -739,6 +740,11 @@ export default function Index() {
             {/* Public dataset references — academic basis */}
             <div className="mt-2">
               <DatasetReferences />
+            </div>
+
+            {/* Model cache controls + stats */}
+            <div className="mt-2">
+              <ModelCachePanel />
             </div>
           </div>
 
