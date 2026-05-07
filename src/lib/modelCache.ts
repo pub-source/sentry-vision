@@ -97,23 +97,39 @@ async function pickStrategy(): Promise<CacheStrategy> {
 }
 
 async function cacheGet(url: string): Promise<Response | undefined> {
-  if (strategy === 'memory') {
-    const r = memoryCache.get(url);
-    return r ? r.clone() : undefined;
+  // L1: in-memory (works on every device, including private mode / no Cache API)
+  const mem = memoryCache.get(url);
+  if (mem) return mem.clone();
+  // L2: persistent Cache Storage when available
+  if (strategy === 'persistent' && typeof caches !== 'undefined') {
+    try {
+      const cache = await caches.open(CACHE_NAME);
+      const hit = await cache.match(url);
+      if (hit) {
+        // Promote to memory for next call
+        memoryCache.set(url, hit.clone());
+        return hit;
+      }
+    } catch (e) {
+      console.warn('[ModelCache] L2 read failed, degrading to memory-only', e);
+      strategy = 'memory';
+      stats.strategy = 'memory';
+    }
   }
-  const cache = await caches.open(CACHE_NAME);
-  return (await cache.match(url)) || undefined;
+  return undefined;
 }
 
 async function cachePut(url: string, response: Response): Promise<void> {
-  if (strategy === 'memory') {
-    memoryCache.set(url, response.clone());
-    return;
-  }
-  const cache = await caches.open(CACHE_NAME);
-  try { await cache.put(url, response.clone()); } catch (e) {
-    console.warn('[ModelCache] put failed, falling back to memory', e);
-    memoryCache.set(url, response.clone());
+  // Always populate memory so we never lose the asset for this session
+  memoryCache.set(url, response.clone());
+  if (strategy !== 'persistent' || typeof caches === 'undefined') return;
+  try {
+    const cache = await caches.open(CACHE_NAME);
+    await cache.put(url, response.clone());
+  } catch (e) {
+    console.warn('[ModelCache] L2 write failed, staying memory-only', e);
+    strategy = 'memory';
+    stats.strategy = 'memory';
   }
 }
 
@@ -121,7 +137,11 @@ export async function installModelCache(): Promise<void> {
   if (installed || typeof window === 'undefined' || !window.fetch) return;
   installed = true;
 
-  strategy = await pickStrategy();
+  try {
+    strategy = await pickStrategy();
+  } catch {
+    strategy = 'memory';
+  }
   stats.strategy = strategy;
   persistStats();
   console.log(`[ModelCache] Strategy: ${strategy}`);
