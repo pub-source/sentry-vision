@@ -1,7 +1,7 @@
 import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
-import { installModelCache, prefetchModels, forceMemoryStrategy } from "./lib/modelCache";
+import { installModelCache, prefetchModels, forceMemoryStrategy, whenCacheReady } from "./lib/modelCache";
 
 // Install the ML model cache as early as possible so the very first
 // COCO-SSD / face-api fetches can be intercepted and persisted.
@@ -27,12 +27,14 @@ import { installModelCache, prefetchModels, forceMemoryStrategy } from "./lib/mo
     forceMemoryStrategy();
   }
   await installModelCache();
+  // Guarantee the strategy decision is finalized before any warm-up.
+  await whenCacheReady();
   // Auto warm-up: prefetch ML models in the background once the app opens
   // so the first Start runs with everything already cached.
   if ('requestIdleCallback' in window) {
-    (window as any).requestIdleCallback(() => prefetchModels(), { timeout: 4000 });
+    (window as any).requestIdleCallback(() => { void prefetchModels(); }, { timeout: 4000 });
   } else {
-    setTimeout(() => prefetchModels(), 1500);
+    setTimeout(() => { void prefetchModels(); }, 1500);
   }
 })();
 
