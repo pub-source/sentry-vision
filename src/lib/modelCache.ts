@@ -45,6 +45,13 @@ const memoryCache = new Map<string, Response>();
 let strategy: CacheStrategy = 'persistent';
 let strategyForced = false;
 let installed = false;
+let installPromise: Promise<void> | null = null;
+let resolveReady: () => void;
+const readyPromise: Promise<void> = new Promise((res) => { resolveReady = res; });
+
+export function whenCacheReady(): Promise<void> {
+  return readyPromise;
+}
 
 const stats: CacheStats = loadStats();
 const listeners = new Set<(s: CacheStats) => void>();
@@ -143,23 +150,28 @@ async function cachePut(url: string, response: Response): Promise<void> {
 }
 
 export async function installModelCache(): Promise<void> {
-  if (installed || typeof window === 'undefined' || !window.fetch) return;
+  if (installPromise) return installPromise;
+  if (typeof window === 'undefined' || !window.fetch) {
+    resolveReady();
+    return;
+  }
   installed = true;
+  installPromise = (async () => {
 
-  try {
+    try {
     if (!strategyForced) {
       strategy = await pickStrategy();
     }
-  } catch {
+    } catch {
     strategy = 'memory';
-  }
-  stats.strategy = strategy;
-  persistStats();
-  console.log(`[ModelCache] Strategy: ${strategy}`);
+    }
+    stats.strategy = strategy;
+    persistStats();
+    console.log(`[ModelCache] Strategy: ${strategy}`);
 
-  const originalFetch = window.fetch.bind(window);
+    const originalFetch = window.fetch.bind(window);
 
-  window.fetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
+    window.fetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
     const url =
       typeof input === 'string' ? input :
       input instanceof URL ? input.toString() :
@@ -190,12 +202,19 @@ export async function installModelCache(): Promise<void> {
       console.warn('[ModelCache] interceptor error, falling back', err);
       return originalFetch(input, init);
     }
-  };
+    };
+    resolveReady();
+  })();
+  return installPromise;
 }
 
 export async function prefetchModels(
   onProgress?: (done: number, total: number, label: string) => void
 ): Promise<void> {
+  // Make sure the cache strategy (persistent vs memory) has been decided
+  // and the fetch interceptor is installed before we warm anything up,
+  // so the very first Start always uses the correct caching path.
+  await readyPromise;
   const total = PREFETCH_URLS.length;
   let done = 0;
   for (const { url, label } of PREFETCH_URLS) {
