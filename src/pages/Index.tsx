@@ -131,12 +131,21 @@ export default function Index() {
     await enumerateDevices();
     loadModel(); // Start loading COCO-SSD model
     if (speechSupported) startSpeech();
+    // Start audio FIRST and independently — earphone/built-in mic must
+    // keep working even if video capture fails or no camera is available.
+    const audioPromise = startAudio().catch((err) => {
+      console.warn('[handleStart] Audio failed to start:', err);
+    });
     if (simulationMode) {
       setRunning(true);
-      startAudio();
+      await audioPromise;
     } else {
-      await startCameras(quality);
-      await startAudio();
+      try {
+        await startCameras(quality);
+      } catch (err) {
+        console.warn('[handleStart] Cameras failed to start, continuing with audio only:', err);
+      }
+      await audioPromise;
       setRunning(true);
     }
   }, [simulationMode, quality, startCameras, startAudio, enumerateDevices, loadModel, speechSupported, startSpeech]);
