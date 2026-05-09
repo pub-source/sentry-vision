@@ -43,6 +43,7 @@ export interface CacheStats {
 
 const memoryCache = new Map<string, Response>();
 let strategy: CacheStrategy = 'persistent';
+let strategyForced = false;
 let installed = false;
 
 const stats: CacheStats = loadStats();
@@ -69,6 +70,14 @@ export function subscribeCacheStats(fn: (s: CacheStats) => void): () => void {
 
 export function getCacheStats(): CacheStats {
   return { ...stats, lastDownloads: { ...stats.lastDownloads } };
+}
+
+export function forceMemoryStrategy(): void {
+  strategy = 'memory';
+  stats.strategy = 'memory';
+  strategyForced = true;
+  persistStats();
+  console.log('[ModelCache] Forced memory-only strategy (persistent storage denied)');
 }
 
 function shouldCache(url: string): boolean {
@@ -138,7 +147,9 @@ export async function installModelCache(): Promise<void> {
   installed = true;
 
   try {
-    strategy = await pickStrategy();
+    if (!strategyForced) {
+      strategy = await pickStrategy();
+    }
   } catch {
     strategy = 'memory';
   }
