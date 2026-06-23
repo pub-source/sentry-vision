@@ -635,7 +635,7 @@ export default function Auth() {
             </button>
           </div>
           {confirmPassword && confirmPassword !== password && (
-            <p className="text-[10px] text-destructive pl-1">Passwords do not match</p>
+            <p className="text-[10px] text-destructive pl-1">Passwords do not match.</p>
           )}
         </div>
 
