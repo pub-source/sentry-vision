@@ -537,6 +537,11 @@ export default function Auth() {
   }
 
   // Create Account
+  const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()) && email.trim().toLowerCase().endsWith('@gmail.com');
+  const passwordValid = !validatePasswordStrength(password) && password.length > 0;
+  const confirmValid = confirmPassword.length > 0 && confirmPassword === password;
+  const canSubmitCreate = emailValid && passwordValid && confirmValid && !submitting && !success;
+
   return (
     <PageWrapper>
       <form onSubmit={handleCreateAccount} noValidate aria-busy={submitting} className="bg-card rounded-xl border border-border shadow-sm p-6 space-y-5">
@@ -621,7 +626,7 @@ export default function Auth() {
               required
               aria-required="true"
               aria-invalid={!!confirmPassword && confirmPassword !== password}
-              placeholder="Re-enter your password"
+              placeholder="Confirm your password"
               className="w-full bg-secondary/60 border border-border rounded-lg pl-10 pr-10 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
             />
             <button
@@ -635,13 +640,13 @@ export default function Auth() {
             </button>
           </div>
           {confirmPassword && confirmPassword !== password && (
-            <p className="text-[10px] text-destructive pl-1">Passwords do not match</p>
+            <p className="text-[10px] text-destructive pl-1">Passwords do not match.</p>
           )}
         </div>
 
         <ErrorMsg msg={error} />
         <SuccessMsg msg={success} />
-        <PrimaryButton type="submit" disabled={submitting || !!success} aria-label="Create Account">
+        <PrimaryButton type="submit" disabled={!canSubmitCreate} aria-label="Create Account">
           {submitting ? (
             <>
               <Loader2 className="w-4 h-4 animate-spin" />
