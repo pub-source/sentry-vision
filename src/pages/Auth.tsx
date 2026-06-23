@@ -537,6 +537,11 @@ export default function Auth() {
   }
 
   // Create Account
+  const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()) && email.trim().toLowerCase().endsWith('@gmail.com');
+  const passwordValid = !validatePasswordStrength(password) && password.length > 0;
+  const confirmValid = confirmPassword.length > 0 && confirmPassword === password;
+  const canSubmitCreate = emailValid && passwordValid && confirmValid && !submitting && !success;
+
   return (
     <PageWrapper>
       <form onSubmit={handleCreateAccount} noValidate aria-busy={submitting} className="bg-card rounded-xl border border-border shadow-sm p-6 space-y-5">
