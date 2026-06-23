@@ -621,7 +621,7 @@ export default function Auth() {
               required
               aria-required="true"
               aria-invalid={!!confirmPassword && confirmPassword !== password}
-              placeholder="Re-enter your password"
+              placeholder="Confirm your password"
               className="w-full bg-secondary/60 border border-border rounded-lg pl-10 pr-10 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
             />
             <button
