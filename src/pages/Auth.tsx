@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
-import { Shield, UserPlus, QrCode, LogIn, ArrowLeft, Mail, Lock, User, Phone, Camera, Send, KeyRound } from 'lucide-react';
+import { Shield, UserPlus, QrCode, LogIn, ArrowLeft, Mail, Lock, User, Phone, Camera, Send, KeyRound, Eye, EyeOff, CheckCircle2, Loader2 } from 'lucide-react';
 
 type AuthMode = 'choose' | 'create' | 'join-qr' | 'join-name' | 'join-submitted' | 'login' | 'forgot';
 
@@ -13,6 +13,9 @@ export default function Auth() {
   const [mode, setMode] = useState<AuthMode>('choose');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [inviteCode, setInviteCode] = useState('');
   const [joinName, setJoinName] = useState('');
   const [joinPhone, setJoinPhone] = useState('');
@@ -73,6 +76,9 @@ export default function Auth() {
     setSuccess('');
     setEmail('');
     setPassword('');
+    setConfirmPassword('');
+    setShowPassword(false);
+    setShowConfirmPassword(false);
     setInviteCode('');
     setJoinName('');
     setJoinPhone('');
@@ -106,18 +112,35 @@ export default function Auth() {
     e.preventDefault();
     setError('');
     setSuccess('');
-    if (!email.trim().toLowerCase().endsWith('@gmail.com')) {
+    const trimmedEmail = email.trim();
+    if (!trimmedEmail) { setError('Email is required.'); return; }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(trimmedEmail)) { setError('Please enter a valid email address.'); return; }
+    if (!trimmedEmail.toLowerCase().endsWith('@gmail.com')) {
       setError('Only @gmail.com email addresses are allowed.');
       return;
     }
+    if (!password) { setError('Password is required.'); return; }
+    const pwIssue = validatePasswordStrength(password);
+    if (pwIssue) { setError(pwIssue); return; }
+    if (password !== confirmPassword) {
+      setError('Passwords do not match.');
+      return;
+    }
     setSubmitting(true);
-    const { error: authError } = await signUp(email, password);
+    // Note: Supabase securely hashes the password server-side (bcrypt) before storage.
+    const { error: authError } = await signUp(trimmedEmail, password);
     if (authError) {
       setError(authError.message);
-    } else {
-      setSuccess('Account created successfully! You can now sign in.');
+      setSubmitting(false);
+      return;
     }
+    setSuccess('Account created successfully! Redirecting to sign in...');
     setSubmitting(false);
+    setTimeout(() => {
+      clearState();
+      setMode('login');
+    }, 1800);
   };
 
   const handleSignIn = async (e: React.FormEvent) => {
@@ -516,7 +539,7 @@ export default function Auth() {
   // Create Account
   return (
     <PageWrapper>
-      <form onSubmit={handleCreateAccount} className="bg-card rounded-xl border border-border shadow-sm p-6 space-y-5">
+      <form onSubmit={handleCreateAccount} noValidate aria-busy={submitting} className="bg-card rounded-xl border border-border shadow-sm p-6 space-y-5">
         <div className="space-y-1">
           <h2 className="text-base font-semibold text-foreground">Create Account</h2>
           <p className="text-xs text-muted-foreground">Set up your admin account to get started</p>
@@ -529,13 +552,112 @@ export default function Auth() {
           </div>
         )}
 
-        <InputField icon={Mail} label="Email" type="email" value={email} onChange={e => setEmail(e.target.value)} required placeholder="your@gmail.com" />
-        <InputField icon={Lock} label="Password" type="password" value={password} onChange={e => setPassword(e.target.value)} required minLength={6} placeholder="••••••••" />
+        <div className="space-y-1.5">
+          <label htmlFor="ca-email" className="text-xs font-medium text-muted-foreground">Email</label>
+          <div className="relative">
+            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/60" aria-hidden="true" />
+            <input
+              id="ca-email"
+              type="email"
+              inputMode="email"
+              autoComplete="email"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              required
+              aria-required="true"
+              aria-invalid={!!error}
+              placeholder="your@gmail.com"
+              className="w-full bg-secondary/60 border border-border rounded-lg pl-10 pr-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
+            />
+          </div>
+        </div>
+
+        <div className="space-y-1.5">
+          <label htmlFor="ca-password" className="text-xs font-medium text-muted-foreground">Password</label>
+          <div className="relative">
+            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/60" aria-hidden="true" />
+            <input
+              id="ca-password"
+              type={showPassword ? 'text' : 'password'}
+              autoComplete="new-password"
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              required
+              aria-required="true"
+              aria-describedby="ca-password-help"
+              placeholder="At least 8 characters"
+              className="w-full bg-secondary/60 border border-border rounded-lg pl-10 pr-10 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(v => !v)}
+              aria-label={showPassword ? 'Hide password' : 'Show password'}
+              aria-pressed={showPassword}
+              className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+            >
+              {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+            </button>
+          </div>
+          <PasswordStrengthMeter password={password} />
+          <ul id="ca-password-help" className="text-[10px] text-muted-foreground space-y-0.5 pl-1 pt-1">
+            <PwReq ok={password.length >= 8} label="At least 8 characters" />
+            <PwReq ok={/[A-Z]/.test(password)} label="One uppercase letter" />
+            <PwReq ok={/[a-z]/.test(password)} label="One lowercase letter" />
+            <PwReq ok={/[0-9]/.test(password)} label="One number" />
+            <PwReq ok={/[^A-Za-z0-9]/.test(password)} label="One special character" />
+          </ul>
+        </div>
+
+        <div className="space-y-1.5">
+          <label htmlFor="ca-confirm" className="text-xs font-medium text-muted-foreground">Confirm Password</label>
+          <div className="relative">
+            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/60" aria-hidden="true" />
+            <input
+              id="ca-confirm"
+              type={showConfirmPassword ? 'text' : 'password'}
+              autoComplete="new-password"
+              value={confirmPassword}
+              onChange={e => setConfirmPassword(e.target.value)}
+              required
+              aria-required="true"
+              aria-invalid={!!confirmPassword && confirmPassword !== password}
+              placeholder="Re-enter your password"
+              className="w-full bg-secondary/60 border border-border rounded-lg pl-10 pr-10 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
+            />
+            <button
+              type="button"
+              onClick={() => setShowConfirmPassword(v => !v)}
+              aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
+              aria-pressed={showConfirmPassword}
+              className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+            >
+              {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+            </button>
+          </div>
+          {confirmPassword && confirmPassword !== password && (
+            <p className="text-[10px] text-destructive pl-1">Passwords do not match</p>
+          )}
+        </div>
+
         <ErrorMsg msg={error} />
         <SuccessMsg msg={success} />
-        <PrimaryButton type="submit" disabled={submitting}>
-          <UserPlus className="w-4 h-4" />
-          {submitting ? 'Creating...' : 'Create Account'}
+        <PrimaryButton type="submit" disabled={submitting || !!success} aria-label="Create Account">
+          {submitting ? (
+            <>
+              <Loader2 className="w-4 h-4 animate-spin" />
+              <span>Creating account...</span>
+            </>
+          ) : success ? (
+            <>
+              <CheckCircle2 className="w-4 h-4" />
+              <span>Account Created</span>
+            </>
+          ) : (
+            <>
+              <UserPlus className="w-4 h-4" />
+              <span>Create Account</span>
+            </>
+          )}
         </PrimaryButton>
         <button type="button" onClick={() => { clearState(); setMode('login'); }} className="w-full text-xs text-muted-foreground hover:text-primary transition-colors py-1">
           Already have an account? Sign in
@@ -543,6 +665,49 @@ export default function Auth() {
         <BackButton onClick={() => { clearState(); setMode('choose'); }} />
       </form>
     </PageWrapper>
+  );
+}
+
+function validatePasswordStrength(pw: string): string | null {
+  if (pw.length < 8) return 'Password must be at least 8 characters long.';
+  if (!/[A-Z]/.test(pw)) return 'Password must contain at least one uppercase letter.';
+  if (!/[a-z]/.test(pw)) return 'Password must contain at least one lowercase letter.';
+  if (!/[0-9]/.test(pw)) return 'Password must contain at least one number.';
+  if (!/[^A-Za-z0-9]/.test(pw)) return 'Password must contain at least one special character.';
+  return null;
+}
+
+function passwordScore(pw: string): number {
+  let s = 0;
+  if (pw.length >= 8) s++;
+  if (/[A-Z]/.test(pw)) s++;
+  if (/[a-z]/.test(pw)) s++;
+  if (/[0-9]/.test(pw)) s++;
+  if (/[^A-Za-z0-9]/.test(pw)) s++;
+  return s;
+}
+
+function PasswordStrengthMeter({ password }: { password: string }) {
+  if (!password) return null;
+  const score = passwordScore(password);
+  const labels = ['Very weak', 'Weak', 'Fair', 'Good', 'Strong', 'Very strong'];
+  const colors = ['bg-destructive', 'bg-destructive', 'bg-amber-500', 'bg-amber-500', 'bg-emerald-500', 'bg-emerald-500'];
+  return (
+    <div className="flex items-center gap-2 pt-1" aria-live="polite">
+      <div className="flex-1 h-1.5 rounded-full bg-secondary overflow-hidden">
+        <div className={`h-full ${colors[score]} transition-all`} style={{ width: `${(score / 5) * 100}%` }} />
+      </div>
+      <span className="text-[10px] text-muted-foreground w-16 text-right">{labels[score]}</span>
+    </div>
+  );
+}
+
+function PwReq({ ok, label }: { ok: boolean; label: string }) {
+  return (
+    <li className={`flex items-center gap-1.5 ${ok ? 'text-emerald-600 dark:text-emerald-400' : 'text-muted-foreground'}`}>
+      <span aria-hidden="true">{ok ? '✓' : '○'}</span>
+      <span>{label}</span>
+    </li>
   );
 }
 
