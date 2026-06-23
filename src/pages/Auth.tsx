@@ -646,7 +646,7 @@ export default function Auth() {
 
         <ErrorMsg msg={error} />
         <SuccessMsg msg={success} />
-        <PrimaryButton type="submit" disabled={submitting || !!success} aria-label="Create Account">
+        <PrimaryButton type="submit" disabled={!canSubmitCreate} aria-label="Create Account">
           {submitting ? (
             <>
               <Loader2 className="w-4 h-4 animate-spin" />
