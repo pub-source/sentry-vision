@@ -247,71 +247,8 @@ export default function Auth() {
     }
   };
 
-  // Shared layout wrapper
-  const PageWrapper = ({ children }: { children: React.ReactNode }) => (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <div className="w-full max-w-md space-y-6">
-        <div className="text-center space-y-3">
-          <div className="flex items-center justify-center gap-2.5">
-            <Shield className="w-6 h-6 text-primary" />
-            <h1 className="text-lg font-semibold text-foreground tracking-tight">
-              MSDSystem
-            </h1>
-          </div>
-          <p className="text-xs text-muted-foreground">
-            Multimodal Saliency Detection System
-          </p>
-        </div>
-        {children}
-      </div>
-    </div>
-  );
-
-  const ErrorMsg = ({ msg }: { msg: string }) => msg ? (
-    <div className="flex items-center gap-2 bg-destructive/10 border border-destructive/20 rounded-lg px-3 py-2.5">
-      <span className="text-destructive text-sm">⚠</span>
-      <p className="text-xs text-destructive">{msg}</p>
-    </div>
-  ) : null;
-
-  const SuccessMsg = ({ msg }: { msg: string }) => msg ? (
-    <div className="flex items-center gap-2 bg-success/10 border border-success/20 rounded-lg px-3 py-2.5">
-      <span className="text-success text-sm">✓</span>
-      <p className="text-xs text-success">{msg}</p>
-    </div>
-  ) : null;
-
-  const InputField = ({ icon: Icon, label, ...props }: { icon: any; label: string } & React.InputHTMLAttributes<HTMLInputElement>) => (
-    <div className="space-y-1.5">
-      <label className="text-xs font-medium text-muted-foreground">{label}</label>
-      <div className="relative">
-        <Icon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/60" />
-        <input
-          {...props}
-          autoComplete={props.type === 'password' ? 'current-password' : props.type === 'email' ? 'email' : 'off'}
-          className="w-full bg-secondary/60 border border-border rounded-lg pl-10 pr-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
-        />
-      </div>
-    </div>
-  );
-
-  const PrimaryButton = ({ children, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement>) => (
-    <button
-      {...props}
-      className="w-full flex items-center justify-center gap-2 text-sm font-medium py-3 px-4 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 active:scale-[0.98] transition-all disabled:opacity-50 disabled:pointer-events-none shadow-sm"
-    />
-  );
-
-  const BackButton = ({ onClick, label = '← Back' }: { onClick: () => void; label?: string }) => (
-    <button
-      type="button"
-      onClick={onClick}
-      className="w-full flex items-center justify-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors py-2"
-    >
-      <ArrowLeft className="w-3 h-3" />
-      {label}
-    </button>
-  );
+  // Shared subcomponents are defined at module scope below to avoid
+  // remounting inputs on every keystroke (which would steal focus).
 
   // Forgot password
   if (mode === 'forgot') {
