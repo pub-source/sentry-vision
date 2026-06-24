@@ -447,7 +447,7 @@ export default function HouseholdPage() {
                 <form onSubmit={handleAddWakeWord} className="border border-primary/20 rounded-xl p-4 space-y-4 bg-primary/5">
                   <h4 className="text-sm font-semibold text-foreground">New Phrase</h4>
 
-                  <InputField label="Phrase to detect" type="text" value={newPhrase} onChange={e => setNewPhrase(e.target.value)} placeholder="help, intruder, fire..." required />
+                  <HInput label="Phrase to detect" type="text" value={newPhrase} onChange={e => setNewPhrase(e.target.value)} placeholder="help, intruder, fire..." required />
 
                   <div className="space-y-2">
                     <label className="text-xs font-medium text-muted-foreground">Action Type</label>
