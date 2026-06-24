@@ -204,16 +204,6 @@ export default function HouseholdPage() {
     both: { icon: MessageSquare, label: 'Both', color: 'text-warning', bg: 'bg-warning/10', desc: 'SMS + Email notifications' },
   };
 
-  const InputField = ({ label, ...props }: { label: string } & React.InputHTMLAttributes<HTMLInputElement>) => (
-    <div className="space-y-1.5">
-      <label className="text-xs font-medium text-muted-foreground">{label}</label>
-      <input
-        {...props}
-        className="w-full bg-secondary/60 border border-border rounded-lg px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
-      />
-    </div>
-  );
-
   return (
     <div className="min-h-screen bg-background text-foreground">
       {/* Header */}
@@ -269,13 +259,13 @@ export default function HouseholdPage() {
               </div>
 
               {mode === 'create' && (
-                <InputField label="Household Name" type="text" value={householdName} onChange={e => setHouseholdName(e.target.value)} placeholder="My Home" required />
+                <HInput label="Household Name" type="text" value={householdName} onChange={e => setHouseholdName(e.target.value)} placeholder="My Home" required autoComplete="off" />
               )}
               {mode === 'join' && (
-                <InputField label="Invite Code" type="text" value={inviteCode} onChange={e => setInviteCode(normalizeInviteCode(e.target.value))} placeholder="abc12345" required />
+                <HInput label="Invite Code" type="text" value={inviteCode} onChange={e => setInviteCode(normalizeInviteCode(e.target.value))} placeholder="abc12345" required autoComplete="off" />
               )}
-              <InputField label="Your Name" type="text" value={displayName} onChange={e => setDisplayName(e.target.value)} placeholder="John" required />
-              <InputField label="Phone Number" type="tel" value={phoneNumber} onChange={e => setPhoneNumber(e.target.value)} placeholder="+1 555-123-4567" required />
+              <HInput label="Your Name" type="text" value={displayName} onChange={e => setDisplayName(e.target.value)} placeholder="John" required autoComplete="name" />
+              <HInput label="Phone Number" type="tel" value={phoneNumber} onChange={e => setPhoneNumber(e.target.value)} placeholder="+1 555-123-4567" required autoComplete="tel" />
 
               {formError && (
                 <div className="flex items-center gap-2 bg-destructive/10 border border-destructive/20 rounded-lg px-3 py-2.5">
