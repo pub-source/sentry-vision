@@ -35,6 +35,21 @@ interface WakeWord {
   action_type: string;
 }
 
+// Module-scope input component — must NOT be defined inside the page
+// component, otherwise React remounts the <input> on every keystroke
+// and steals focus after a single character.
+function HInput({ label, ...props }: { label: string } & React.InputHTMLAttributes<HTMLInputElement>) {
+  return (
+    <div className="space-y-1.5">
+      <label className="text-xs font-medium text-muted-foreground">{label}</label>
+      <input
+        {...props}
+        className="w-full bg-secondary/60 border border-border rounded-lg px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
+      />
+    </div>
+  );
+}
+
 export default function HouseholdPage() {
   const { user, loading, signOut } = useAuth();
   const navigate = useNavigate();
