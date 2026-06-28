@@ -28,7 +28,7 @@ export default function Index() {
   const { user, loading: authLoading, signOut } = useAuth();
   const navigate = useNavigate();
   const { householdId, wakeWords, members, checkForWakeWord, logAlert, logNotification } = useHousehold(user?.id);
-  const { cameras, devices, startCameras, stopCameras, updateCamera, attachStream, enumerateDevices } = useCamera();
+  const { cameras, devices, startCameras, stopCameras, updateCamera, attachStream, enumerateDevices, startSpecificCamera } = useCamera();
   const { audioFeatures, startAudio, stopAudio } = useAudioAnalysis();
   const { loadModel, detect, stats: detectionStats } = useObjectDetection();
   const [darkMode, setDarkMode] = useState(() => {
@@ -71,6 +71,22 @@ export default function Index() {
   const [cameraStatusMsg, setCameraStatusMsg] = useState<string>(
     'No camera connected. Please connect a webcam or CCTV/IP camera.'
   );
+
+  // Auto-detect available cameras on mount so the Connect picker is populated
+  // before the user clicks Start. Browsers won't expose device labels until
+  // permission is granted, but deviceIds are enough to count availability.
+  useEffect(() => {
+    enumerateDevices().then(list => {
+      if (!list || list.length === 0) {
+        setCameraStatusMsg('No camera detected. Connect a webcam or CCTV/IP camera.');
+      }
+    }).catch(() => {});
+    if (navigator.mediaDevices && 'addEventListener' in navigator.mediaDevices) {
+      const onChange = () => { enumerateDevices(); };
+      navigator.mediaDevices.addEventListener('devicechange', onChange);
+      return () => navigator.mediaDevices.removeEventListener('devicechange', onChange);
+    }
+  }, [enumerateDevices]);
 
   // IP camera state
   const [showIpDialog, setShowIpDialog] = useState(false);
@@ -134,7 +150,7 @@ export default function Index() {
   }, [transcript, interimTranscript, running, checkForWakeWord, addAlert, logAlert, logNotification]);
 
   const handleStart = useCallback(async () => {
-    await enumerateDevices();
+    const detected = await enumerateDevices();
     // Require a connected camera (webcam OR IP/CCTV) before enabling any
     // detection pipeline. Simulation mode bypasses the requirement.
     let hasCamera = simulationMode || ipCam.connected;
@@ -147,8 +163,11 @@ export default function Index() {
       }
     }
     if (!hasCamera) {
-      setCameraStatusMsg('No camera connected. Please connect a webcam or CCTV/IP camera.');
-      addAlert('No camera connected. Connect a webcam or CCTV/IP camera to start.', 'medium', 1);
+      const msg = (!detected || detected.length === 0) && !ipCam.connected
+        ? 'No camera detected. Connect a webcam or CCTV/IP camera.'
+        : 'No camera connected. Open Connect to choose a camera.';
+      setCameraStatusMsg(msg);
+      addAlert(msg, 'medium', 1);
       return;
     }
     loadModel(); // Start loading COCO-SSD model
@@ -156,7 +175,7 @@ export default function Index() {
     await startAudio().catch((err) => {
       console.warn('[handleStart] Audio failed to start:', err);
     });
-    setCameraStatusMsg('No camera connected. Please connect a webcam or CCTV/IP camera.');
+    setCameraStatusMsg('');
     setRunning(true);
   }, [simulationMode, quality, startCameras, startAudio, enumerateDevices, loadModel, speechSupported, startSpeech, ipCam.connected, addAlert]);
 
@@ -177,11 +196,15 @@ export default function Index() {
     if (simulationMode) return;
     const anyActive = cameras.some(c => c.active) || ipCam.connected;
     if (!anyActive) {
-      setCameraStatusMsg('Camera Disconnected. Reconnect to continue.');
-      addAlert('Camera Disconnected. Reconnect to continue.', 'high', 1);
+      const more = devices.length > 0;
+      const msg = more
+        ? 'Camera disconnected. Open Connect to switch to another available camera.'
+        : 'Camera disconnected. No other cameras detected — reconnect to continue.';
+      setCameraStatusMsg(msg);
+      addAlert(msg, 'high', 1);
       handleStop();
     }
-  }, [running, simulationMode, cameras, ipCam.connected, handleStop, addAlert]);
+  }, [running, simulationMode, cameras, ipCam.connected, handleStop, addAlert, devices.length]);
 
   // Listen for underlying MediaStreamTrack ended events (USB unplug, IP cam drop)
   useEffect(() => {
@@ -401,6 +424,45 @@ export default function Index() {
                 <X className="w-4 h-4 text-muted-foreground" />
               </button>
             </div>
+
+            {/* Local webcams (built-in / USB) — auto-detected */}
+            <div className="space-y-2">
+              <label className="text-[10px] font-mono text-muted-foreground uppercase">
+                Local cameras ({devices.length} detected)
+              </label>
+              {devices.length === 0 ? (
+                <p className="text-[10px] font-mono text-muted-foreground italic">
+                  No built-in or USB webcam detected. Connect a CCTV/IP camera below, or grant camera permission and reload.
+                </p>
+              ) : (
+                <div className="space-y-1 max-h-32 overflow-y-auto">
+                  {devices.map((d, idx) => {
+                    const inUse = cameras.some(c => c.deviceId === d.deviceId && c.active);
+                    return (
+                      <button
+                        key={d.deviceId || idx}
+                        onClick={async () => {
+                          const ok = await startSpecificCamera(d.deviceId, 1, quality);
+                          if (ok) {
+                            setCameraStatusMsg('');
+                            setShowIpDialog(false);
+                          }
+                        }}
+                        className={`w-full text-left text-[10px] font-mono px-2 py-1.5 rounded border transition-all ${
+                          inUse
+                            ? 'bg-success/10 border-success/40 text-success'
+                            : 'bg-secondary/30 border-border hover:border-primary/50 text-foreground/80'
+                        }`}
+                      >
+                        {inUse ? '● ' : '○ '}{d.label || `Camera ${idx + 1}`}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            <div className="h-px bg-border" />
 
             <div className="space-y-2">
               <label className="text-[10px] font-mono text-muted-foreground uppercase">Stream type</label>
@@ -664,7 +726,11 @@ export default function Index() {
             <span className="text-[10px] font-mono text-foreground flex-1">
               {ipCam.connected
                 ? `🟢 IP Cam connected → CAM ${ipTargetSlot}`
-                : 'Connect a CCTV / IP camera (HLS .m3u8 or MJPEG/snapshot URL)'}
+                : cameras.some(c => c.active)
+                  ? `🟢 Webcam active → ${cameras.find(c => c.active)?.label || 'CAM 1'}`
+                  : devices.length > 0
+                    ? `${devices.length} local camera(s) detected — click Connect to choose, or use a CCTV/IP URL`
+                    : 'No camera detected — connect a CCTV / IP camera (HLS .m3u8 or MJPEG/snapshot URL)'}
             </span>
             {ipCam.connected ? (
               <button

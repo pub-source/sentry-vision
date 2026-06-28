@@ -81,6 +81,30 @@ export function useCamera() {
     setCameras(prev => prev.map(c => ({ ...c, active: false, stream: null, fps: 0, objects: [], saliencyScore: 0 })));
   }, []);
 
+  // Start a single, user-chosen webcam on a specific slot. Used when the
+  // dashboard's Connect picker lets the user choose among multiple devices.
+  const startSpecificCamera = useCallback(async (deviceId: string, slot: number, quality: QualityMode) => {
+    const constraints = quality === 'HD'
+      ? { width: { ideal: 1280 }, height: { ideal: 720 } }
+      : { width: { ideal: 640 }, height: { ideal: 480 } };
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { deviceId: { exact: deviceId }, ...constraints },
+        audio: false,
+      });
+      streamsRef.current.push(stream);
+      const devs = await navigator.mediaDevices.enumerateDevices();
+      const dev = devs.find(d => d.deviceId === deviceId);
+      setCameras(prev => prev.map(c => c.id === slot
+        ? { ...c, deviceId, label: dev?.label || `Camera ${slot}`, stream, active: true, fps: 0 }
+        : c));
+      return true;
+    } catch (err) {
+      console.warn('[useCamera] startSpecificCamera failed:', err);
+      return false;
+    }
+  }, []);
+
   const updateCamera = useCallback((id: number, update: Partial<CameraState>) => {
     setCameras(prev => prev.map(c => c.id === id ? { ...c, ...update } : c));
   }, []);
@@ -107,5 +131,5 @@ export function useCamera() {
     };
   }, []);
 
-  return { cameras, devices, startCameras, stopCameras, updateCamera, attachStream, enumerateDevices };
+  return { cameras, devices, startCameras, stopCameras, updateCamera, attachStream, enumerateDevices, startSpecificCamera };
 }
