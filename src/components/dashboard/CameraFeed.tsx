@@ -26,6 +26,7 @@ interface CameraFeedProps {
   onSaliencyScoreUpdate: (cameraId: number, score: number) => void;
   onFrameCapture?: (canvas: HTMLCanvasElement) => void;
   onDetectFrame?: (video: HTMLVideoElement) => Promise<DetectedObject[]>;
+  noSignalMessage?: string;
 }
 
 export default function CameraFeed({
@@ -44,6 +45,7 @@ export default function CameraFeed({
   onSaliencyScoreUpdate,
   onFrameCapture,
   onDetectFrame,
+  noSignalMessage,
 }: CameraFeedProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -237,8 +239,10 @@ export default function CameraFeed({
       )}
 
       {!camera.active && !simulationMode && (
-        <div className="absolute inset-0 flex items-center justify-center bg-background/80">
-          <span className="text-xs font-mono text-muted-foreground">NO SIGNAL</span>
+        <div className="absolute inset-0 flex items-center justify-center bg-background/80 p-4 text-center">
+          <span className="text-xs font-mono text-muted-foreground">
+            {noSignalMessage ?? 'NO SIGNAL'}
+          </span>
         </div>
       )}
     </div>
