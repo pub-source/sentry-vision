@@ -617,6 +617,7 @@ export default function Index() {
               onSaliencyScoreUpdate={handleCameraSaliencyScore}
               onFrameCapture={handleFrameCapture}
               onDetectFrame={handleDetectFrame}
+              noSignalMessage={cameraStatusMsg}
             />
 
             {/* CAM 2: Fused Detection (Activity + Speech) */}
