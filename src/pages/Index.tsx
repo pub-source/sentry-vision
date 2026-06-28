@@ -726,7 +726,11 @@ export default function Index() {
             <span className="text-[10px] font-mono text-foreground flex-1">
               {ipCam.connected
                 ? `🟢 IP Cam connected → CAM ${ipTargetSlot}`
-                : 'Connect a CCTV / IP camera (HLS .m3u8 or MJPEG/snapshot URL)'}
+                : cameras.some(c => c.active)
+                  ? `🟢 Webcam active → ${cameras.find(c => c.active)?.label || 'CAM 1'}`
+                  : devices.length > 0
+                    ? `${devices.length} local camera(s) detected — click Connect to choose, or use a CCTV/IP URL`
+                    : 'No camera detected — connect a CCTV / IP camera (HLS .m3u8 or MJPEG/snapshot URL)'}
             </span>
             {ipCam.connected ? (
               <button
