@@ -66,6 +66,12 @@ export default function Index() {
   const [sourceCanvas, setSourceCanvas] = useState<HTMLCanvasElement | null>(null);
   const [cam2SourceCanvas, setCam2SourceCanvas] = useState<HTMLCanvasElement | null>(null);
 
+  // Camera-connection gating: detection only runs while at least one
+  // webcam or IP/CCTV stream is connected. UI message reflects state.
+  const [cameraStatusMsg, setCameraStatusMsg] = useState<string>(
+    'No camera connected. Please connect a webcam or CCTV/IP camera.'
+  );
+
   // IP camera state
   const [showIpDialog, setShowIpDialog] = useState(false);
   const [ipUrl, setIpUrl] = useState('');
@@ -129,26 +135,30 @@ export default function Index() {
 
   const handleStart = useCallback(async () => {
     await enumerateDevices();
+    // Require a connected camera (webcam OR IP/CCTV) before enabling any
+    // detection pipeline. Simulation mode bypasses the requirement.
+    let hasCamera = simulationMode || ipCam.connected;
+    if (!simulationMode) {
+      try {
+        const started = await startCameras(quality);
+        if (started.some(c => c.active)) hasCamera = true;
+      } catch (err) {
+        console.warn('[handleStart] Cameras failed to start:', err);
+      }
+    }
+    if (!hasCamera) {
+      setCameraStatusMsg('No camera connected. Please connect a webcam or CCTV/IP camera.');
+      addAlert('No camera connected. Connect a webcam or CCTV/IP camera to start.', 'medium', 1);
+      return;
+    }
     loadModel(); // Start loading COCO-SSD model
     if (speechSupported) startSpeech();
-    // Start audio FIRST and independently — earphone/built-in mic must
-    // keep working even if video capture fails or no camera is available.
-    const audioPromise = startAudio().catch((err) => {
+    await startAudio().catch((err) => {
       console.warn('[handleStart] Audio failed to start:', err);
     });
-    if (simulationMode) {
-      setRunning(true);
-      await audioPromise;
-    } else {
-      try {
-        await startCameras(quality);
-      } catch (err) {
-        console.warn('[handleStart] Cameras failed to start, continuing with audio only:', err);
-      }
-      await audioPromise;
-      setRunning(true);
-    }
-  }, [simulationMode, quality, startCameras, startAudio, enumerateDevices, loadModel, speechSupported, startSpeech]);
+    setCameraStatusMsg('No camera connected. Please connect a webcam or CCTV/IP camera.');
+    setRunning(true);
+  }, [simulationMode, quality, startCameras, startAudio, enumerateDevices, loadModel, speechSupported, startSpeech, ipCam.connected, addAlert]);
 
   const handleStop = useCallback(() => {
     setRunning(false);
@@ -159,6 +169,39 @@ export default function Index() {
     setAttentionScore(0);
     setGlobalSaliencyScore(0);
   }, [stopCameras, stopAudio, stopSpeech, clearSpeech]);
+
+  // Watch for camera disconnect mid-run: if no active webcam and no IP cam,
+  // stop detection and surface a reconnect message in the existing feed area.
+  useEffect(() => {
+    if (!running) return;
+    if (simulationMode) return;
+    const anyActive = cameras.some(c => c.active) || ipCam.connected;
+    if (!anyActive) {
+      setCameraStatusMsg('Camera Disconnected. Reconnect to continue.');
+      addAlert('Camera Disconnected. Reconnect to continue.', 'high', 1);
+      handleStop();
+    }
+  }, [running, simulationMode, cameras, ipCam.connected, handleStop, addAlert]);
+
+  // Listen for underlying MediaStreamTrack ended events (USB unplug, IP cam drop)
+  useEffect(() => {
+    const tracks: MediaStreamTrack[] = [];
+    cameras.forEach(c => {
+      if (c.stream) c.stream.getTracks().forEach(t => tracks.push(t));
+    });
+    if (ipCam.stream) ipCam.stream.getTracks().forEach(t => tracks.push(t));
+    if (tracks.length === 0) return;
+    const onEnded = () => {
+      // Force a re-evaluation: mark camera inactive if its track ended.
+      cameras.forEach(c => {
+        if (c.stream && c.stream.getTracks().every(t => t.readyState === 'ended')) {
+          updateCamera(c.id, { active: false, stream: null, fps: 0 });
+        }
+      });
+    };
+    tracks.forEach(t => t.addEventListener('ended', onEnded));
+    return () => tracks.forEach(t => t.removeEventListener('ended', onEnded));
+  }, [cameras, ipCam.stream, updateCamera]);
 
   // Speech recognition is always on when running — no toggle needed
   // It auto-starts in handleStart and auto-stops in handleStop
