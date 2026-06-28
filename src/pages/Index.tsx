@@ -425,6 +425,45 @@ export default function Index() {
               </button>
             </div>
 
+            {/* Local webcams (built-in / USB) — auto-detected */}
+            <div className="space-y-2">
+              <label className="text-[10px] font-mono text-muted-foreground uppercase">
+                Local cameras ({devices.length} detected)
+              </label>
+              {devices.length === 0 ? (
+                <p className="text-[10px] font-mono text-muted-foreground italic">
+                  No built-in or USB webcam detected. Connect a CCTV/IP camera below, or grant camera permission and reload.
+                </p>
+              ) : (
+                <div className="space-y-1 max-h-32 overflow-y-auto">
+                  {devices.map((d, idx) => {
+                    const inUse = cameras.some(c => c.deviceId === d.deviceId && c.active);
+                    return (
+                      <button
+                        key={d.deviceId || idx}
+                        onClick={async () => {
+                          const ok = await startSpecificCamera(d.deviceId, 1, quality);
+                          if (ok) {
+                            setCameraStatusMsg('');
+                            setShowIpDialog(false);
+                          }
+                        }}
+                        className={`w-full text-left text-[10px] font-mono px-2 py-1.5 rounded border transition-all ${
+                          inUse
+                            ? 'bg-success/10 border-success/40 text-success'
+                            : 'bg-secondary/30 border-border hover:border-primary/50 text-foreground/80'
+                        }`}
+                      >
+                        {inUse ? '● ' : '○ '}{d.label || `Camera ${idx + 1}`}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            <div className="h-px bg-border" />
+
             <div className="space-y-2">
               <label className="text-[10px] font-mono text-muted-foreground uppercase">Stream type</label>
               <div className="grid grid-cols-3 gap-1">
