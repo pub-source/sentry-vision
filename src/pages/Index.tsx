@@ -28,7 +28,7 @@ export default function Index() {
   const { user, loading: authLoading, signOut } = useAuth();
   const navigate = useNavigate();
   const { householdId, wakeWords, members, checkForWakeWord, logAlert, logNotification } = useHousehold(user?.id);
-  const { cameras, devices, startCameras, stopCameras, updateCamera, attachStream, enumerateDevices } = useCamera();
+  const { cameras, devices, startCameras, stopCameras, updateCamera, attachStream, enumerateDevices, startSpecificCamera } = useCamera();
   const { audioFeatures, startAudio, stopAudio } = useAudioAnalysis();
   const { loadModel, detect, stats: detectionStats } = useObjectDetection();
   const [darkMode, setDarkMode] = useState(() => {
@@ -71,6 +71,22 @@ export default function Index() {
   const [cameraStatusMsg, setCameraStatusMsg] = useState<string>(
     'No camera connected. Please connect a webcam or CCTV/IP camera.'
   );
+
+  // Auto-detect available cameras on mount so the Connect picker is populated
+  // before the user clicks Start. Browsers won't expose device labels until
+  // permission is granted, but deviceIds are enough to count availability.
+  useEffect(() => {
+    enumerateDevices().then(list => {
+      if (!list || list.length === 0) {
+        setCameraStatusMsg('No camera detected. Connect a webcam or CCTV/IP camera.');
+      }
+    }).catch(() => {});
+    if (navigator.mediaDevices && 'addEventListener' in navigator.mediaDevices) {
+      const onChange = () => { enumerateDevices(); };
+      navigator.mediaDevices.addEventListener('devicechange', onChange);
+      return () => navigator.mediaDevices.removeEventListener('devicechange', onChange);
+    }
+  }, [enumerateDevices]);
 
   // IP camera state
   const [showIpDialog, setShowIpDialog] = useState(false);
@@ -134,7 +150,7 @@ export default function Index() {
   }, [transcript, interimTranscript, running, checkForWakeWord, addAlert, logAlert, logNotification]);
 
   const handleStart = useCallback(async () => {
-    await enumerateDevices();
+    const detected = await enumerateDevices();
     // Require a connected camera (webcam OR IP/CCTV) before enabling any
     // detection pipeline. Simulation mode bypasses the requirement.
     let hasCamera = simulationMode || ipCam.connected;
@@ -147,8 +163,11 @@ export default function Index() {
       }
     }
     if (!hasCamera) {
-      setCameraStatusMsg('No camera connected. Please connect a webcam or CCTV/IP camera.');
-      addAlert('No camera connected. Connect a webcam or CCTV/IP camera to start.', 'medium', 1);
+      const msg = (!detected || detected.length === 0) && !ipCam.connected
+        ? 'No camera detected. Connect a webcam or CCTV/IP camera.'
+        : 'No camera connected. Open Connect to choose a camera.';
+      setCameraStatusMsg(msg);
+      addAlert(msg, 'medium', 1);
       return;
     }
     loadModel(); // Start loading COCO-SSD model
@@ -156,7 +175,7 @@ export default function Index() {
     await startAudio().catch((err) => {
       console.warn('[handleStart] Audio failed to start:', err);
     });
-    setCameraStatusMsg('No camera connected. Please connect a webcam or CCTV/IP camera.');
+    setCameraStatusMsg('');
     setRunning(true);
   }, [simulationMode, quality, startCameras, startAudio, enumerateDevices, loadModel, speechSupported, startSpeech, ipCam.connected, addAlert]);
 
@@ -177,11 +196,15 @@ export default function Index() {
     if (simulationMode) return;
     const anyActive = cameras.some(c => c.active) || ipCam.connected;
     if (!anyActive) {
-      setCameraStatusMsg('Camera Disconnected. Reconnect to continue.');
-      addAlert('Camera Disconnected. Reconnect to continue.', 'high', 1);
+      const more = devices.length > 0;
+      const msg = more
+        ? 'Camera disconnected. Open Connect to switch to another available camera.'
+        : 'Camera disconnected. No other cameras detected — reconnect to continue.';
+      setCameraStatusMsg(msg);
+      addAlert(msg, 'high', 1);
       handleStop();
     }
-  }, [running, simulationMode, cameras, ipCam.connected, handleStop, addAlert]);
+  }, [running, simulationMode, cameras, ipCam.connected, handleStop, addAlert, devices.length]);
 
   // Listen for underlying MediaStreamTrack ended events (USB unplug, IP cam drop)
   useEffect(() => {
