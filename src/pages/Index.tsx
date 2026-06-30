@@ -837,12 +837,16 @@ export default function Index() {
               <div className={`rounded p-2 border ${fireStatus.detected ? 'border-destructive/60 bg-destructive/10' : 'border-border bg-secondary/20'}`}>
                 <div className="flex items-center gap-1.5 mb-0.5">
                   <Flame className={`w-3 h-3 ${fireStatus.detected ? 'text-destructive animate-pulse' : 'text-muted-foreground'}`} />
-                  <span className="text-[9px] font-mono text-foreground/80">Fire ({Math.round(fireStatus.confidence * 100)}%)</span>
+                  <span className="text-[9px] font-mono text-foreground/80">
+                    Fire {Math.round(fireStatus.confidence * 100)}% · Smoke {Math.round(fireStatus.smokeRatio * 100)}% · Vis {fireStatus.visibility}
+                  </span>
                 </div>
                 <p className="text-[8px] font-mono text-muted-foreground italic">
-                  {fireStatus.detected
+                  {fireStatus.fireDetected
                     ? '⚠ Real fire signature (color + flicker)'
-                    : fireStatus.reason || 'No fire signature'}
+                    : fireStatus.smokeEmergency
+                      ? `💨 Smoke emergency — visibility ${fireStatus.visibility}/100`
+                      : fireStatus.reason || 'No fire signature'}
                 </p>
                 {fireStatus.detected && (
                   <DetectionFeedback
