@@ -117,6 +117,7 @@ export default function Index() {
 
   // Facial distress (cam 2)
   const faceDistress = useFaceDistress(running);
+  const yamnet = useYamnet(running);
 
   const alertCooldownRef = useRef<Record<string, number>>({});
   const snapshotCooldownRef = useRef(0);
