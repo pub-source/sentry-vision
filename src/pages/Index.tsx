@@ -20,6 +20,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useHousehold } from '@/hooks/useHousehold';
 import { useIpCamera } from '@/hooks/useIpCamera';
 import { useFaceDistress } from '@/hooks/useFaceDistress';
+import { useYamnet } from '@/hooks/useYamnet';
 import { detectFire, createFireState } from '@/lib/fireDetection';
 import type { SaliencyMode, QualityMode, Alert, DetectedObject } from '@/types/dashboard';
 import { DEFAULT_PRIORITY_OBJECTS } from '@/types/dashboard';
