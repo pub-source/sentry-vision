@@ -859,6 +859,19 @@ export default function Index() {
                   />
                 )}
               </div>
+              <div className={`rounded p-2 border ${yamnet.distressScore >= 60 ? 'border-destructive/60 bg-destructive/10' : yamnet.distressScore >= 30 ? 'border-warning/60 bg-warning/10' : 'border-border bg-secondary/20'}`}>
+                <div className="flex items-center gap-1.5 mb-0.5">
+                  <span className={`text-[10px] ${yamnet.distressScore >= 60 ? 'animate-pulse' : ''}`}>🔊</span>
+                  <span className="text-[9px] font-mono text-foreground/80">
+                    YAMNet Distress ({yamnet.distressScore}%)
+                  </span>
+                </div>
+                <p className="text-[8px] font-mono text-muted-foreground italic">
+                  {yamnet.error ? `⚠ ${yamnet.error}` :
+                   !yamnet.ready ? 'Loading AudioSet model…' :
+                   `${yamnet.topLabel} (${Math.round(yamnet.topScore * 100)}%)`}
+                </p>
+              </div>
               <div className={`rounded p-2 border ${faceDistress.distress.distressLevel === 'severe' ? 'border-destructive/60 bg-destructive/10' : faceDistress.distress.distressLevel === 'mild' ? 'border-warning/60 bg-warning/10' : 'border-border bg-secondary/20'}`}>
                 <div className="flex items-center gap-1.5 mb-0.5">
                   <span className={`text-[10px] ${faceDistress.distress.distressLevel === 'severe' ? 'animate-pulse' : ''}`}>😟</span>
