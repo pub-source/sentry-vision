@@ -97,9 +97,21 @@ export default function Index() {
 
   // Fire detection state
   const fireStateRef = useRef(createFireState());
-  const [fireStatus, setFireStatus] = useState<{ detected: boolean; confidence: number; reason?: string }>({
+  const [fireStatus, setFireStatus] = useState<{
+    detected: boolean;
+    fireDetected: boolean;
+    smokeEmergency: boolean;
+    confidence: number;
+    smokeRatio: number;
+    visibility: number;
+    reason?: string;
+  }>({
     detected: false,
+    fireDetected: false,
+    smokeEmergency: false,
     confidence: 0,
+    smokeRatio: 0,
+    visibility: 100,
   });
 
   // Facial distress (cam 2)
@@ -350,11 +362,24 @@ export default function Index() {
         if (!ctx) return;
         const frame = ctx.getImageData(0, 0, sourceCanvas.width, sourceCanvas.height);
         const result = detectFire(frame, fireStateRef.current, cameras[0].objects);
-        setFireStatus({ detected: result.detected, confidence: result.confidence, reason: result.rejectedReason });
+        setFireStatus({
+          detected: result.detected,
+          fireDetected: result.fireDetected,
+          smokeEmergency: result.smokeEmergency,
+          confidence: result.confidence,
+          smokeRatio: result.smokeRatio,
+          visibility: result.visibility,
+          reason: result.rejectedReason,
+        });
         if (result.detected && Date.now() - fireCooldown.current > 5000) {
           fireCooldown.current = Date.now();
-          addAlert(`🔥 Fire detected (${Math.round(result.confidence * 100)}% conf)`, 'critical', 1);
-          logAlert('fire', `Fire signature confirmed (ratio ${result.firePixelRatio.toFixed(3)}, flicker ${result.flickerScore.toExponential(2)})`);
+          if (result.fireDetected) {
+            addAlert(`🔥 Fire detected (${Math.round(result.confidence * 100)}% conf)`, 'critical', 1);
+            logAlert('fire', `Fire signature confirmed (ratio ${result.firePixelRatio.toFixed(3)}, flicker ${result.flickerScore.toExponential(2)}, smoke ${(result.smokeRatio * 100).toFixed(1)}%, visibility ${result.visibility}/100)`);
+          } else if (result.smokeEmergency) {
+            addAlert(`💨 Heavy smoke — visibility ${result.visibility}/100`, 'high', 1);
+            logAlert('smoke', `Smoke emergency: coverage ${(result.smokeRatio * 100).toFixed(1)}%, visibility ${result.visibility}/100`);
+          }
         }
       } catch (err) {
         // Canvas may be tainted by cross-origin IP cam — skip silently
