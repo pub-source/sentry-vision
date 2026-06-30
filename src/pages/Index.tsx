@@ -20,6 +20,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useHousehold } from '@/hooks/useHousehold';
 import { useIpCamera } from '@/hooks/useIpCamera';
 import { useFaceDistress } from '@/hooks/useFaceDistress';
+import { useYamnet } from '@/hooks/useYamnet';
 import { detectFire, createFireState } from '@/lib/fireDetection';
 import type { SaliencyMode, QualityMode, Alert, DetectedObject } from '@/types/dashboard';
 import { DEFAULT_PRIORITY_OBJECTS } from '@/types/dashboard';
@@ -97,13 +98,26 @@ export default function Index() {
 
   // Fire detection state
   const fireStateRef = useRef(createFireState());
-  const [fireStatus, setFireStatus] = useState<{ detected: boolean; confidence: number; reason?: string }>({
+  const [fireStatus, setFireStatus] = useState<{
+    detected: boolean;
+    fireDetected: boolean;
+    smokeEmergency: boolean;
+    confidence: number;
+    smokeRatio: number;
+    visibility: number;
+    reason?: string;
+  }>({
     detected: false,
+    fireDetected: false,
+    smokeEmergency: false,
     confidence: 0,
+    smokeRatio: 0,
+    visibility: 100,
   });
 
   // Facial distress (cam 2)
   const faceDistress = useFaceDistress(running);
+  const yamnet = useYamnet(running);
 
   const alertCooldownRef = useRef<Record<string, number>>({});
   const snapshotCooldownRef = useRef(0);
@@ -350,11 +364,24 @@ export default function Index() {
         if (!ctx) return;
         const frame = ctx.getImageData(0, 0, sourceCanvas.width, sourceCanvas.height);
         const result = detectFire(frame, fireStateRef.current, cameras[0].objects);
-        setFireStatus({ detected: result.detected, confidence: result.confidence, reason: result.rejectedReason });
+        setFireStatus({
+          detected: result.detected,
+          fireDetected: result.fireDetected,
+          smokeEmergency: result.smokeEmergency,
+          confidence: result.confidence,
+          smokeRatio: result.smokeRatio,
+          visibility: result.visibility,
+          reason: result.rejectedReason,
+        });
         if (result.detected && Date.now() - fireCooldown.current > 5000) {
           fireCooldown.current = Date.now();
-          addAlert(`🔥 Fire detected (${Math.round(result.confidence * 100)}% conf)`, 'critical', 1);
-          logAlert('fire', `Fire signature confirmed (ratio ${result.firePixelRatio.toFixed(3)}, flicker ${result.flickerScore.toExponential(2)})`);
+          if (result.fireDetected) {
+            addAlert(`🔥 Fire detected (${Math.round(result.confidence * 100)}% conf)`, 'critical', 1);
+            logAlert('fire', `Fire signature confirmed (ratio ${result.firePixelRatio.toFixed(3)}, flicker ${result.flickerScore.toExponential(2)}, smoke ${(result.smokeRatio * 100).toFixed(1)}%, visibility ${result.visibility}/100)`);
+          } else if (result.smokeEmergency) {
+            addAlert(`💨 Heavy smoke — visibility ${result.visibility}/100`, 'high', 1);
+            logAlert('smoke', `Smoke emergency: coverage ${(result.smokeRatio * 100).toFixed(1)}%, visibility ${result.visibility}/100`);
+          }
         }
       } catch (err) {
         // Canvas may be tainted by cross-origin IP cam — skip silently
@@ -812,12 +839,16 @@ export default function Index() {
               <div className={`rounded p-2 border ${fireStatus.detected ? 'border-destructive/60 bg-destructive/10' : 'border-border bg-secondary/20'}`}>
                 <div className="flex items-center gap-1.5 mb-0.5">
                   <Flame className={`w-3 h-3 ${fireStatus.detected ? 'text-destructive animate-pulse' : 'text-muted-foreground'}`} />
-                  <span className="text-[9px] font-mono text-foreground/80">Fire ({Math.round(fireStatus.confidence * 100)}%)</span>
+                  <span className="text-[9px] font-mono text-foreground/80">
+                    Fire {Math.round(fireStatus.confidence * 100)}% · Smoke {Math.round(fireStatus.smokeRatio * 100)}% · Vis {fireStatus.visibility}
+                  </span>
                 </div>
                 <p className="text-[8px] font-mono text-muted-foreground italic">
-                  {fireStatus.detected
+                  {fireStatus.fireDetected
                     ? '⚠ Real fire signature (color + flicker)'
-                    : fireStatus.reason || 'No fire signature'}
+                    : fireStatus.smokeEmergency
+                      ? `💨 Smoke emergency — visibility ${fireStatus.visibility}/100`
+                      : fireStatus.reason || 'No fire signature'}
                 </p>
                 {fireStatus.detected && (
                   <DetectionFeedback
@@ -827,6 +858,19 @@ export default function Index() {
                     visualContext={{ reason: fireStatus.reason }}
                   />
                 )}
+              </div>
+              <div className={`rounded p-2 border ${yamnet.distressScore >= 60 ? 'border-destructive/60 bg-destructive/10' : yamnet.distressScore >= 30 ? 'border-warning/60 bg-warning/10' : 'border-border bg-secondary/20'}`}>
+                <div className="flex items-center gap-1.5 mb-0.5">
+                  <span className={`text-[10px] ${yamnet.distressScore >= 60 ? 'animate-pulse' : ''}`}>🔊</span>
+                  <span className="text-[9px] font-mono text-foreground/80">
+                    YAMNet Distress ({yamnet.distressScore}%)
+                  </span>
+                </div>
+                <p className="text-[8px] font-mono text-muted-foreground italic">
+                  {yamnet.error ? `⚠ ${yamnet.error}` :
+                   !yamnet.ready ? 'Loading AudioSet model…' :
+                   `${yamnet.topLabel} (${Math.round(yamnet.topScore * 100)}%)`}
+                </p>
               </div>
               <div className={`rounded p-2 border ${faceDistress.distress.distressLevel === 'severe' ? 'border-destructive/60 bg-destructive/10' : faceDistress.distress.distressLevel === 'mild' ? 'border-warning/60 bg-warning/10' : 'border-border bg-secondary/20'}`}>
                 <div className="flex items-center gap-1.5 mb-0.5">
