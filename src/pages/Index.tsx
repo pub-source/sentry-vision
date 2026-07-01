@@ -154,7 +154,7 @@ export default function Index() {
     if (match.matched && (match.phrase !== lastMatchedPhraseRef.current || now - lastMatchedTimeRef.current > 5000)) {
       lastMatchedPhraseRef.current = match.phrase;
       lastMatchedTimeRef.current = now;
-      addAlert(`🔊 Wake word: "${match.phrase}"`, match.isEmergency ? 'critical' : 'high', 0);
+        addAlert(`Wake word: "${match.phrase}"`, match.isEmergency ? 'critical' : 'high', 0);
       logAlert('wake_word', `Wake word detected: "${match.phrase}"`);
       logNotification(match.wakeWordId, match.phrase, match.actionType, match.isEmergency);
       if (match.isEmergency) {
@@ -262,20 +262,25 @@ export default function Index() {
 
   const handleCameraSaliencyScore = useCallback((cameraId: number, score: number) => {
     updateCamera(cameraId, { saliencyScore: score });
-    
-    // Update global saliency from this frame (not max - use latest from cam 1)
-    if (cameraId === 1) {
+
+    // The FUSED pipeline runs on CAM 2's frame if CAM 2 has its own source,
+    // otherwise it falls back to CAM 1 (raw feed).
+    const fusedCamId = cameras[1].active ? 2 : 1;
+
+    // Update global saliency from the fused source only.
+    if (cameraId === fusedCamId) {
       setGlobalSaliencyScore(score);
     }
 
-    // Compute fused attention: α = 0.4×S + 0.3×A + 0.3×O
-    if (cameraId === 1) {
-      const saliencyComponent = score; // S from CAM 2 (same source frame)
+    // Compute fused attention: α = 0.4×S + 0.3×A + 0.3×O — from fused source.
+    if (cameraId === fusedCamId) {
+      const saliencyComponent = score;
       const audioComponent = audioFeatures.speechDetected
         ? Math.min(100, Math.abs(audioFeatures.decibel) + 20)
         : Math.min(100, Math.max(0, (audioFeatures.decibel + 50) * 1.5));
-      const objectComponent = cameras[0].objects.length > 0
-        ? Math.min(100, cameras[0].objects.reduce((sum, o) => sum + o.confidence * 100, 0) / cameras[0].objects.length)
+      const fusedObjs = cameras[fusedCamId - 1].objects;
+      const objectComponent = fusedObjs.length > 0
+        ? Math.min(100, fusedObjs.reduce((sum, o) => sum + o.confidence * 100, 0) / fusedObjs.length)
         : 0;
       
       const fused = Math.min(100, Math.round(
@@ -284,8 +289,8 @@ export default function Index() {
       setAttentionScore(fused);
     }
 
-    // Audio event classification alerts (only from camera 1 to avoid duplicates)
-    if (cameraId === 1) {
+    // Audio event classification alerts (only from the fused cam to avoid duplicates)
+    if (cameraId === fusedCamId) {
       if (audioFeatures.audioEvent === 'clap') {
         addAlert('Clap detected', 'medium', 0);
       }
@@ -357,14 +362,16 @@ export default function Index() {
 
   // Fire detection — runs on cam 1 source frames every ~500ms
   useEffect(() => {
-    if (!running || !sourceCanvas) return;
+    const target = cam2SourceCanvas || sourceCanvas;
+    if (!running || !target) return;
+    const fusedObjs = cameras[1].active ? cameras[1].objects : cameras[0].objects;
     const fireCooldown = { current: 0 };
     const interval = window.setInterval(() => {
       try {
-        const ctx = sourceCanvas.getContext('2d');
+        const ctx = target.getContext('2d');
         if (!ctx) return;
-        const frame = ctx.getImageData(0, 0, sourceCanvas.width, sourceCanvas.height);
-        const result = detectFire(frame, fireStateRef.current, cameras[0].objects);
+        const frame = ctx.getImageData(0, 0, target.width, target.height);
+        const result = detectFire(frame, fireStateRef.current, fusedObjs);
         setFireStatus({
           detected: result.detected,
           fireDetected: result.fireDetected,
@@ -377,10 +384,10 @@ export default function Index() {
         if (result.detected && Date.now() - fireCooldown.current > 5000) {
           fireCooldown.current = Date.now();
           if (result.fireDetected) {
-            addAlert(`🔥 Fire detected (${Math.round(result.confidence * 100)}% conf)`, 'critical', 1);
+            addAlert(`Fire detected (${Math.round(result.confidence * 100)}% conf)`, 'critical', 1);
             logAlert('fire', `Fire signature confirmed (ratio ${result.firePixelRatio.toFixed(3)}, flicker ${result.flickerScore.toExponential(2)}, smoke ${(result.smokeRatio * 100).toFixed(1)}%, visibility ${result.visibility}/100)`);
           } else if (result.smokeEmergency) {
-            addAlert(`💨 Heavy smoke — visibility ${result.visibility}/100`, 'high', 1);
+            addAlert(`Heavy smoke - visibility ${result.visibility}/100`, 'high', 1);
             logAlert('smoke', `Smoke emergency: coverage ${(result.smokeRatio * 100).toFixed(1)}%, visibility ${result.visibility}/100`);
           }
         }
@@ -389,7 +396,7 @@ export default function Index() {
       }
     }, 500);
     return () => window.clearInterval(interval);
-  }, [running, sourceCanvas, cameras, addAlert, logAlert]);
+  }, [running, sourceCanvas, cam2SourceCanvas, cameras, addAlert, logAlert]);
 
   // Facial distress — runs on cam 2 source (or cam 1 fallback) every ~700ms
   useEffect(() => {
@@ -406,7 +413,7 @@ export default function Index() {
   // Alert on severe facial distress
   useEffect(() => {
     if (faceDistress.distress.distressLevel === 'severe' && running) {
-      addAlert(`😟 Facial distress: ${faceDistress.distress.expression} (${faceDistress.distress.distressScore}%)`, 'high', 2);
+      addAlert(`Facial distress: ${faceDistress.distress.expression} (${faceDistress.distress.distressScore}%)`, 'high', 2);
       logAlert('facial_distress', `Facial distress detected: ${faceDistress.distress.expression}`);
     }
   }, [faceDistress.distress.distressLevel, faceDistress.distress.expression, faceDistress.distress.distressScore, running, addAlert, logAlert]);
