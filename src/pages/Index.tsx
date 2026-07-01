@@ -94,6 +94,7 @@ export default function Index() {
   const [ipUrl, setIpUrl] = useState('');
   const [ipKind, setIpKind] = useState<'hls' | 'mjpeg' | 'image'>('hls');
   const [ipTargetSlot, setIpTargetSlot] = useState<number>(2);
+  const [localTargetSlot, setLocalTargetSlot] = useState<number>(2);
   const ipCam = useIpCamera();
 
   // Fire detection state
