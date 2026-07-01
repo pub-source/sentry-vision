@@ -11,6 +11,24 @@ export function useSpeechRecognition() {
   const [isListening, setIsListening] = useState(false);
   const [supported, setSupported] = useState(false);
   const recognitionRef = useRef<any>(null);
+  const transcriptTimerRef = useRef<number | null>(null);
+  const interimTimerRef = useRef<number | null>(null);
+
+  const scheduleTranscriptClear = () => {
+    if (transcriptTimerRef.current) window.clearTimeout(transcriptTimerRef.current);
+    transcriptTimerRef.current = window.setTimeout(() => {
+      setTranscript('');
+      transcriptTimerRef.current = null;
+    }, 3000);
+  };
+
+  const scheduleInterimClear = () => {
+    if (interimTimerRef.current) window.clearTimeout(interimTimerRef.current);
+    interimTimerRef.current = window.setTimeout(() => {
+      setInterimTranscript('');
+      interimTimerRef.current = null;
+    }, 1500);
+  };
 
   useEffect(() => {
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
@@ -39,8 +57,10 @@ export function useSpeechRecognition() {
       }
       if (final) {
         setTranscript(prev => (prev + ' ' + final).trim().split(' ').slice(-30).join(' '));
+        scheduleTranscriptClear();
       }
       setInterimTranscript(interim);
+      if (interim) scheduleInterimClear();
     };
 
     recognition.onerror = (event: any) => {
@@ -71,6 +91,8 @@ export function useSpeechRecognition() {
       try { ref.stop(); } catch {}
       setIsListening(false);
       setInterimTranscript('');
+      if (transcriptTimerRef.current) { window.clearTimeout(transcriptTimerRef.current); transcriptTimerRef.current = null; }
+      if (interimTimerRef.current) { window.clearTimeout(interimTimerRef.current); interimTimerRef.current = null; }
     }
   }, []);
 
