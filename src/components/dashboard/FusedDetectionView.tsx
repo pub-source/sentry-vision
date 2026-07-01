@@ -37,23 +37,22 @@ function inferDistress(objects: DetectedObject[], audioFeatures: AudioFeatures, 
 
   if (matchedDistress.length > 0) {
     distressLevel = 'critical';
-    distressActivities.push(`⚠ DISTRESS: "${matchedDistress[0]}"`);
+    distressActivities.push(`DISTRESS: "${matchedDistress[0]}"`);
   }
 
   if (isScreaming) {
     distressLevel = 'critical';
-    distressActivities.push('⚠ SCREAMING DETECTED');
+    distressActivities.push('SCREAMING DETECTED');
   }
 
   if (isBang && hasPerson) {
     distressLevel = distressLevel === 'critical' ? 'critical' : 'warning';
-    distressActivities.push('⚠ Impact/Fall detected');
+    distressActivities.push('Impact/Fall detected');
   }
 
   // Normal activity inference
   if (distressActivities.length === 0) {
     if (!hasPerson) {
-      if (audioFeatures.speechDetected) return { activity: 'Speaking (no visual subject)', distressLevel: 'none' };
       return { activity: labels.length > 0 ? `Objects: ${[...new Set(labels)].slice(0, 3).join(', ')}` : 'No activity detected', distressLevel: 'none' };
     }
 
@@ -176,7 +175,7 @@ export default function FusedDetectionView({
       ctx.fillRect(0, h - actBarH, w, actBarH);
       ctx.font = '11px "JetBrains Mono", monospace';
       ctx.fillStyle = distressLevel !== 'none' ? '#ffffff' : '#00e5ff';
-      ctx.fillText('🎯 ' + activity, 8, h - 10);
+      ctx.fillText(activity, 8, h - 10);
 
       // Attention score badge
       const scoreText = `ATT: ${attentionScore}`;
@@ -227,7 +226,7 @@ export default function FusedDetectionView({
         <div className="flex items-center gap-2">
           <span className="text-[8px] font-mono px-1 py-0.5 rounded bg-accent/20 text-accent">AI+DISTRESS</span>
           {distressLevel === 'critical' && (
-            <span className="text-[8px] font-mono px-1 py-0.5 rounded bg-destructive/80 text-destructive-foreground animate-pulse">⚠ ALERT</span>
+            <span className="text-[8px] font-mono px-1 py-0.5 rounded bg-destructive/80 text-destructive-foreground animate-pulse">ALERT</span>
           )}
           <span className={`w-1.5 h-1.5 rounded-full ${active ? 'bg-success' : 'bg-destructive'}`} />
         </div>
@@ -246,7 +245,7 @@ export default function FusedDetectionView({
         {(transcript || interimTranscript) && (
           <div className="bg-background/80 backdrop-blur-sm rounded px-2 py-1 border border-border">
             <div className="flex items-center gap-1 mb-0.5">
-              <span className="text-[8px] font-mono text-accent uppercase">💬 Speech</span>
+              <span className="text-[8px] font-mono text-accent uppercase">Speech</span>
             </div>
             <p className="text-[10px] font-mono text-foreground leading-tight">
               {transcript && <span>{transcript.split(' ').slice(-15).join(' ')} </span>}
@@ -256,7 +255,7 @@ export default function FusedDetectionView({
         )}
         {!transcript && !interimTranscript && speechListening && active && (
           <div className="bg-background/60 rounded px-2 py-1 border border-border/50">
-            <span className="text-[9px] font-mono text-muted-foreground">💬 Listening for wake words...</span>
+            <span className="text-[9px] font-mono text-muted-foreground">Listening for wake words...</span>
           </div>
         )}
       </div>

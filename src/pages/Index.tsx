@@ -94,6 +94,7 @@ export default function Index() {
   const [ipUrl, setIpUrl] = useState('');
   const [ipKind, setIpKind] = useState<'hls' | 'mjpeg' | 'image'>('hls');
   const [ipTargetSlot, setIpTargetSlot] = useState<number>(2);
+  const [localTargetSlot, setLocalTargetSlot] = useState<number>(2);
   const ipCam = useIpCamera();
 
   // Fire detection state
@@ -153,7 +154,7 @@ export default function Index() {
     if (match.matched && (match.phrase !== lastMatchedPhraseRef.current || now - lastMatchedTimeRef.current > 5000)) {
       lastMatchedPhraseRef.current = match.phrase;
       lastMatchedTimeRef.current = now;
-      addAlert(`🔊 Wake word: "${match.phrase}"`, match.isEmergency ? 'critical' : 'high', 0);
+        addAlert(`Wake word: "${match.phrase}"`, match.isEmergency ? 'critical' : 'high', 0);
       logAlert('wake_word', `Wake word detected: "${match.phrase}"`);
       logNotification(match.wakeWordId, match.phrase, match.actionType, match.isEmergency);
       if (match.isEmergency) {
@@ -261,20 +262,25 @@ export default function Index() {
 
   const handleCameraSaliencyScore = useCallback((cameraId: number, score: number) => {
     updateCamera(cameraId, { saliencyScore: score });
-    
-    // Update global saliency from this frame (not max - use latest from cam 1)
-    if (cameraId === 1) {
+
+    // The FUSED pipeline runs on CAM 2's frame if CAM 2 has its own source,
+    // otherwise it falls back to CAM 1 (raw feed).
+    const fusedCamId = cameras[1].active ? 2 : 1;
+
+    // Update global saliency from the fused source only.
+    if (cameraId === fusedCamId) {
       setGlobalSaliencyScore(score);
     }
 
-    // Compute fused attention: α = 0.4×S + 0.3×A + 0.3×O
-    if (cameraId === 1) {
-      const saliencyComponent = score; // S from CAM 2 (same source frame)
+    // Compute fused attention: α = 0.4×S + 0.3×A + 0.3×O — from fused source.
+    if (cameraId === fusedCamId) {
+      const saliencyComponent = score;
       const audioComponent = audioFeatures.speechDetected
         ? Math.min(100, Math.abs(audioFeatures.decibel) + 20)
         : Math.min(100, Math.max(0, (audioFeatures.decibel + 50) * 1.5));
-      const objectComponent = cameras[0].objects.length > 0
-        ? Math.min(100, cameras[0].objects.reduce((sum, o) => sum + o.confidence * 100, 0) / cameras[0].objects.length)
+      const fusedObjs = cameras[fusedCamId - 1].objects;
+      const objectComponent = fusedObjs.length > 0
+        ? Math.min(100, fusedObjs.reduce((sum, o) => sum + o.confidence * 100, 0) / fusedObjs.length)
         : 0;
       
       const fused = Math.min(100, Math.round(
@@ -283,8 +289,8 @@ export default function Index() {
       setAttentionScore(fused);
     }
 
-    // Audio event classification alerts (only from camera 1 to avoid duplicates)
-    if (cameraId === 1) {
+    // Audio event classification alerts (only from the fused cam to avoid duplicates)
+    if (cameraId === fusedCamId) {
       if (audioFeatures.audioEvent === 'clap') {
         addAlert('Clap detected', 'medium', 0);
       }
@@ -356,14 +362,16 @@ export default function Index() {
 
   // Fire detection — runs on cam 1 source frames every ~500ms
   useEffect(() => {
-    if (!running || !sourceCanvas) return;
+    const target = cam2SourceCanvas || sourceCanvas;
+    if (!running || !target) return;
+    const fusedObjs = cameras[1].active ? cameras[1].objects : cameras[0].objects;
     const fireCooldown = { current: 0 };
     const interval = window.setInterval(() => {
       try {
-        const ctx = sourceCanvas.getContext('2d');
+        const ctx = target.getContext('2d');
         if (!ctx) return;
-        const frame = ctx.getImageData(0, 0, sourceCanvas.width, sourceCanvas.height);
-        const result = detectFire(frame, fireStateRef.current, cameras[0].objects);
+        const frame = ctx.getImageData(0, 0, target.width, target.height);
+        const result = detectFire(frame, fireStateRef.current, fusedObjs);
         setFireStatus({
           detected: result.detected,
           fireDetected: result.fireDetected,
@@ -376,10 +384,10 @@ export default function Index() {
         if (result.detected && Date.now() - fireCooldown.current > 5000) {
           fireCooldown.current = Date.now();
           if (result.fireDetected) {
-            addAlert(`🔥 Fire detected (${Math.round(result.confidence * 100)}% conf)`, 'critical', 1);
+            addAlert(`Fire detected (${Math.round(result.confidence * 100)}% conf)`, 'critical', 1);
             logAlert('fire', `Fire signature confirmed (ratio ${result.firePixelRatio.toFixed(3)}, flicker ${result.flickerScore.toExponential(2)}, smoke ${(result.smokeRatio * 100).toFixed(1)}%, visibility ${result.visibility}/100)`);
           } else if (result.smokeEmergency) {
-            addAlert(`💨 Heavy smoke — visibility ${result.visibility}/100`, 'high', 1);
+            addAlert(`Heavy smoke - visibility ${result.visibility}/100`, 'high', 1);
             logAlert('smoke', `Smoke emergency: coverage ${(result.smokeRatio * 100).toFixed(1)}%, visibility ${result.visibility}/100`);
           }
         }
@@ -388,7 +396,7 @@ export default function Index() {
       }
     }, 500);
     return () => window.clearInterval(interval);
-  }, [running, sourceCanvas, cameras, addAlert, logAlert]);
+  }, [running, sourceCanvas, cam2SourceCanvas, cameras, addAlert, logAlert]);
 
   // Facial distress — runs on cam 2 source (or cam 1 fallback) every ~700ms
   useEffect(() => {
@@ -405,7 +413,7 @@ export default function Index() {
   // Alert on severe facial distress
   useEffect(() => {
     if (faceDistress.distress.distressLevel === 'severe' && running) {
-      addAlert(`😟 Facial distress: ${faceDistress.distress.expression} (${faceDistress.distress.distressScore}%)`, 'high', 2);
+      addAlert(`Facial distress: ${faceDistress.distress.expression} (${faceDistress.distress.distressScore}%)`, 'high', 2);
       logAlert('facial_distress', `Facial distress detected: ${faceDistress.distress.expression}`);
     }
   }, [faceDistress.distress.distressLevel, faceDistress.distress.expression, faceDistress.distress.distressScore, running, addAlert, logAlert]);
@@ -455,8 +463,16 @@ export default function Index() {
             {/* Local webcams (built-in / USB) — auto-detected */}
             <div className="space-y-2">
               <label className="text-[10px] font-mono text-muted-foreground uppercase">
-                Local cameras ({devices.length} detected)
+                Local cameras / OBS ({devices.length} detected)
               </label>
+              <select
+                value={localTargetSlot}
+                onChange={e => setLocalTargetSlot(parseInt(e.target.value, 10))}
+                className="w-full text-[11px] font-mono px-3 py-1.5 rounded border border-input bg-background focus:outline-none focus:ring-2 focus:ring-primary"
+              >
+                <option value={1}>Assign to CAM 1 (Raw feed)</option>
+                <option value={2}>Assign to CAM 2 (Fused detection)</option>
+              </select>
               {devices.length === 0 ? (
                 <p className="text-[10px] font-mono text-muted-foreground italic">
                   No built-in or USB webcam detected. Connect a CCTV/IP camera below, or grant camera permission and reload.
@@ -469,7 +485,7 @@ export default function Index() {
                       <button
                         key={d.deviceId || idx}
                         onClick={async () => {
-                          const ok = await startSpecificCamera(d.deviceId, 1, quality);
+                          const ok = await startSpecificCamera(d.deviceId, localTargetSlot, quality);
                           if (ok) {
                             setCameraStatusMsg('');
                             setShowIpDialog(false);
@@ -487,6 +503,9 @@ export default function Index() {
                   })}
                 </div>
               )}
+              <p className="text-[9px] font-mono text-muted-foreground italic">
+                Tip: start OBS Virtual Camera in OBS, then it will appear here as a source you can assign to CAM 2 for fused detection.
+              </p>
             </div>
 
             <div className="h-px bg-border" />
@@ -540,11 +559,11 @@ export default function Index() {
 
             {ipCam.error && (
               <div className="text-[10px] font-mono text-destructive bg-destructive/10 px-2 py-1 rounded">
-                ⚠ {ipCam.error}
+                {ipCam.error}
               </div>
             )}
             <p className="text-[9px] font-mono text-muted-foreground">
-              ⚠ Browsers can't play raw RTSP. Use an HLS gateway (e.g. <code>go2rtc</code>, <code>MediaMTX</code>) or your camera's MJPEG snapshot URL. The URL must be served over HTTPS and allow CORS.
+              Browsers can't play raw RTSP. Use an HLS gateway (e.g. <code>go2rtc</code>, <code>MediaMTX</code>) or your camera's MJPEG snapshot URL. The URL must be served over HTTPS and allow CORS.
             </p>
 
             <div className="flex gap-2">
@@ -574,7 +593,6 @@ export default function Index() {
       {showEmergency && (
         <div className="fixed bottom-4 right-4 z-50 w-80 bg-destructive/95 backdrop-blur-md text-destructive-foreground rounded-xl shadow-2xl border-2 border-destructive p-4 space-y-3 animate-in slide-in-from-bottom-5">
           <div className="flex items-center gap-2">
-            <span className="text-2xl animate-pulse">🚨</span>
             <h3 className="text-sm font-mono font-bold">EMERGENCY DETECTED</h3>
           </div>
           <p className="text-xs font-mono opacity-90">
@@ -584,7 +602,7 @@ export default function Index() {
             href="tel:911"
             className="block w-full py-2.5 px-4 bg-background text-destructive font-mono font-bold text-sm rounded-lg text-center hover:bg-background/90 transition-all"
           >
-            📞 CALL 911
+            CALL 911
           </a>
           <button
             onClick={() => setShowEmergency(false)}
@@ -712,7 +730,7 @@ export default function Index() {
             {/* CAM 2: Fused Detection (Activity + Speech) */}
             <FusedDetectionView
               sourceCanvas={cam2SourceCanvas || sourceCanvas}
-              objects={cameras[0].objects}
+              objects={cameras[1].active ? cameras[1].objects : cameras[0].objects}
               audioFeatures={audioFeatures}
               attentionScore={attentionScore}
               saliencyScore={globalSaliencyScore}
@@ -752,9 +770,9 @@ export default function Index() {
             <Wifi className="w-4 h-4 text-primary" />
             <span className="text-[10px] font-mono text-foreground flex-1">
               {ipCam.connected
-                ? `🟢 IP Cam connected → CAM ${ipTargetSlot}`
+                ? `IP Cam connected -> CAM ${ipTargetSlot}`
                 : cameras.some(c => c.active)
-                  ? `🟢 Webcam active → ${cameras.find(c => c.active)?.label || 'CAM 1'}`
+                  ? `Webcam active -> ${cameras.find(c => c.active)?.label || 'CAM 1'}`
                   : devices.length > 0
                     ? `${devices.length} local camera(s) detected — click Connect to choose, or use a CCTV/IP URL`
                     : 'No camera detected — connect a CCTV / IP camera (HLS .m3u8 or MJPEG/snapshot URL)'}
@@ -780,7 +798,7 @@ export default function Index() {
           <div className="bg-card rounded-md border border-primary/30 panel-glow p-3">
             <div className="flex items-center justify-between mb-2">
               <span className="text-[10px] font-mono text-primary uppercase tracking-wider">
-                📊 Saliency Score Calculation
+                Saliency Score Calculation
               </span>
               <span className="text-[9px] font-mono text-muted-foreground">
                 α = 0.40·S + 0.30·A + 0.30·O
@@ -845,9 +863,9 @@ export default function Index() {
                 </div>
                 <p className="text-[8px] font-mono text-muted-foreground italic">
                   {fireStatus.fireDetected
-                    ? '⚠ Real fire signature (color + flicker)'
+                    ? 'Real fire signature (color + flicker)'
                     : fireStatus.smokeEmergency
-                      ? `💨 Smoke emergency — visibility ${fireStatus.visibility}/100`
+                      ? `Smoke emergency - visibility ${fireStatus.visibility}/100`
                       : fireStatus.reason || 'No fire signature'}
                 </p>
                 {fireStatus.detected && (
@@ -861,27 +879,25 @@ export default function Index() {
               </div>
               <div className={`rounded p-2 border ${yamnet.distressScore >= 60 ? 'border-destructive/60 bg-destructive/10' : yamnet.distressScore >= 30 ? 'border-warning/60 bg-warning/10' : 'border-border bg-secondary/20'}`}>
                 <div className="flex items-center gap-1.5 mb-0.5">
-                  <span className={`text-[10px] ${yamnet.distressScore >= 60 ? 'animate-pulse' : ''}`}>🔊</span>
                   <span className="text-[9px] font-mono text-foreground/80">
                     YAMNet Distress ({yamnet.distressScore}%)
                   </span>
                 </div>
                 <p className="text-[8px] font-mono text-muted-foreground italic">
-                  {yamnet.error ? `⚠ ${yamnet.error}` :
+                  {yamnet.error ? yamnet.error :
                    !yamnet.ready ? 'Loading AudioSet model…' :
                    `${yamnet.topLabel} (${Math.round(yamnet.topScore * 100)}%)`}
                 </p>
               </div>
               <div className={`rounded p-2 border ${faceDistress.distress.distressLevel === 'severe' ? 'border-destructive/60 bg-destructive/10' : faceDistress.distress.distressLevel === 'mild' ? 'border-warning/60 bg-warning/10' : 'border-border bg-secondary/20'}`}>
                 <div className="flex items-center gap-1.5 mb-0.5">
-                  <span className={`text-[10px] ${faceDistress.distress.distressLevel === 'severe' ? 'animate-pulse' : ''}`}>😟</span>
                   <span className="text-[9px] font-mono text-foreground/80">
                     Facial Distress ({faceDistress.distress.distressScore}%)
                   </span>
                 </div>
                 <p className="text-[8px] font-mono text-muted-foreground italic">
                   {!faceDistress.ready ? 'Loading model…' :
-                   faceDistress.error ? `⚠ ${faceDistress.error}` :
+                   faceDistress.error ? faceDistress.error :
                    !faceDistress.distress.hasFace ? 'No face detected' :
                    `${faceDistress.distress.expression} (${Math.round(faceDistress.distress.probability * 100)}%)`}
                 </p>
@@ -937,7 +953,7 @@ export default function Index() {
                       alert.severity === 'medium' ? 'bg-warning h-4' :
                       'bg-primary/40 h-2'
                     }`}
-                    title={`${alert.message} - ${alert.timestamp.toLocaleTimeString()}${hasSnap ? ' 📸 Click to view' : ''}`}
+                    title={`${alert.message} - ${alert.timestamp.toLocaleTimeString()}${hasSnap ? ' - Click to view' : ''}`}
                   />
                 );
               })}
@@ -950,13 +966,13 @@ export default function Index() {
               <div className="mt-2 p-2 bg-secondary/50 rounded border border-primary/30 space-y-1">
                 <div className="flex items-center justify-between">
                   <span className="text-[9px] font-mono text-primary">
-                    📸 Playback — {selectedSnapshot.timestamp.toLocaleTimeString()}
+                    Playback — {selectedSnapshot.timestamp.toLocaleTimeString()}
                   </span>
                   <button
                     onClick={() => setSelectedSnapshot(null)}
                     className="text-[9px] font-mono text-muted-foreground hover:text-destructive"
                   >
-                    ✕ Close
+                    Close
                   </button>
                 </div>
                 <img
