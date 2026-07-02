@@ -168,7 +168,7 @@ export default function TutorialOverlay({ steps, open, onClose, onFinish }: Prop
           {/* AI avatar */}
           <div className="relative flex-shrink-0">
             <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center">
-              <span className="text-[10px] font-mono font-bold text-primary-foreground">AI</span>
+              <span className="text-[10px] font-mono font-bold text-primary-foreground">Elmer</span>
             </div>
             <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-success ring-2 ring-card animate-pulse" />
           </div>
