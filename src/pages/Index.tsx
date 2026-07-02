@@ -698,7 +698,7 @@ export default function Index() {
         </div>
       )}
       {/* Header */}
-      <header className="border-b border-border bg-card/60 backdrop-blur-sm px-4 py-2.5 flex items-center justify-between">
+      <header id="tour-header" className="border-b border-border bg-card/60 backdrop-blur-sm px-4 py-2.5 flex items-center justify-between">
         {/* Left: Brand */}
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
@@ -742,6 +742,14 @@ export default function Index() {
             title={darkMode ? 'Light mode' : 'Dark mode'}
           >
             {darkMode ? <Sun className="w-4 h-4 text-warning" /> : <Moon className="w-4 h-4 text-muted-foreground" />}
+          </button>
+
+          <button
+            onClick={() => setShowTutorial(true)}
+            className="p-1.5 rounded-lg hover:bg-muted transition-colors"
+            title="Replay tutorial"
+          >
+            <HelpCircle className="w-4 h-4 text-muted-foreground" />
           </button>
 
           {user && (
