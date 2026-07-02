@@ -49,6 +49,7 @@ export default function Index() {
   const [showEmergency, setShowEmergency] = useState(false);
 
   const [running, setRunning] = useState(false);
+  const [showTutorial, setShowTutorial] = useState(false);
   const [saliencyMode, setSaliencyMode] = useState<SaliencyMode>('sobel');
   const [threshold, setThreshold] = useState(15);
   const [showBoundingBoxes, setShowBoundingBoxes] = useState(true);
