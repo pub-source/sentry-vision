@@ -257,9 +257,9 @@ export default function HouseholdPage() {
 
       <div className="max-w-2xl mx-auto p-4 sm:p-6 space-y-5">
         {tab === 'setup' && (
-          <div className="space-y-5">
+          <div id="hh-tour-setup" className="space-y-5">
             {/* Mode Toggle */}
-            <div className="flex rounded-lg border border-border overflow-hidden">
+            <div id="hh-tour-mode" className="flex rounded-lg border border-border overflow-hidden">
               {(['create', 'join'] as const).map(m => (
                 <button
                   key={m}
@@ -277,7 +277,7 @@ export default function HouseholdPage() {
 
             <form
               onSubmit={mode === 'create' ? handleCreateHousehold : handleJoinHousehold}
-              className="bg-card rounded-xl border border-border shadow-sm p-6 space-y-4"
+              id="hh-tour-form" className="bg-card rounded-xl border border-border shadow-sm p-6 space-y-4"
             >
               <div className="space-y-1">
                 <h2 className="text-base font-semibold text-foreground">
@@ -315,7 +315,7 @@ export default function HouseholdPage() {
         {tab === 'manage' && household && (
           <div className="space-y-5">
             {/* Household Info Card */}
-            <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
+            <div id="hh-tour-invite" className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
               <div className="p-5 space-y-4">
                 <div className="flex items-center justify-between">
                   <div>
@@ -361,7 +361,7 @@ export default function HouseholdPage() {
             </div>
 
             {/* Members */}
-            <div className="bg-card rounded-xl border border-border shadow-sm p-5 space-y-3">
+            <div id="hh-tour-members" className="bg-card rounded-xl border border-border shadow-sm p-5 space-y-3">
               <div className="flex items-center gap-2">
                 <Users className="w-4 h-4 text-primary" />
                 <h3 className="text-sm font-semibold text-foreground">Members ({members.length})</h3>
@@ -415,7 +415,7 @@ export default function HouseholdPage() {
             )}
 
             {/* Wake Words & Phrases */}
-            <div className="bg-card rounded-xl border border-border shadow-sm p-5 space-y-4">
+            <div id="hh-tour-wakewords" className="bg-card rounded-xl border border-border shadow-sm p-5 space-y-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Volume2 className="w-4 h-4 text-primary" />
@@ -530,7 +530,7 @@ export default function HouseholdPage() {
             {/* Go to Dashboard */}
             <button
               onClick={() => navigate('/dashboard')}
-              className="w-full flex items-center justify-center gap-2 text-sm font-medium py-3.5 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 active:scale-[0.98] transition-all shadow-sm"
+              id="hh-tour-goto" className="w-full flex items-center justify-center gap-2 text-sm font-medium py-3.5 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 active:scale-[0.98] transition-all shadow-sm"
             >
               Go to Monitoring Dashboard
               <ChevronRight className="w-4 h-4" />
@@ -538,6 +538,75 @@ export default function HouseholdPage() {
           </div>
         )}
       </div>
+
+      <TutorialOverlay
+        open={showTutorial}
+        onClose={() => setShowTutorial(false)}
+        onFinish={() => {
+          if (user) {
+            try { localStorage.setItem(`msds-household-tutorial-done-${user.id}`, '1'); } catch { /* noop */ }
+          }
+        }}
+        steps={tab === 'setup' ? ([
+          {
+            selector: '#hh-tour-header',
+            placement: 'bottom',
+            title: 'Household Setup',
+            body: 'Hi, I am Elmer. A household lets multiple people share the same monitoring, alerts, and wake words. Let me show you how to set one up.',
+            narration: 'Hi, I am Elmer. This is the household setup page. Let me walk you through it.',
+          },
+          {
+            selector: '#hh-tour-mode',
+            placement: 'bottom',
+            title: 'Create or Join',
+            body: 'Pick Create Household to start a new one and become admin, or Join Household if someone already sent you an invite code.',
+            narration: 'Choose whether to create a new household or join an existing one with an invite code.',
+          },
+          {
+            selector: '#hh-tour-form',
+            placement: 'top',
+            title: 'Your Details',
+            body: 'Fill in your display name and phone number. These are used to identify you and to route alerts to the right member.',
+            narration: 'Fill in your details. These are used to identify you and route alerts.',
+          },
+        ] as TutorialStep[]) : ([
+          {
+            selector: '#hh-tour-header',
+            placement: 'bottom',
+            title: 'Household Dashboard',
+            body: 'Hi, I am Elmer. This is where you manage your household: invite people, review members, and configure the phrases that trigger alerts.',
+            narration: 'Hi, I am Elmer. This is your household management page.',
+          },
+          {
+            selector: '#hh-tour-invite',
+            placement: 'bottom',
+            title: 'Invite Code & QR',
+            body: 'Share this invite code or QR so family members can join your household. Only members inside the household receive alerts and updates.',
+            narration: 'Share the invite code or QR so family can join your household.',
+          },
+          {
+            selector: '#hh-tour-members',
+            placement: 'top',
+            title: 'Members',
+            body: 'All people currently in your household. Admins can manage invites, wake words, and accept new join requests.',
+            narration: 'These are the people currently in your household.',
+          },
+          {
+            selector: '#hh-tour-wakewords',
+            placement: 'top',
+            title: 'Wake Words & Phrases',
+            body: 'Add spoken phrases like help, fire, or intruder. When the microphone hears them, I trigger the matching action for everyone in the household.',
+            narration: 'Add phrases like help, fire, or intruder. When heard, I trigger the matching alert.',
+          },
+          {
+            selector: '#hh-tour-goto',
+            placement: 'top',
+            title: 'Back to Monitoring',
+            body: 'When you are ready, jump back to the monitoring dashboard to start watching, listening, and detecting emergencies in real time.',
+            narration: 'When you are ready, go back to the monitoring dashboard to start detection.',
+          },
+        ] as TutorialStep[])}
+      />
     </div>
   );
 }
