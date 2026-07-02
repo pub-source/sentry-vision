@@ -1175,6 +1175,16 @@ export default function Index() {
           )}
         </div>
       </div>
+
+      <TutorialOverlay
+        steps={tutorialSteps}
+        open={showTutorial}
+        onClose={() => setShowTutorial(false)}
+        onFinish={() => {
+          const key = user ? `msds-tutorial-done-${user.id}` : 'msds-tutorial-done-guest';
+          try { localStorage.setItem(key, '1'); } catch { /* noop */ }
+        }}
+      />
     </div>
   );
 }
