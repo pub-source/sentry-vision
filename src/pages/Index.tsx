@@ -799,7 +799,7 @@ export default function Index() {
         {/* Left: Specialized camera grid + fusion */}
          <div className="flex-1 p-2 flex flex-col gap-2 overflow-y-auto">
           {/* Top row: 2 cameras */}
-          <div className="grid grid-cols-2 gap-2">
+          <div id="tour-cams" className="grid grid-cols-2 gap-2">
             {/* CAM 1: Object Detection */}
             <CameraFeed
               camera={cameras[0]}
@@ -1080,9 +1080,9 @@ export default function Index() {
         </div>
 
         {/* Right sidebar */}
-        <div className="w-72 border-l border-border p-2 space-y-2 overflow-y-auto">
+        <div id="tour-sidebar" className="w-72 border-l border-border p-2 space-y-2 overflow-y-auto">
           {/* Start/Stop */}
-          <div className="bg-card rounded-md border border-border panel-glow p-3">
+          <div id="tour-start" className="bg-card rounded-md border border-border panel-glow p-3">
             <button
               onClick={running ? handleStop : handleStart}
               className={`w-full text-xs font-mono py-2.5 px-3 rounded-md transition-all font-semibold ${
