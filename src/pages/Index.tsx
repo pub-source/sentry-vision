@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { Moon, Sun, Home, LogOut, LogIn, Shield, Clock, Wifi, X, Flame } from 'lucide-react';
+import { Moon, Sun, Home, LogOut, LogIn, Shield, Clock, Wifi, X, Flame, HelpCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import CameraFeed from '@/components/dashboard/CameraFeed';
 import FusedDetectionView from '@/components/dashboard/FusedDetectionView';
@@ -11,6 +11,7 @@ import AttentionGauge from '@/components/dashboard/AttentionGauge';
 import DatasetReferences from '@/components/dashboard/DatasetReferences';
 import DetectionFeedback from '@/components/dashboard/DetectionFeedback';
 import ModelCachePanel from '@/components/dashboard/ModelCachePanel';
+import TutorialOverlay, { type TutorialStep } from '@/components/dashboard/TutorialOverlay';
 
 import { useCamera } from '@/hooks/useCamera';
 import { useAudioAnalysis } from '@/hooks/useAudioAnalysis';
@@ -44,10 +45,94 @@ export default function Index() {
   useEffect(() => {
     localStorage.setItem('safewatch-dark-mode', String(darkMode));
   }, [darkMode]);
+
+  // Auto-launch onboarding tutorial once per signed-in user
+  useEffect(() => {
+    if (authLoading) return;
+    const key = user ? `msds-tutorial-done-${user.id}` : 'msds-tutorial-done-guest';
+    if (!localStorage.getItem(key)) {
+      // Small delay so panels have mounted and refs exist
+      const t = setTimeout(() => setShowTutorial(true), 600);
+      return () => clearTimeout(t);
+    }
+  }, [authLoading, user]);
+
+  const tutorialSteps: TutorialStep[] = [
+    {
+      selector: '#tour-header',
+      placement: 'bottom',
+      title: 'Welcome to MSDSystem',
+      body: 'This is your Multimodal Saliency Detection dashboard. I will walk you through the key panels and what each one does.',
+      narration: 'Welcome to the Multimodal Saliency Detection dashboard. I will guide you through each part.',
+    },
+    {
+      selector: '#tour-start',
+      placement: 'left',
+      title: 'Start Monitoring',
+      body: 'Press this to activate the full detection pipeline: camera capture, saliency, object detection, audio, and emergency reasoning.',
+      narration: 'Press Start Monitoring to activate the full detection pipeline.',
+    },
+    {
+      selector: '#tour-cams',
+      childIndex: 1,
+      placement: 'bottom',
+      title: 'CAM 1 — Raw Feed',
+      body: 'Your live camera stream. Bounding boxes and low-level saliency overlays are drawn here so you can see what the system is seeing.',
+      narration: 'This is the raw live feed. Bounding boxes appear here as objects are detected.',
+    },
+    {
+      selector: '#tour-cams',
+      childIndex: 2,
+      placement: 'bottom',
+      title: 'CAM 2 — Fused Detection',
+      body: 'The fused detection view combines vision, audio, speech, and face analysis to infer activity, distress, fire, and emergencies.',
+      narration: 'This panel fuses vision, audio, speech and face signals to infer the current situation.',
+    },
+    {
+      selector: '#tour-sidebar',
+      childIndex: 2,
+      placement: 'left',
+      title: 'Attention Score',
+      body: 'A single 0 to 100 score summarising how much the system currently believes something important is happening. Higher means more attention needed.',
+      narration: 'This is the attention score, a summary of how urgent the current scene looks.',
+    },
+    {
+      selector: '#tour-sidebar',
+      childIndex: 3,
+      placement: 'left',
+      title: 'Audio Meter & Talking AI',
+      body: 'Live decibel, speech, and distress sound analysis. Wake words and screams are picked up here and can trigger the emergency response.',
+      narration: 'The audio meter listens for speech, wake words, and distress sounds like screams.',
+    },
+    {
+      selector: '#tour-sidebar',
+      childIndex: 4,
+      placement: 'left',
+      title: 'Alert Log',
+      body: 'Every important event lands here with a timestamp, severity, and snapshot. Click an alert to review the moment it was captured.',
+      narration: 'All events and alerts are logged here for review.',
+    },
+    {
+      selector: '#tour-sidebar',
+      childIndex: 6,
+      placement: 'left',
+      title: 'Controls',
+      body: 'Toggle bounding boxes, heatmap, alerts, quality, and which objects the system should treat as priority. You can also export a session as CSV here.',
+      narration: 'Use the controls to tune detection, choose priority objects, and export session data.',
+    },
+    {
+      selector: '#tour-header',
+      placement: 'center',
+      title: 'You are ready',
+      body: 'Connect a camera, press Start Monitoring, and the system will begin listening and watching. You can replay this tour anytime from the help icon.',
+      narration: 'You are ready. Connect a camera and press Start Monitoring to begin.',
+    },
+  ];
   const { transcript, interimTranscript, isListening: speechListening, supported: speechSupported, start: startSpeech, stop: stopSpeech, clear: clearSpeech } = useSpeechRecognition();
   const [showEmergency, setShowEmergency] = useState(false);
 
   const [running, setRunning] = useState(false);
+  const [showTutorial, setShowTutorial] = useState(false);
   const [saliencyMode, setSaliencyMode] = useState<SaliencyMode>('sobel');
   const [threshold, setThreshold] = useState(15);
   const [showBoundingBoxes, setShowBoundingBoxes] = useState(true);
@@ -613,7 +698,7 @@ export default function Index() {
         </div>
       )}
       {/* Header */}
-      <header className="border-b border-border bg-card/60 backdrop-blur-sm px-4 py-2.5 flex items-center justify-between">
+      <header id="tour-header" className="border-b border-border bg-card/60 backdrop-blur-sm px-4 py-2.5 flex items-center justify-between">
         {/* Left: Brand */}
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
@@ -657,6 +742,14 @@ export default function Index() {
             title={darkMode ? 'Light mode' : 'Dark mode'}
           >
             {darkMode ? <Sun className="w-4 h-4 text-warning" /> : <Moon className="w-4 h-4 text-muted-foreground" />}
+          </button>
+
+          <button
+            onClick={() => setShowTutorial(true)}
+            className="p-1.5 rounded-lg hover:bg-muted transition-colors"
+            title="Replay tutorial"
+          >
+            <HelpCircle className="w-4 h-4 text-muted-foreground" />
           </button>
 
           {user && (
@@ -706,7 +799,7 @@ export default function Index() {
         {/* Left: Specialized camera grid + fusion */}
          <div className="flex-1 p-2 flex flex-col gap-2 overflow-y-auto">
           {/* Top row: 2 cameras */}
-          <div className="grid grid-cols-2 gap-2">
+          <div id="tour-cams" className="grid grid-cols-2 gap-2">
             {/* CAM 1: Object Detection */}
             <CameraFeed
               camera={cameras[0]}
@@ -987,9 +1080,9 @@ export default function Index() {
         </div>
 
         {/* Right sidebar */}
-        <div className="w-72 border-l border-border p-2 space-y-2 overflow-y-auto">
+        <div id="tour-sidebar" className="w-72 border-l border-border p-2 space-y-2 overflow-y-auto">
           {/* Start/Stop */}
-          <div className="bg-card rounded-md border border-border panel-glow p-3">
+          <div id="tour-start" className="bg-card rounded-md border border-border panel-glow p-3">
             <button
               onClick={running ? handleStop : handleStart}
               className={`w-full text-xs font-mono py-2.5 px-3 rounded-md transition-all font-semibold ${
@@ -1082,6 +1175,16 @@ export default function Index() {
           )}
         </div>
       </div>
+
+      <TutorialOverlay
+        steps={tutorialSteps}
+        open={showTutorial}
+        onClose={() => setShowTutorial(false)}
+        onFinish={() => {
+          const key = user ? `msds-tutorial-done-${user.id}` : 'msds-tutorial-done-guest';
+          try { localStorage.setItem(key, '1'); } catch { /* noop */ }
+        }}
+      />
     </div>
   );
 }
