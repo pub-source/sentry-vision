@@ -168,13 +168,17 @@ export default function TutorialOverlay({ steps, open, onClose, onFinish }: Prop
           {/* AI avatar */}
           <div className="relative flex-shrink-0">
             <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center">
-              <span className="text-[10px] font-mono font-bold text-primary-foreground">AI</span>
+              <span className="text-sm font-bold text-primary-foreground">E</span>
             </div>
             <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-success ring-2 ring-card animate-pulse" />
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between mb-1">
-              <h4 className="text-xs font-semibold text-foreground tracking-tight">{step.title}</h4>
+              <div className="flex items-center gap-1.5 min-w-0">
+                <span className="text-[9px] font-mono uppercase tracking-wider text-primary">Elmer</span>
+                <span className="text-muted-foreground/40">·</span>
+                <h4 className="text-xs font-semibold text-foreground tracking-tight truncate">{step.title}</h4>
+              </div>
               <span className="text-[9px] font-mono text-muted-foreground">{idx + 1}/{steps.length}</span>
             </div>
             <p className="text-[11px] leading-relaxed text-muted-foreground">{step.body}</p>
