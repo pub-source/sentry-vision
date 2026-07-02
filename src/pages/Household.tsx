@@ -234,12 +234,15 @@ export default function HouseholdPage() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       {/* Header */}
-      <header className="border-b border-border bg-card/60 backdrop-blur-sm px-4 py-3 flex items-center justify-between">
+      <header id="hh-tour-header" className="border-b border-border bg-card/60 backdrop-blur-sm px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Shield className="w-5 h-5 text-primary" />
           <h1 className="text-sm font-semibold text-foreground tracking-tight">Household</h1>
         </div>
         <div className="flex items-center gap-3">
+          <button onClick={() => setShowTutorial(true)} className="p-1 rounded hover:bg-muted transition-colors" title="Replay tutorial">
+            <HelpCircle className="w-4 h-4 text-muted-foreground" />
+          </button>
           <button onClick={() => navigate('/dashboard')} className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors">
             <ArrowLeft className="w-3 h-3" />
             Dashboard
