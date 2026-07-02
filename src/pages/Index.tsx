@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { Moon, Sun, Home, LogOut, LogIn, Shield, Clock, Wifi, X, Flame } from 'lucide-react';
+import { Moon, Sun, Home, LogOut, LogIn, Shield, Clock, Wifi, X, Flame, HelpCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import CameraFeed from '@/components/dashboard/CameraFeed';
 import FusedDetectionView from '@/components/dashboard/FusedDetectionView';
@@ -11,6 +11,7 @@ import AttentionGauge from '@/components/dashboard/AttentionGauge';
 import DatasetReferences from '@/components/dashboard/DatasetReferences';
 import DetectionFeedback from '@/components/dashboard/DetectionFeedback';
 import ModelCachePanel from '@/components/dashboard/ModelCachePanel';
+import TutorialOverlay, { type TutorialStep } from '@/components/dashboard/TutorialOverlay';
 
 import { useCamera } from '@/hooks/useCamera';
 import { useAudioAnalysis } from '@/hooks/useAudioAnalysis';
