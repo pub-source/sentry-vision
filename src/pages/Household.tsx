@@ -4,6 +4,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { QRCodeSVG } from 'qrcode.react';
 import { Shield, LogOut, ArrowLeft, Copy, QrCode, AlertTriangle, Users, Volume2, Plus, X, Check, Phone as PhoneIcon, Mail, MessageSquare, ChevronRight } from 'lucide-react';
+import { HelpCircle } from 'lucide-react';
+import TutorialOverlay, { type TutorialStep } from '@/components/dashboard/TutorialOverlay';
 
 interface Household {
   id: string;
@@ -75,6 +77,16 @@ export default function HouseholdPage() {
   const [showEmergency, setShowEmergency] = useState(false);
   const [showQr, setShowQr] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [showTutorial, setShowTutorial] = useState(false);
+
+  useEffect(() => {
+    if (loading || loadingData || !user) return;
+    const key = `msds-household-tutorial-done-${user.id}`;
+    if (!localStorage.getItem(key)) {
+      const t = setTimeout(() => setShowTutorial(true), 500);
+      return () => clearTimeout(t);
+    }
+  }, [loading, loadingData, user, tab]);
 
   const normalizeInviteCode = (value: string) =>
     value.trim().toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 8);
