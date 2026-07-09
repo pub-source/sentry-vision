@@ -27,6 +27,8 @@ export default function Auth() {
   const [resetEmail, setResetEmail] = useState('');
   const [resetSent, setResetSent] = useState(false);
   const [scanning, setScanning] = useState(false);
+  const [privacyConsent, setPrivacyConsent] = useState(false);
+  const [showPrivacyDialog, setShowPrivacyDialog] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
@@ -125,6 +127,10 @@ export default function Auth() {
     if (pwIssue) { setError(pwIssue); return; }
     if (password !== confirmPassword) {
       setError('Passwords do not match.');
+      return;
+    }
+    if (!privacyConsent) {
+      setError('You must agree to the Data Privacy Act notice to create an account.');
       return;
     }
     setSubmitting(true);
@@ -477,7 +483,7 @@ export default function Auth() {
   const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()) && email.trim().toLowerCase().endsWith('@gmail.com');
   const passwordValid = !validatePasswordStrength(password) && password.length > 0;
   const confirmValid = confirmPassword.length > 0 && confirmPassword === password;
-  const canSubmitCreate = emailValid && passwordValid && confirmValid && !submitting && !success;
+  const canSubmitCreate = emailValid && passwordValid && confirmValid && privacyConsent && !submitting && !success;
 
   return (
     <PageWrapper>
@@ -583,6 +589,27 @@ export default function Auth() {
 
         <ErrorMsg msg={error} />
         <SuccessMsg msg={success} />
+        <div className="flex items-start gap-2 rounded-lg border border-border bg-secondary/40 p-3">
+          <input
+            id="ca-privacy"
+            type="checkbox"
+            checked={privacyConsent}
+            onChange={e => setPrivacyConsent(e.target.checked)}
+            className="mt-0.5 h-4 w-4 rounded border-border accent-primary cursor-pointer"
+          />
+          <label htmlFor="ca-privacy" className="text-[11px] leading-relaxed text-muted-foreground cursor-pointer">
+            I have read and agree to the collection, use, and processing of my personal
+            information (email, household data, detection logs, and audio/video snapshots)
+            in accordance with the Data Privacy Act of 2012 (Republic Act No. 10173).{' '}
+            <button
+              type="button"
+              onClick={() => setShowPrivacyDialog(true)}
+              className="text-primary underline underline-offset-2 hover:text-primary/80"
+            >
+              Read full notice
+            </button>
+          </label>
+        </div>
         <PrimaryButton type="submit" disabled={!canSubmitCreate} aria-label="Create Account">
           {submitting ? (
             <>
@@ -606,6 +633,62 @@ export default function Auth() {
         </button>
         <BackButton onClick={() => { clearState(); setMode('choose'); }} />
       </form>
+      {showPrivacyDialog && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4"
+          onClick={() => setShowPrivacyDialog(false)}
+        >
+          <div
+            className="bg-card border border-border rounded-xl shadow-lg max-w-lg w-full max-h-[80vh] overflow-y-auto p-6 space-y-4"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-2">
+              <Shield className="w-5 h-5 text-primary" />
+              <h3 className="text-sm font-semibold text-foreground">Data Privacy Act Notice</h3>
+            </div>
+            <div className="space-y-3 text-xs text-muted-foreground leading-relaxed">
+              <p>
+                In compliance with the <span className="text-foreground font-medium">Data Privacy Act of 2012 (Republic Act No. 10173)</span>,
+                MSDSystem informs you of the following regarding the personal information collected through this application.
+              </p>
+              <div>
+                <p className="text-foreground font-medium mb-1">Information We Collect</p>
+                <ul className="list-disc pl-4 space-y-1">
+                  <li>Account details: email address and hashed password.</li>
+                  <li>Household data: names, roles, phone numbers, invite codes.</li>
+                  <li>Detection data: camera snapshots, audio events, wake-word matches, alert logs, AI confidence scores, timestamps.</li>
+                </ul>
+              </div>
+              <div>
+                <p className="text-foreground font-medium mb-1">Purpose of Processing</p>
+                <p>Data is used solely to operate the multimodal emergency detection service, notify household members, and improve model accuracy.</p>
+              </div>
+              <div>
+                <p className="text-foreground font-medium mb-1">Storage & Security</p>
+                <p>Data is stored on secure cloud infrastructure protected by Row-Level Security policies and encrypted transport (HTTPS/TLS). Access is limited to authorized household members.</p>
+              </div>
+              <div>
+                <p className="text-foreground font-medium mb-1">Your Rights</p>
+                <p>You have the right to be informed, to access, to object, to rectify, to erase, and to data portability. You may withdraw consent at any time by deleting your account.</p>
+              </div>
+              <div>
+                <p className="text-foreground font-medium mb-1">Sharing</p>
+                <p>Your data is not sold or shared with third parties for advertising. It is only shared with members of your household as required by the service.</p>
+              </div>
+              <p className="text-[10px] italic">
+                By checking the consent box, you acknowledge that you have read this notice and freely give your consent to the processing of your personal information for the purposes stated above.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowPrivacyDialog(false)}
+              className="w-full py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
     </PageWrapper>
   );
 }
