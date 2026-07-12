@@ -3,11 +3,13 @@ import { DATASET_REFERENCES } from '@/lib/datasetReferences';
 import { Database, ExternalLink, ChevronDown, ChevronUp } from 'lucide-react';
 
 const DOMAIN_LABEL: Record<string, string> = {
-  'facial-expression': '😟 Facial',
-  'audio-distress': '🔊 Audio',
-  'object': '📦 Object',
-  'fire': '🔥 Fire',
-  'fall': '🪂 Fall',
+  'fire-hazard': 'Fire',
+  'smoke': 'Smoke',
+  'visibility': 'Visibility',
+  'facial-expression': 'Facial',
+  'context-awareness': 'Context',
+  'safety': 'Safety',
+  'keywords': 'Keywords',
 };
 
 export default function DatasetReferences() {
