@@ -629,6 +629,32 @@ export default function Index() {
 
             <div className="h-px bg-border" />
 
+            {/* Upload video for testing detection */}
+            <div className="space-y-2">
+              <label className="text-[10px] font-mono text-muted-foreground uppercase">
+                Upload test video (fire / smoke / distress clips)
+              </label>
+              <input
+                type="file"
+                accept="video/*"
+                onChange={async e => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  const ok = await handleTestVideoUpload(file, localTargetSlot);
+                  if (ok) setShowIpDialog(false);
+                }}
+                className="w-full text-[10px] font-mono file:mr-2 file:py-1 file:px-2 file:rounded file:border file:border-input file:bg-secondary/30 file:text-foreground/80 file:cursor-pointer"
+              />
+              {testVideoName && (
+                <p className="text-[9px] font-mono text-success">Loaded: {testVideoName}</p>
+              )}
+              <p className="text-[9px] font-mono text-muted-foreground italic">
+                Plays the file into the selected slot as a live stream so fused detection can process it. Great for validating fire / smoke / facial-distress logic without a live camera.
+              </p>
+            </div>
+
+            <div className="h-px bg-border" />
+
             <div className="space-y-2">
               <label className="text-[10px] font-mono text-muted-foreground uppercase">Stream type</label>
               <div className="grid grid-cols-3 gap-1">
