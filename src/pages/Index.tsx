@@ -182,6 +182,40 @@ export default function Index() {
   const [localTargetSlot, setLocalTargetSlot] = useState<number>(2);
   const ipCam = useIpCamera();
 
+  // Test video upload — feeds an uploaded video file into a slot as a MediaStream
+  const testVideoRef = useRef<HTMLVideoElement | null>(null);
+  const [testVideoName, setTestVideoName] = useState<string>('');
+  const handleTestVideoUpload = useCallback(async (file: File, slot: number) => {
+    try {
+      if (!testVideoRef.current) {
+        const v = document.createElement('video');
+        v.muted = true;
+        v.loop = true;
+        v.playsInline = true;
+        v.crossOrigin = 'anonymous';
+        testVideoRef.current = v;
+      }
+      const v = testVideoRef.current;
+      const url = URL.createObjectURL(file);
+      v.src = url;
+      await v.play().catch(() => {});
+      // captureStream is supported on Chromium/Firefox
+      // @ts-expect-error captureStream typing varies across browsers
+      const stream: MediaStream | null = v.captureStream ? v.captureStream() : (v.mozCaptureStream ? v.mozCaptureStream() : null);
+      if (!stream) {
+        alert('Your browser does not support video.captureStream(). Try Chrome or Firefox.');
+        return false;
+      }
+      attachStream(slot, stream, `Test Video: ${file.name}`);
+      setTestVideoName(file.name);
+      setCameraStatusMsg('');
+      return true;
+    } catch (err) {
+      console.warn('[testVideo] failed:', err);
+      return false;
+    }
+  }, []);
+
   // Fire detection state
   const fireStateRef = useRef(createFireState());
   const [fireStatus, setFireStatus] = useState<{
@@ -590,6 +624,32 @@ export default function Index() {
               )}
               <p className="text-[9px] font-mono text-muted-foreground italic">
                 Tip: start OBS Virtual Camera in OBS, then it will appear here as a source you can assign to CAM 2 for fused detection.
+              </p>
+            </div>
+
+            <div className="h-px bg-border" />
+
+            {/* Upload video for testing detection */}
+            <div className="space-y-2">
+              <label className="text-[10px] font-mono text-muted-foreground uppercase">
+                Upload test video (fire / smoke / distress clips)
+              </label>
+              <input
+                type="file"
+                accept="video/*"
+                onChange={async e => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  const ok = await handleTestVideoUpload(file, localTargetSlot);
+                  if (ok) setShowIpDialog(false);
+                }}
+                className="w-full text-[10px] font-mono file:mr-2 file:py-1 file:px-2 file:rounded file:border file:border-input file:bg-secondary/30 file:text-foreground/80 file:cursor-pointer"
+              />
+              {testVideoName && (
+                <p className="text-[9px] font-mono text-success">Loaded: {testVideoName}</p>
+              )}
+              <p className="text-[9px] font-mono text-muted-foreground italic">
+                Plays the file into the selected slot as a live stream so fused detection can process it. Great for validating fire / smoke / facial-distress logic without a live camera.
               </p>
             </div>
 

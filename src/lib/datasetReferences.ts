@@ -7,7 +7,14 @@
 
 export type DatasetRef = {
   name: string;
-  domain: 'facial-expression' | 'audio-distress' | 'object' | 'fire' | 'fall';
+  domain:
+    | 'fire-hazard'
+    | 'smoke'
+    | 'visibility'
+    | 'facial-expression'
+    | 'context-awareness'
+    | 'safety'
+    | 'keywords';
   size: string;
   license: string;
   url: string;
@@ -16,9 +23,41 @@ export type DatasetRef = {
 
 export const DATASET_REFERENCES: DatasetRef[] = [
   {
+    name: 'D-Fire Dataset',
+    domain: 'fire-hazard',
+    size: '21,000+ labeled images of fire & smoke',
+    license: 'Open (research)',
+    url: 'https://github.com/gaiasd/DFireDataset',
+    notes: 'Primary reference for fire vs. false-alarm (lighter, TV, poster) filtering.',
+  },
+  {
+    name: 'FIRESENSE',
+    domain: 'fire-hazard',
+    size: 'Fire/smoke video sequences (indoor + outdoor)',
+    license: 'Open (research)',
+    url: 'https://zenodo.org/record/836749',
+    notes: 'Flame flicker + temporal validation ground truth.',
+  },
+  {
+    name: 'Smoke100k',
+    domain: 'smoke',
+    size: '100,000 synthetic + real smoke images',
+    license: 'Academic',
+    url: 'https://bigmms.github.io/cheng_gcce19_smoke100k/',
+    notes: 'Trains the smoke-color / desaturation heuristic used in fireDetection.',
+  },
+  {
+    name: 'RESIDE (Dehazing)',
+    domain: 'visibility',
+    size: '400k+ hazy / clear image pairs',
+    license: 'Open (academic)',
+    url: 'https://sites.google.com/view/reside-dehaze-datasets',
+    notes: 'Benchmarks contrast / edge-density visibility scoring (0–100).',
+  },
+  {
     name: 'FER-2013',
     domain: 'facial-expression',
-    size: '35,887 images / 7 classes',
+    size: '35,887 images / 7 emotion classes',
     license: 'Open (Kaggle)',
     url: 'https://www.kaggle.com/datasets/msambare/fer2013',
     notes: 'Backbone of FaceExpressionNet — sad / fear / anger map to distress.',
@@ -26,65 +65,62 @@ export const DATASET_REFERENCES: DatasetRef[] = [
   {
     name: 'AffectNet',
     domain: 'facial-expression',
-    size: '~1M images / 8 classes + valence/arousal',
+    size: '~1M in-the-wild face images, 8 classes',
     license: 'Academic',
     url: 'http://mohammadmahoor.com/affectnet/',
-    notes: 'Largest in-the-wild facial-expression dataset; for future fine-tuning.',
-  },
-  {
-    name: 'RAF-DB',
-    domain: 'facial-expression',
-    size: '29,672 images, real-world, compound expressions',
-    license: 'Academic',
-    url: 'http://www.whdeng.cn/RAF/model1.html',
-    notes: 'Improves robustness to lighting/pose for crying/shouting faces.',
-  },
-  {
-    name: 'RAVDESS',
-    domain: 'audio-distress',
-    size: '7,356 vocal recordings (24 actors, 8 emotions)',
-    license: 'CC BY-NC-SA 4.0',
-    url: 'https://zenodo.org/record/1188976',
-    notes: 'Ground truth for screaming, crying, fearful and angry speech.',
-  },
-  {
-    name: 'CREMA-D',
-    domain: 'audio-distress',
-    size: '7,442 clips, 91 actors',
-    license: 'Open Database License',
-    url: 'https://github.com/CheyneyComputerScience/CREMA-D',
-    notes: 'Diverse demographic emotional speech — improves shouting detection.',
-  },
-  {
-    name: 'AudioSet (Google)',
-    domain: 'audio-distress',
-    size: '2M+ 10s YouTube clips, 632 classes (incl. screaming, crying, glass break)',
-    license: 'CC BY 4.0',
-    url: 'https://research.google.com/audioset/',
-    notes: 'Source for non-speech distress sounds (bangs, screams, crying).',
+    notes: 'Extended distress cues: crying, fear, pain grimace.',
   },
   {
     name: 'COCO',
-    domain: 'object',
-    size: '330K images / 80 classes',
+    domain: 'context-awareness',
+    size: '330K images / 80 everyday object classes',
     license: 'CC BY 4.0',
     url: 'https://cocodataset.org/',
-    notes: 'COCO-SSD model running in-browser is trained on this set.',
+    notes: 'Powers COCO-SSD context: person, tv, phone, kitchenware for activity inference.',
   },
   {
-    name: 'FireNet / D-Fire',
-    domain: 'fire',
-    size: '21K+ labeled images of fire & smoke',
-    license: 'Open (research)',
-    url: 'https://github.com/gaiasd/DFireDataset',
-    notes: 'Reference for fire false-alarm filtering benchmarks.',
+    name: 'ADE20K (Scene)',
+    domain: 'context-awareness',
+    size: '25K scene-parsed images / 150 categories',
+    license: 'BSD-3',
+    url: 'https://groups.csail.mit.edu/vision/datasets/ADE20K/',
+    notes: 'Room / scene context (kitchen, bedroom) for context-aware alert weighting.',
   },
   {
     name: 'UR Fall Detection',
-    domain: 'fall',
-    size: '70 sequences (RGB + depth)',
+    domain: 'safety',
+    size: '70 RGB + depth fall sequences',
     license: 'Academic',
     url: 'http://fenix.univ.rzeszow.pl/~mkepski/ds/uf.html',
-    notes: 'Used to validate trip / fall detection logic.',
+    notes: 'Ground truth for trip / fall / impact safety events.',
+  },
+  {
+    name: 'Le2i Fall Dataset',
+    domain: 'safety',
+    size: '191 videos across home scenarios',
+    license: 'Academic',
+    url: 'http://le2i.cnrs.fr/Fall-detection-Dataset',
+    notes: 'Improves false-positive rejection for sitting vs. falling.',
+  },
+  {
+    name: 'AudioSet — Distress Keywords',
+    domain: 'keywords',
+    size: '2M+ 10s clips, incl. scream / crying / glass break',
+    license: 'CC BY 4.0',
+    url: 'https://research.google.com/audioset/',
+    notes: 'Non-speech distress audio keywords for the always-on wake-word layer.',
+  },
+  {
+    name: 'Speech Commands v2',
+    domain: 'keywords',
+    size: '105,000 utterances / 35 short words',
+    license: 'CC BY 4.0',
+    url: 'https://www.tensorflow.org/datasets/catalog/speech_commands',
+    notes: 'Reference for low-latency wake-phrase recognition ("help", "stop", "fire").',
   },
 ];
+
+// Legacy export removed on purpose — old entries (RAF-DB, RAVDESS, CREMA-D)
+// were dropped so training data now maps 1:1 to the seven detection focus
+// areas: fire hazard, smoke, visibility, facial expression, context
+// awareness, safety, and keywords.
