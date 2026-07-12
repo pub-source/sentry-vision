@@ -187,6 +187,7 @@ export default function Index() {
   const [testVideoName, setTestVideoName] = useState<string>('');
   const handleTestVideoUpload = useCallback(async (file: File, slot: number) => {
     try {
+      console.log('[testVideo] File selected:', file.name, file.type, file.size);
       // Recreate the hidden source video every upload so switching files works.
       if (testVideoRef.current) {
         try { testVideoRef.current.pause(); } catch {}
@@ -211,20 +212,21 @@ export default function Index() {
 
       const url = URL.createObjectURL(file);
       v.src = url;
+      console.log('[testVideo] Video source assigned');
+      v.addEventListener('error', () => console.error('[testVideo] video error:', v.error));
 
-      // Wait for metadata so dimensions are known before captureStream.
+      // Wait for metadata so dimensions are known.
       await new Promise<void>((resolve, reject) => {
-        const onReady = () => { cleanup(); resolve(); };
-        const onErr = () => { cleanup(); reject(new Error('video load error')); };
+        const onMeta = () => { cleanup(); resolve(); };
+        const onErr = () => { cleanup(); reject(new Error('video load error: ' + (v.error?.message || 'unknown'))); };
         const cleanup = () => {
-          v.removeEventListener('loadeddata', onReady);
+          v.removeEventListener('loadedmetadata', onMeta);
           v.removeEventListener('error', onErr);
         };
-        v.addEventListener('loadeddata', onReady, { once: true });
+        v.addEventListener('loadedmetadata', onMeta, { once: true });
         v.addEventListener('error', onErr, { once: true });
       });
-
-      try { await v.play(); } catch (e) { console.warn('[testVideo] play blocked:', e); }
+      console.log('[testVideo] Metadata loaded', v.videoWidth + 'x' + v.videoHeight, 'dur=', v.duration);
 
       // @ts-expect-error captureStream typing varies across browsers
       const capture = v.captureStream ? v.captureStream.bind(v) : (v as any).mozCaptureStream?.bind(v);
@@ -233,17 +235,32 @@ export default function Index() {
         return false;
       }
       const stream: MediaStream = capture();
-      if (!stream || stream.getVideoTracks().length === 0) {
-        alert('Could not capture a video track from this file.');
-        return false;
-      }
+      console.log('[testVideo] captureStream tracks:', stream.getVideoTracks().length);
 
+      // Attach stream BEFORE playing so CAM slot's <video srcObject> binding is ready.
       attachStream(slot, stream, `Test Video: ${file.name}`);
       setTestVideoName(file.name);
       setCameraStatusMsg('');
+
+      try {
+        await v.play();
+        console.log('[testVideo] Playback started; paused=', v.paused, 'currentTime=', v.currentTime);
+      } catch (e) {
+        console.error('[testVideo] play() failed:', e);
+        alert('Playback blocked by browser. Interact with the page and re-upload.');
+        return false;
+      }
+
+      setTimeout(() => {
+        const t = stream.getVideoTracks()[0];
+        console.log('[testVideo] 500ms check — paused=', v.paused, 'currentTime=', v.currentTime,
+          'trackState=', t?.readyState, 'muted=', t?.muted);
+        if (v.paused || v.currentTime === 0) console.warn('[testVideo] video did not advance');
+      }, 500);
+
       return true;
     } catch (err) {
-      console.warn('[testVideo] failed:', err);
+      console.error('[testVideo] pipeline failed:', err);
       alert('Failed to load test video: ' + (err instanceof Error ? err.message : String(err)));
       return false;
     }
