@@ -182,6 +182,40 @@ export default function Index() {
   const [localTargetSlot, setLocalTargetSlot] = useState<number>(2);
   const ipCam = useIpCamera();
 
+  // Test video upload — feeds an uploaded video file into a slot as a MediaStream
+  const testVideoRef = useRef<HTMLVideoElement | null>(null);
+  const [testVideoName, setTestVideoName] = useState<string>('');
+  const handleTestVideoUpload = useCallback(async (file: File, slot: number) => {
+    try {
+      if (!testVideoRef.current) {
+        const v = document.createElement('video');
+        v.muted = true;
+        v.loop = true;
+        v.playsInline = true;
+        v.crossOrigin = 'anonymous';
+        testVideoRef.current = v;
+      }
+      const v = testVideoRef.current;
+      const url = URL.createObjectURL(file);
+      v.src = url;
+      await v.play().catch(() => {});
+      // captureStream is supported on Chromium/Firefox
+      // @ts-expect-error captureStream typing varies across browsers
+      const stream: MediaStream | null = v.captureStream ? v.captureStream() : (v.mozCaptureStream ? v.mozCaptureStream() : null);
+      if (!stream) {
+        alert('Your browser does not support video.captureStream(). Try Chrome or Firefox.');
+        return false;
+      }
+      attachStream(slot, stream, `Test Video: ${file.name}`);
+      setTestVideoName(file.name);
+      setCameraStatusMsg('');
+      return true;
+    } catch (err) {
+      console.warn('[testVideo] failed:', err);
+      return false;
+    }
+  }, []);
+
   // Fire detection state
   const fireStateRef = useRef(createFireState());
   const [fireStatus, setFireStatus] = useState<{
