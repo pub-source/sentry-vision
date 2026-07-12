@@ -187,34 +187,67 @@ export default function Index() {
   const [testVideoName, setTestVideoName] = useState<string>('');
   const handleTestVideoUpload = useCallback(async (file: File, slot: number) => {
     try {
-      if (!testVideoRef.current) {
-        const v = document.createElement('video');
-        v.muted = true;
-        v.loop = true;
-        v.playsInline = true;
-        v.crossOrigin = 'anonymous';
-        testVideoRef.current = v;
+      // Recreate the hidden source video every upload so switching files works.
+      if (testVideoRef.current) {
+        try { testVideoRef.current.pause(); } catch {}
+        try { URL.revokeObjectURL(testVideoRef.current.src); } catch {}
+        testVideoRef.current.removeAttribute('src');
+        testVideoRef.current.load();
+        if (testVideoRef.current.parentNode) testVideoRef.current.parentNode.removeChild(testVideoRef.current);
+        testVideoRef.current = null;
       }
-      const v = testVideoRef.current;
+      const v = document.createElement('video');
+      v.muted = true;
+      v.loop = true;
+      v.playsInline = true;
+      v.autoplay = true;
+      v.setAttribute('playsinline', '');
+      v.setAttribute('muted', '');
+      // Keep it in the DOM (hidden) — some browsers won't render frames for
+      // a detached <video>, which means captureStream() yields an empty track.
+      v.style.cssText = 'position:fixed;left:-9999px;top:-9999px;width:2px;height:2px;opacity:0;pointer-events:none;';
+      document.body.appendChild(v);
+      testVideoRef.current = v;
+
       const url = URL.createObjectURL(file);
       v.src = url;
-      await v.play().catch(() => {});
-      // captureStream is supported on Chromium/Firefox
+
+      // Wait for metadata so dimensions are known before captureStream.
+      await new Promise<void>((resolve, reject) => {
+        const onReady = () => { cleanup(); resolve(); };
+        const onErr = () => { cleanup(); reject(new Error('video load error')); };
+        const cleanup = () => {
+          v.removeEventListener('loadeddata', onReady);
+          v.removeEventListener('error', onErr);
+        };
+        v.addEventListener('loadeddata', onReady, { once: true });
+        v.addEventListener('error', onErr, { once: true });
+      });
+
+      try { await v.play(); } catch (e) { console.warn('[testVideo] play blocked:', e); }
+
       // @ts-expect-error captureStream typing varies across browsers
-      const stream: MediaStream | null = v.captureStream ? v.captureStream() : (v.mozCaptureStream ? v.mozCaptureStream() : null);
-      if (!stream) {
+      const capture = v.captureStream ? v.captureStream.bind(v) : (v as any).mozCaptureStream?.bind(v);
+      if (!capture) {
         alert('Your browser does not support video.captureStream(). Try Chrome or Firefox.');
         return false;
       }
+      const stream: MediaStream = capture();
+      if (!stream || stream.getVideoTracks().length === 0) {
+        alert('Could not capture a video track from this file.');
+        return false;
+      }
+
       attachStream(slot, stream, `Test Video: ${file.name}`);
       setTestVideoName(file.name);
       setCameraStatusMsg('');
       return true;
     } catch (err) {
       console.warn('[testVideo] failed:', err);
+      alert('Failed to load test video: ' + (err instanceof Error ? err.message : String(err)));
       return false;
     }
-  }, []);
+  }, [attachStream]);
 
   // Fire detection state
   const fireStateRef = useRef(createFireState());
