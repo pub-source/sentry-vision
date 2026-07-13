@@ -3,12 +3,9 @@ import { Moon, Sun, Home, LogOut, LogIn, Shield, Clock, Wifi, X, Flame, HelpCirc
 import { useNavigate } from 'react-router-dom';
 import CameraFeed from '@/components/dashboard/CameraFeed';
 import FusedDetectionView from '@/components/dashboard/FusedDetectionView';
-import AudioMeter from '@/components/dashboard/AudioMeter';
 import AlertLog from '@/components/dashboard/AlertLog';
 import ControlsPanel from '@/components/dashboard/ControlsPanel';
-import DebugPanel from '@/components/dashboard/DebugPanel';
 import AttentionGauge from '@/components/dashboard/AttentionGauge';
-import DatasetReferences from '@/components/dashboard/DatasetReferences';
 import DetectionFeedback from '@/components/dashboard/DetectionFeedback';
 import ModelCachePanel from '@/components/dashboard/ModelCachePanel';
 import TutorialOverlay, { type TutorialStep } from '@/components/dashboard/TutorialOverlay';
