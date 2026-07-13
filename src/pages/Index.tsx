@@ -312,7 +312,7 @@ export default function Index() {
     const detected = await enumerateDevices();
     // Require a connected camera (webcam OR IP/CCTV) before enabling any
     // detection pipeline. Simulation mode bypasses the requirement.
-    let hasCamera = simulationMode || ipCam.connected;
+    let hasCamera = simulationMode || ipCam.connected || !!pendingVideoRef.current;
     if (!simulationMode) {
       try {
         const started = await startCameras(quality);
