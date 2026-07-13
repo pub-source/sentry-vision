@@ -3,12 +3,9 @@ import { Moon, Sun, Home, LogOut, LogIn, Shield, Clock, Wifi, X, Flame, HelpCirc
 import { useNavigate } from 'react-router-dom';
 import CameraFeed from '@/components/dashboard/CameraFeed';
 import FusedDetectionView from '@/components/dashboard/FusedDetectionView';
-import AudioMeter from '@/components/dashboard/AudioMeter';
 import AlertLog from '@/components/dashboard/AlertLog';
 import ControlsPanel from '@/components/dashboard/ControlsPanel';
-import DebugPanel from '@/components/dashboard/DebugPanel';
 import AttentionGauge from '@/components/dashboard/AttentionGauge';
-import DatasetReferences from '@/components/dashboard/DatasetReferences';
 import DetectionFeedback from '@/components/dashboard/DetectionFeedback';
 import ModelCachePanel from '@/components/dashboard/ModelCachePanel';
 import TutorialOverlay, { type TutorialStep } from '@/components/dashboard/TutorialOverlay';
@@ -185,9 +182,12 @@ export default function Index() {
   // Test video upload — feeds an uploaded video file into a slot as a MediaStream
   const testVideoRef = useRef<HTMLVideoElement | null>(null);
   const [testVideoName, setTestVideoName] = useState<string>('');
-  const handleTestVideoUpload = useCallback(async (file: File, slot: number) => {
+  const pendingVideoRef = useRef<{ file: File; slot: number } | null>(null);
+  const startPendingTestVideo = useCallback(async () => {
+    const pending = pendingVideoRef.current;
+    if (!pending) return false;
+    const { file, slot } = pending;
     try {
-      console.log('[testVideo] File selected:', file.name, file.type, file.size);
       // Recreate the hidden source video every upload so switching files works.
       if (testVideoRef.current) {
         try { testVideoRef.current.pause(); } catch {}
@@ -204,18 +204,11 @@ export default function Index() {
       v.autoplay = true;
       v.setAttribute('playsinline', '');
       v.setAttribute('muted', '');
-      // Keep it in the DOM (hidden) — some browsers won't render frames for
-      // a detached <video>, which means captureStream() yields an empty track.
       v.style.cssText = 'position:fixed;left:-9999px;top:-9999px;width:2px;height:2px;opacity:0;pointer-events:none;';
       document.body.appendChild(v);
       testVideoRef.current = v;
-
       const url = URL.createObjectURL(file);
       v.src = url;
-      console.log('[testVideo] Video source assigned');
-      v.addEventListener('error', () => console.error('[testVideo] video error:', v.error));
-
-      // Wait for metadata so dimensions are known.
       await new Promise<void>((resolve, reject) => {
         const onMeta = () => { cleanup(); resolve(); };
         const onErr = () => { cleanup(); reject(new Error('video load error: ' + (v.error?.message || 'unknown'))); };
@@ -226,8 +219,6 @@ export default function Index() {
         v.addEventListener('loadedmetadata', onMeta, { once: true });
         v.addEventListener('error', onErr, { once: true });
       });
-      console.log('[testVideo] Metadata loaded', v.videoWidth + 'x' + v.videoHeight, 'dur=', v.duration);
-
       // @ts-expect-error captureStream typing varies across browsers
       const capture = v.captureStream ? v.captureStream.bind(v) : (v as any).mozCaptureStream?.bind(v);
       if (!capture) {
@@ -235,32 +226,16 @@ export default function Index() {
         return false;
       }
       const stream: MediaStream = capture();
-      console.log('[testVideo] captureStream tracks:', stream.getVideoTracks().length);
-
-      // Attach stream BEFORE playing so CAM slot's <video srcObject> binding is ready.
       attachStream(slot, stream, `Test Video: ${file.name}`);
-      setTestVideoName(file.name);
       setCameraStatusMsg('');
-
       try {
         await v.play();
-        console.log('[testVideo] Playback started; paused=', v.paused, 'currentTime=', v.currentTime);
       } catch (e) {
-        console.error('[testVideo] play() failed:', e);
         alert('Playback blocked by browser. Interact with the page and re-upload.');
         return false;
       }
-
-      setTimeout(() => {
-        const t = stream.getVideoTracks()[0];
-        console.log('[testVideo] 500ms check — paused=', v.paused, 'currentTime=', v.currentTime,
-          'trackState=', t?.readyState, 'muted=', t?.muted);
-        if (v.paused || v.currentTime === 0) console.warn('[testVideo] video did not advance');
-      }, 500);
-
       return true;
     } catch (err) {
-      console.error('[testVideo] pipeline failed:', err);
       alert('Failed to load test video: ' + (err instanceof Error ? err.message : String(err)));
       return false;
     }
@@ -337,7 +312,7 @@ export default function Index() {
     const detected = await enumerateDevices();
     // Require a connected camera (webcam OR IP/CCTV) before enabling any
     // detection pipeline. Simulation mode bypasses the requirement.
-    let hasCamera = simulationMode || ipCam.connected;
+    let hasCamera = simulationMode || ipCam.connected || !!pendingVideoRef.current;
     if (!simulationMode) {
       try {
         const started = await startCameras(quality);
@@ -354,6 +329,10 @@ export default function Index() {
       addAlert(msg, 'medium', 1);
       return;
     }
+    // Start any pending uploaded test video only when monitoring begins
+    if (pendingVideoRef.current) {
+      await startPendingTestVideo();
+    }
     loadModel(); // Start loading COCO-SSD model
     if (speechSupported) startSpeech();
     await startAudio().catch((err) => {
@@ -361,7 +340,7 @@ export default function Index() {
     });
     setCameraStatusMsg('');
     setRunning(true);
-  }, [simulationMode, quality, startCameras, startAudio, enumerateDevices, loadModel, speechSupported, startSpeech, ipCam.connected, addAlert]);
+  }, [simulationMode, quality, startCameras, startAudio, enumerateDevices, loadModel, speechSupported, startSpeech, ipCam.connected, addAlert, startPendingTestVideo]);
 
   const handleStop = useCallback(() => {
     setRunning(false);
@@ -690,16 +669,17 @@ export default function Index() {
                 onChange={async e => {
                   const file = e.target.files?.[0];
                   if (!file) return;
-                  const ok = await handleTestVideoUpload(file, localTargetSlot);
-                  if (ok) setShowIpDialog(false);
+                  pendingVideoRef.current = { file, slot: localTargetSlot };
+                  setTestVideoName(file.name);
+                  setShowIpDialog(false);
                 }}
                 className="w-full text-[10px] font-mono file:mr-2 file:py-1 file:px-2 file:rounded file:border file:border-input file:bg-secondary/30 file:text-foreground/80 file:cursor-pointer"
               />
               {testVideoName && (
-                <p className="text-[9px] font-mono text-success">Loaded: {testVideoName}</p>
+                <p className="text-[9px] font-mono text-success">Ready: {testVideoName} — press Start Monitoring to play.</p>
               )}
               <p className="text-[9px] font-mono text-muted-foreground italic">
-                Plays the file into the selected slot as a live stream so fused detection can process it. Great for validating fire / smoke / facial-distress logic without a live camera.
+                The video is queued and only starts playing when you press Start Monitoring. Use it to validate fire / smoke / facial-distress logic without a live camera.
               </p>
             </div>
 
@@ -908,29 +888,30 @@ export default function Index() {
       <div className="flex h-[calc(100vh-41px)]">
         {/* Left: Specialized camera grid + fusion */}
          <div className="flex-1 p-2 flex flex-col gap-2 overflow-y-auto">
-          {/* Top row: 2 cameras */}
-          <div id="tour-cams" className="grid grid-cols-2 gap-2">
-            {/* CAM 1: Object Detection */}
-            <CameraFeed
-              camera={cameras[0]}
-              mirror={mirror}
-              showBoundingBoxes={showBoundingBoxes}
-              showHeatmap={false}
-              heatmapOpacity={0}
-              saliencyMode={saliencyMode}
-              threshold={threshold}
-              simulationMode={simulationMode && running}
-              priorityObjects={priorityObjects}
-              detectionStats={detectionStats}
-              onFpsUpdate={handleFpsUpdate}
-              onObjectsUpdate={handleObjectsUpdate}
-              onSaliencyScoreUpdate={handleCameraSaliencyScore}
-              onFrameCapture={handleFrameCapture}
-              onDetectFrame={handleDetectFrame}
-              noSignalMessage={cameraStatusMsg}
-            />
+          {/* Live camera view */}
+          <div id="tour-cams">
+            {/* CAM 1 kept hidden as the detection source pipeline */}
+            <div className="hidden">
+              <CameraFeed
+                camera={cameras[0]}
+                mirror={mirror}
+                showBoundingBoxes={false}
+                showHeatmap={false}
+                heatmapOpacity={0}
+                saliencyMode={saliencyMode}
+                threshold={threshold}
+                simulationMode={simulationMode && running}
+                priorityObjects={priorityObjects}
+                detectionStats={detectionStats}
+                onFpsUpdate={handleFpsUpdate}
+                onObjectsUpdate={handleObjectsUpdate}
+                onSaliencyScoreUpdate={handleCameraSaliencyScore}
+                onFrameCapture={handleFrameCapture}
+                onDetectFrame={handleDetectFrame}
+              />
+            </div>
 
-            {/* CAM 2: Fused Detection (Activity + Speech) */}
+            {/* CAM view — fused detection is the only visible feed */}
             <FusedDetectionView
               sourceCanvas={cam2SourceCanvas || sourceCanvas}
               objects={cameras[1].active ? cameras[1].objects : cameras[0].objects}
@@ -1119,11 +1100,6 @@ export default function Index() {
               </div>
             </div>
 
-            {/* Public dataset references — academic basis */}
-            <div className="mt-2">
-              <DatasetReferences />
-            </div>
-
             {/* Model cache controls + stats */}
             <div className="mt-2">
               <ModelCachePanel />
@@ -1207,11 +1183,7 @@ export default function Index() {
 
           <AttentionGauge score={attentionScore} />
 
-          <AudioMeter features={audioFeatures} active={running} />
-
           <AlertLog alerts={alerts} visible={showAlerts} snapshots={snapshots} />
-
-          <DebugPanel cameras={cameras} devices={devices} errors={errors} detectionStats={detectionStats} />
 
           <ControlsPanel
             running={running}
