@@ -669,16 +669,17 @@ export default function Index() {
                 onChange={async e => {
                   const file = e.target.files?.[0];
                   if (!file) return;
-                  const ok = await handleTestVideoUpload(file, localTargetSlot);
-                  if (ok) setShowIpDialog(false);
+                  pendingVideoRef.current = { file, slot: localTargetSlot };
+                  setTestVideoName(file.name);
+                  setShowIpDialog(false);
                 }}
                 className="w-full text-[10px] font-mono file:mr-2 file:py-1 file:px-2 file:rounded file:border file:border-input file:bg-secondary/30 file:text-foreground/80 file:cursor-pointer"
               />
               {testVideoName && (
-                <p className="text-[9px] font-mono text-success">Loaded: {testVideoName}</p>
+                <p className="text-[9px] font-mono text-success">Ready: {testVideoName} — press Start Monitoring to play.</p>
               )}
               <p className="text-[9px] font-mono text-muted-foreground italic">
-                Plays the file into the selected slot as a live stream so fused detection can process it. Great for validating fire / smoke / facial-distress logic without a live camera.
+                The video is queued and only starts playing when you press Start Monitoring. Use it to validate fire / smoke / facial-distress logic without a live camera.
               </p>
             </div>
 
