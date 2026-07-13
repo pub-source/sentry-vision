@@ -1100,11 +1100,6 @@ export default function Index() {
               </div>
             </div>
 
-            {/* Public dataset references — academic basis */}
-            <div className="mt-2">
-              <DatasetReferences />
-            </div>
-
             {/* Model cache controls + stats */}
             <div className="mt-2">
               <ModelCachePanel />
@@ -1188,11 +1183,7 @@ export default function Index() {
 
           <AttentionGauge score={attentionScore} />
 
-          <AudioMeter features={audioFeatures} active={running} />
-
           <AlertLog alerts={alerts} visible={showAlerts} snapshots={snapshots} />
-
-          <DebugPanel cameras={cameras} devices={devices} errors={errors} detectionStats={detectionStats} />
 
           <ControlsPanel
             running={running}
