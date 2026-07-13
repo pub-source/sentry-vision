@@ -629,6 +629,10 @@ export default function Index() {
                 <div className="space-y-1 max-h-32 overflow-y-auto">
                   {devices.map((d, idx) => {
                     const inUse = cameras.some(c => c.deviceId === d.deviceId && c.active);
+                    const lower = (d.label || '').toLowerCase();
+                    const isVirtual = /obs|virtual|snap|manycam|streamlab/.test(lower);
+                    const isBuiltIn = !isVirtual && (idx === 0 || /built[- ]?in|facetime|integrated|internal/.test(lower));
+                    const kindTag = isBuiltIn ? 'Built-in' : isVirtual ? 'Virtual' : 'External';
                     return (
                       <button
                         key={d.deviceId || idx}
@@ -645,7 +649,16 @@ export default function Index() {
                             : 'bg-secondary/30 border-border hover:border-primary/50 text-foreground/80'
                         }`}
                       >
-                        {inUse ? '● ' : '○ '}{d.label || `Camera ${idx + 1}`}
+                        <span className="flex items-center justify-between gap-2">
+                          <span className="truncate">
+                            {inUse ? '● ' : '○ '}{d.label || `Camera ${idx + 1}`}
+                          </span>
+                          <span className={`text-[8px] px-1 py-0.5 rounded shrink-0 ${
+                            isBuiltIn ? 'bg-primary/20 text-primary' :
+                            isVirtual ? 'bg-accent/20 text-accent' :
+                            'bg-muted text-muted-foreground'
+                          }`}>{kindTag}</span>
+                        </span>
                       </button>
                     );
                   })}
@@ -970,7 +983,17 @@ export default function Index() {
               </button>
             ) : (
               <button
-                onClick={() => setShowIpDialog(true)}
+                onClick={async () => {
+                  setShowIpDialog(true);
+                  // Prime camera permission so built-in / USB device labels
+                  // become visible in the picker (browsers hide labels until
+                  // permission is granted at least once).
+                  try {
+                    const s = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+                    s.getTracks().forEach(t => t.stop());
+                  } catch { /* user denied — enumeration still returns deviceIds */ }
+                  enumerateDevices();
+                }}
                 className="text-[10px] font-mono px-2 py-1 rounded bg-primary/20 text-primary hover:bg-primary/30"
               >
                 + Connect
