@@ -888,29 +888,30 @@ export default function Index() {
       <div className="flex h-[calc(100vh-41px)]">
         {/* Left: Specialized camera grid + fusion */}
          <div className="flex-1 p-2 flex flex-col gap-2 overflow-y-auto">
-          {/* Top row: 2 cameras */}
-          <div id="tour-cams" className="grid grid-cols-2 gap-2">
-            {/* CAM 1: Object Detection */}
-            <CameraFeed
-              camera={cameras[0]}
-              mirror={mirror}
-              showBoundingBoxes={showBoundingBoxes}
-              showHeatmap={false}
-              heatmapOpacity={0}
-              saliencyMode={saliencyMode}
-              threshold={threshold}
-              simulationMode={simulationMode && running}
-              priorityObjects={priorityObjects}
-              detectionStats={detectionStats}
-              onFpsUpdate={handleFpsUpdate}
-              onObjectsUpdate={handleObjectsUpdate}
-              onSaliencyScoreUpdate={handleCameraSaliencyScore}
-              onFrameCapture={handleFrameCapture}
-              onDetectFrame={handleDetectFrame}
-              noSignalMessage={cameraStatusMsg}
-            />
+          {/* Live camera view */}
+          <div id="tour-cams">
+            {/* CAM 1 kept hidden as the detection source pipeline */}
+            <div className="hidden">
+              <CameraFeed
+                camera={cameras[0]}
+                mirror={mirror}
+                showBoundingBoxes={false}
+                showHeatmap={false}
+                heatmapOpacity={0}
+                saliencyMode={saliencyMode}
+                threshold={threshold}
+                simulationMode={simulationMode && running}
+                priorityObjects={priorityObjects}
+                detectionStats={detectionStats}
+                onFpsUpdate={handleFpsUpdate}
+                onObjectsUpdate={handleObjectsUpdate}
+                onSaliencyScoreUpdate={handleCameraSaliencyScore}
+                onFrameCapture={handleFrameCapture}
+                onDetectFrame={handleDetectFrame}
+              />
+            </div>
 
-            {/* CAM 2: Fused Detection (Activity + Speech) */}
+            {/* CAM view — fused detection is the only visible feed */}
             <FusedDetectionView
               sourceCanvas={cam2SourceCanvas || sourceCanvas}
               objects={cameras[1].active ? cameras[1].objects : cameras[0].objects}
