@@ -329,6 +329,10 @@ export default function Index() {
       addAlert(msg, 'medium', 1);
       return;
     }
+    // Start any pending uploaded test video only when monitoring begins
+    if (pendingVideoRef.current) {
+      await startPendingTestVideo();
+    }
     loadModel(); // Start loading COCO-SSD model
     if (speechSupported) startSpeech();
     await startAudio().catch((err) => {
@@ -336,7 +340,7 @@ export default function Index() {
     });
     setCameraStatusMsg('');
     setRunning(true);
-  }, [simulationMode, quality, startCameras, startAudio, enumerateDevices, loadModel, speechSupported, startSpeech, ipCam.connected, addAlert]);
+  }, [simulationMode, quality, startCameras, startAudio, enumerateDevices, loadModel, speechSupported, startSpeech, ipCam.connected, addAlert, startPendingTestVideo]);
 
   const handleStop = useCallback(() => {
     setRunning(false);
