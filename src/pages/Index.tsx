@@ -182,9 +182,12 @@ export default function Index() {
   // Test video upload — feeds an uploaded video file into a slot as a MediaStream
   const testVideoRef = useRef<HTMLVideoElement | null>(null);
   const [testVideoName, setTestVideoName] = useState<string>('');
-  const handleTestVideoUpload = useCallback(async (file: File, slot: number) => {
+  const pendingVideoRef = useRef<{ file: File; slot: number } | null>(null);
+  const startPendingTestVideo = useCallback(async () => {
+    const pending = pendingVideoRef.current;
+    if (!pending) return false;
+    const { file, slot } = pending;
     try {
-      console.log('[testVideo] File selected:', file.name, file.type, file.size);
       // Recreate the hidden source video every upload so switching files works.
       if (testVideoRef.current) {
         try { testVideoRef.current.pause(); } catch {}
@@ -201,18 +204,11 @@ export default function Index() {
       v.autoplay = true;
       v.setAttribute('playsinline', '');
       v.setAttribute('muted', '');
-      // Keep it in the DOM (hidden) — some browsers won't render frames for
-      // a detached <video>, which means captureStream() yields an empty track.
       v.style.cssText = 'position:fixed;left:-9999px;top:-9999px;width:2px;height:2px;opacity:0;pointer-events:none;';
       document.body.appendChild(v);
       testVideoRef.current = v;
-
       const url = URL.createObjectURL(file);
       v.src = url;
-      console.log('[testVideo] Video source assigned');
-      v.addEventListener('error', () => console.error('[testVideo] video error:', v.error));
-
-      // Wait for metadata so dimensions are known.
       await new Promise<void>((resolve, reject) => {
         const onMeta = () => { cleanup(); resolve(); };
         const onErr = () => { cleanup(); reject(new Error('video load error: ' + (v.error?.message || 'unknown'))); };
@@ -223,8 +219,6 @@ export default function Index() {
         v.addEventListener('loadedmetadata', onMeta, { once: true });
         v.addEventListener('error', onErr, { once: true });
       });
-      console.log('[testVideo] Metadata loaded', v.videoWidth + 'x' + v.videoHeight, 'dur=', v.duration);
-
       // @ts-expect-error captureStream typing varies across browsers
       const capture = v.captureStream ? v.captureStream.bind(v) : (v as any).mozCaptureStream?.bind(v);
       if (!capture) {
@@ -232,32 +226,16 @@ export default function Index() {
         return false;
       }
       const stream: MediaStream = capture();
-      console.log('[testVideo] captureStream tracks:', stream.getVideoTracks().length);
-
-      // Attach stream BEFORE playing so CAM slot's <video srcObject> binding is ready.
       attachStream(slot, stream, `Test Video: ${file.name}`);
-      setTestVideoName(file.name);
       setCameraStatusMsg('');
-
       try {
         await v.play();
-        console.log('[testVideo] Playback started; paused=', v.paused, 'currentTime=', v.currentTime);
       } catch (e) {
-        console.error('[testVideo] play() failed:', e);
         alert('Playback blocked by browser. Interact with the page and re-upload.');
         return false;
       }
-
-      setTimeout(() => {
-        const t = stream.getVideoTracks()[0];
-        console.log('[testVideo] 500ms check — paused=', v.paused, 'currentTime=', v.currentTime,
-          'trackState=', t?.readyState, 'muted=', t?.muted);
-        if (v.paused || v.currentTime === 0) console.warn('[testVideo] video did not advance');
-      }, 500);
-
       return true;
     } catch (err) {
-      console.error('[testVideo] pipeline failed:', err);
       alert('Failed to load test video: ' + (err instanceof Error ? err.message : String(err)));
       return false;
     }
