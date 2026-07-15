@@ -1186,8 +1186,26 @@ export default function Index() {
           </div>
         </div>
 
-        {/* Right sidebar */}
-        <div id="tour-sidebar" className="w-72 border-l border-border p-2 space-y-2 overflow-y-auto">
+        {/* Mobile backdrop */}
+        {sidebarOpen && (
+          <div
+            className="lg:hidden fixed inset-0 z-40 bg-background/60 backdrop-blur-sm"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
+
+        {/* Right sidebar — drawer on mobile, fixed panel on lg+ */}
+        <div
+          id="tour-sidebar"
+          className={`${sidebarOpen ? 'translate-x-0' : 'translate-x-full'} lg:translate-x-0 fixed lg:static right-0 top-0 lg:top-auto z-50 lg:z-auto h-full lg:h-auto w-72 max-w-[90vw] border-l border-border p-2 space-y-2 overflow-y-auto bg-card lg:bg-transparent transition-transform duration-200 ease-out`}
+        >
+          <button
+            onClick={() => setSidebarOpen(false)}
+            className="lg:hidden w-full flex items-center justify-end p-1 text-muted-foreground hover:text-foreground"
+            aria-label="Close controls"
+          >
+            <X className="w-4 h-4" />
+          </button>
           {/* Start/Stop */}
           <div id="tour-start" className="bg-card rounded-md border border-border panel-glow p-3">
             <button
@@ -1198,8 +1216,11 @@ export default function Index() {
                   : 'bg-primary text-primary-foreground hover:bg-primary/80'
               }`}
             >
-              {running ? '■ STOP MONITORING' : '▶ START MONITORING'}
+              {running ? '■ Stop Monitoring' : '▶ Start Monitoring'}
             </button>
+            <p className="mt-1.5 text-[10px] text-muted-foreground text-center">
+              {running ? 'Live analysis is running.' : 'Press to start watching, listening, and detecting.'}
+            </p>
           </div>
 
           <AttentionGauge score={attentionScore} />
@@ -1208,7 +1229,6 @@ export default function Index() {
 
           <ControlsPanel
             running={running}
-            saliencyMode={saliencyMode}
             threshold={threshold}
             showBoundingBoxes={showBoundingBoxes}
             showHeatmap={showHeatmap}
@@ -1220,7 +1240,6 @@ export default function Index() {
             priorityObjects={priorityObjects}
             onStart={handleStart}
             onStop={handleStop}
-            onSaliencyModeChange={setSaliencyMode}
             onThresholdChange={setThreshold}
             onToggleBoundingBoxes={() => setShowBoundingBoxes(p => !p)}
             onToggleHeatmap={() => setShowHeatmap(p => !p)}
