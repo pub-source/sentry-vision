@@ -46,8 +46,8 @@ export default function AlertLog({ alerts, visible, snapshots = [], onAlertClick
   };
 
   return (
-    <div className="bg-card rounded-md border border-border panel-glow p-3 space-y-2 max-h-[300px] overflow-y-auto">
-      <div className="flex items-center justify-between sticky top-0 bg-card pb-1">
+    <div className="bg-card rounded-md border border-border panel-glow p-3 space-y-2">
+      <div className="flex items-center justify-between bg-card pb-1">
         <span className="text-[10px] font-mono text-primary uppercase tracking-wider">
           Alerts ({alerts.length})
         </span>
@@ -84,7 +84,7 @@ export default function AlertLog({ alerts, visible, snapshots = [], onAlertClick
       {alerts.length === 0 ? (
         <p className="text-[10px] font-mono text-muted-foreground text-center py-4">No alerts</p>
       ) : (
-        <div className="space-y-1">
+        <div className="space-y-1 max-h-[168px] overflow-y-auto pr-1">
           {alerts.slice(0, 50).map(alert => {
             const snap = findSnapshot(alert);
             return (
