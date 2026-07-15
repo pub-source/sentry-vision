@@ -732,17 +732,9 @@ export default function Index() {
               />
             </div>
 
-            <div className="space-y-2">
-              <label className="text-[10px] font-mono text-muted-foreground uppercase">Assign to slot</label>
-              <select
-                value={ipTargetSlot}
-                onChange={e => setIpTargetSlot(parseInt(e.target.value, 10))}
-                className="w-full text-[11px] font-mono px-3 py-2 rounded border border-input bg-background focus:outline-none focus:ring-2 focus:ring-primary"
-              >
-                <option value={1}>CAM 1 (Raw feed)</option>
-                <option value={2}>CAM 2 (Fused detection)</option>
-              </select>
-            </div>
+            <p className="text-[10px] text-muted-foreground">
+              This IP camera will stream into CAM 2 and drive all detection.
+            </p>
 
             {ipCam.error && (
               <div className="text-[10px] font-mono text-destructive bg-destructive/10 px-2 py-1 rounded">
