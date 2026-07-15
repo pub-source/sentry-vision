@@ -1,4 +1,4 @@
-import type { SaliencyMode, QualityMode } from '@/types/dashboard';
+import type { QualityMode } from '@/types/dashboard';
 import { DETECTABLE_OBJECTS, DEFAULT_PRIORITY_OBJECTS } from '@/types/dashboard';
 
 interface ControlsPanelProps {
@@ -30,9 +30,9 @@ interface ControlsPanelProps {
 
 export default function ControlsPanel(props: ControlsPanelProps) {
   const {
-    running, saliencyMode, threshold, showBoundingBoxes, showHeatmap, showAlerts,
+    running, threshold, showBoundingBoxes, showHeatmap, showAlerts,
     quality, mirror, heatmapOpacity, simulationMode, priorityObjects, minConfidence,
-    onStart, onStop, onSaliencyModeChange, onThresholdChange,
+    onStart, onStop, onThresholdChange,
     onToggleBoundingBoxes, onToggleHeatmap, onToggleAlerts,
     onQualityChange, onToggleMirror, onHeatmapOpacityChange,
     onToggleSimulation, onPriorityObjectsChange, onMinConfidenceChange, onExportCSV,
@@ -89,26 +89,6 @@ export default function ControlsPanel(props: ControlsPanelProps) {
             {q}
           </button>
         ))}
-      </div>
-
-      {/* Saliency Mode */}
-      <div className="space-y-1">
-        <span className="text-[10px] font-mono text-muted-foreground">Saliency Style</span>
-        <div className="flex gap-1">
-          {(['sobel', 'laplacian', 'motion'] as SaliencyMode[]).map(m => (
-            <button
-              key={m}
-              onClick={() => onSaliencyModeChange(m)}
-              className={`flex-1 text-[10px] font-mono py-1 rounded border capitalize transition-all ${
-                saliencyMode === m
-                  ? 'border-primary bg-primary/10 text-primary'
-                  : 'border-border text-muted-foreground'
-              }`}
-            >
-              {m}
-            </button>
-          ))}
-        </div>
       </div>
 
       {/* Threshold */}
