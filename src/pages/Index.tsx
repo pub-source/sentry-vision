@@ -798,7 +798,7 @@ export default function Index() {
           <div className="flex items-center gap-2">
             <Shield className="w-5 h-5 text-primary" />
             <h1 className="text-sm font-semibold text-foreground tracking-tight">
-              Multimodal Saliency Detection
+              MSDSystem
             </h1>
           </div>
         </div>
@@ -813,16 +813,20 @@ export default function Index() {
             <div className={`w-1.5 h-1.5 rounded-full ${running ? 'bg-success animate-pulse' : 'bg-muted-foreground/50'}`} />
             {running ? 'Live' : 'Standby'}
           </div>
-          {householdId && (
-            <span className="flex items-center gap-1 text-[10px] font-medium text-primary bg-primary/10 px-2 py-0.5 rounded-full">
+          {user && (
+            <button
+              onClick={() => navigate('/household')}
+              className="flex items-center gap-1 text-[11px] font-medium text-primary bg-primary/10 hover:bg-primary/20 px-2.5 py-1 rounded-full transition-colors"
+              title="Open Household"
+            >
               <Home className="w-3 h-3" /> Household
-            </span>
+            </button>
           )}
         </div>
 
         {/* Right: Actions */}
         <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1 text-[10px] text-muted-foreground mr-1">
+          <div className="hidden sm:flex items-center gap-1 text-[10px] text-muted-foreground mr-1">
             <Clock className="w-3 h-3" />
             <span className="font-mono">{new Date().toLocaleTimeString()}</span>
           </div>
@@ -848,15 +852,8 @@ export default function Index() {
 
           {user && (
             <>
-              <button
-                onClick={() => navigate('/household')}
-                className="p-1.5 rounded-lg hover:bg-muted transition-colors"
-                title="Household"
-              >
-                <Home className="w-4 h-4 text-muted-foreground" />
-              </button>
-              <div className="h-4 w-px bg-border" />
-              <span className="text-[11px] text-muted-foreground max-w-[140px] truncate">{user.email}</span>
+              <div className="hidden sm:block h-4 w-px bg-border" />
+              <span className="hidden sm:inline text-[11px] text-muted-foreground max-w-[140px] truncate">{user.email}</span>
               <button
                 onClick={signOut}
                 className="p-1.5 rounded-lg hover:bg-destructive/10 transition-colors"
@@ -885,11 +882,21 @@ export default function Index() {
               </button>
             );
           })()}
+
+          {/* Mobile hamburger to open sidebar drawer */}
+          <button
+            onClick={() => setSidebarOpen(true)}
+            className="lg:hidden p-1.5 rounded-lg hover:bg-muted transition-colors"
+            title="Open controls"
+            aria-label="Open controls"
+          >
+            <Menu className="w-5 h-5 text-foreground" />
+          </button>
         </div>
       </header>
 
       {/* Main content */}
-      <div className="flex h-[calc(100vh-41px)]">
+      <div className="flex flex-col lg:flex-row h-[calc(100vh-49px)]">
         {/* Left: Specialized camera grid + fusion */}
          <div className="flex-1 p-2 flex flex-col gap-2 overflow-y-auto">
           {/* Live camera view */}
