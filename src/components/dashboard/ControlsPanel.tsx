@@ -3,7 +3,6 @@ import { DETECTABLE_OBJECTS, DEFAULT_PRIORITY_OBJECTS } from '@/types/dashboard'
 
 interface ControlsPanelProps {
   running: boolean;
-  saliencyMode: SaliencyMode;
   threshold: number;
   showBoundingBoxes: boolean;
   showHeatmap: boolean;
@@ -16,7 +15,6 @@ interface ControlsPanelProps {
   priorityObjects: string[];
   onStart: () => void;
   onStop: () => void;
-  onSaliencyModeChange: (mode: SaliencyMode) => void;
   onThresholdChange: (v: number) => void;
   onToggleBoundingBoxes: () => void;
   onToggleHeatmap: () => void;
