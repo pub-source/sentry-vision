@@ -611,19 +611,15 @@ export default function Index() {
               </button>
             </div>
 
-            {/* Local webcams (built-in / USB) — auto-detected */}
+            {/* Local webcams (built-in / USB) — auto-detected. Single-camera mode:
+                all footage streams into CAM 2 for fused detection. */}
             <div className="space-y-2">
               <label className="text-[10px] font-mono text-muted-foreground uppercase">
-                Local cameras / OBS ({devices.length} detected)
+                Available cameras ({devices.length} found)
               </label>
-              <select
-                value={localTargetSlot}
-                onChange={e => setLocalTargetSlot(parseInt(e.target.value, 10))}
-                className="w-full text-[11px] font-mono px-3 py-1.5 rounded border border-input bg-background focus:outline-none focus:ring-2 focus:ring-primary"
-              >
-                <option value={1}>Assign to CAM 1 (Raw feed)</option>
-                <option value={2}>Assign to CAM 2 (Fused detection)</option>
-              </select>
+              <p className="text-[10px] text-muted-foreground">
+                Pick a camera to stream into CAM 2. All detection runs on this feed.
+              </p>
               {devices.length === 0 ? (
                 <p className="text-[10px] font-mono text-muted-foreground italic">
                   No built-in or USB webcam detected. Connect a CCTV/IP camera below, or grant camera permission and reload.
