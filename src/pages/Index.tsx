@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { Moon, Sun, Home, LogOut, LogIn, Shield, Clock, Wifi, X, Flame, HelpCircle } from 'lucide-react';
+import { Moon, Sun, Home, LogOut, LogIn, Shield, Clock, Wifi, X, Flame, HelpCircle, Menu } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import CameraFeed from '@/components/dashboard/CameraFeed';
 import FusedDetectionView from '@/components/dashboard/FusedDetectionView';
@@ -175,8 +175,11 @@ export default function Index() {
   const [showIpDialog, setShowIpDialog] = useState(false);
   const [ipUrl, setIpUrl] = useState('');
   const [ipKind, setIpKind] = useState<'hls' | 'mjpeg' | 'image'>('hls');
-  const [ipTargetSlot, setIpTargetSlot] = useState<number>(2);
-  const [localTargetSlot, setLocalTargetSlot] = useState<number>(2);
+  // Single-camera mode: everything runs on CAM 2 (slot index 0 internally as the
+  // sole detection source). We keep constants so downstream logic stays intact.
+  const ipTargetSlot = 1;
+  const localTargetSlot = 1;
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const ipCam = useIpCamera();
 
   // Test video upload — feeds an uploaded video file into a slot as a MediaStream
