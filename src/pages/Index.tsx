@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { Moon, Sun, Home, LogOut, LogIn, Shield, Clock, Wifi, X, Flame, HelpCircle } from 'lucide-react';
+import { Moon, Sun, Home, LogOut, LogIn, Shield, Clock, Wifi, X, Flame, HelpCircle, Menu } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import CameraFeed from '@/components/dashboard/CameraFeed';
 import FusedDetectionView from '@/components/dashboard/FusedDetectionView';
@@ -175,8 +175,11 @@ export default function Index() {
   const [showIpDialog, setShowIpDialog] = useState(false);
   const [ipUrl, setIpUrl] = useState('');
   const [ipKind, setIpKind] = useState<'hls' | 'mjpeg' | 'image'>('hls');
-  const [ipTargetSlot, setIpTargetSlot] = useState<number>(2);
-  const [localTargetSlot, setLocalTargetSlot] = useState<number>(2);
+  // Single-camera mode: everything runs on CAM 2 (slot index 0 internally as the
+  // sole detection source). We keep constants so downstream logic stays intact.
+  const ipTargetSlot = 1;
+  const localTargetSlot = 1;
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const ipCam = useIpCamera();
 
   // Test video upload — feeds an uploaded video file into a slot as a MediaStream
@@ -608,19 +611,15 @@ export default function Index() {
               </button>
             </div>
 
-            {/* Local webcams (built-in / USB) — auto-detected */}
+            {/* Local webcams (built-in / USB) — auto-detected. Single-camera mode:
+                all footage streams into CAM 2 for fused detection. */}
             <div className="space-y-2">
               <label className="text-[10px] font-mono text-muted-foreground uppercase">
-                Local cameras / OBS ({devices.length} detected)
+                Available cameras ({devices.length} found)
               </label>
-              <select
-                value={localTargetSlot}
-                onChange={e => setLocalTargetSlot(parseInt(e.target.value, 10))}
-                className="w-full text-[11px] font-mono px-3 py-1.5 rounded border border-input bg-background focus:outline-none focus:ring-2 focus:ring-primary"
-              >
-                <option value={1}>Assign to CAM 1 (Raw feed)</option>
-                <option value={2}>Assign to CAM 2 (Fused detection)</option>
-              </select>
+              <p className="text-[10px] text-muted-foreground">
+                Pick a camera to stream into CAM 2. All detection runs on this feed.
+              </p>
               {devices.length === 0 ? (
                 <p className="text-[10px] font-mono text-muted-foreground italic">
                   No built-in or USB webcam detected. Connect a CCTV/IP camera below, or grant camera permission and reload.
@@ -733,17 +732,9 @@ export default function Index() {
               />
             </div>
 
-            <div className="space-y-2">
-              <label className="text-[10px] font-mono text-muted-foreground uppercase">Assign to slot</label>
-              <select
-                value={ipTargetSlot}
-                onChange={e => setIpTargetSlot(parseInt(e.target.value, 10))}
-                className="w-full text-[11px] font-mono px-3 py-2 rounded border border-input bg-background focus:outline-none focus:ring-2 focus:ring-primary"
-              >
-                <option value={1}>CAM 1 (Raw feed)</option>
-                <option value={2}>CAM 2 (Fused detection)</option>
-              </select>
-            </div>
+            <p className="text-[10px] text-muted-foreground">
+              This IP camera will stream into CAM 2 and drive all detection.
+            </p>
 
             {ipCam.error && (
               <div className="text-[10px] font-mono text-destructive bg-destructive/10 px-2 py-1 rounded">
@@ -807,7 +798,7 @@ export default function Index() {
           <div className="flex items-center gap-2">
             <Shield className="w-5 h-5 text-primary" />
             <h1 className="text-sm font-semibold text-foreground tracking-tight">
-              Multimodal Saliency Detection
+              MSDSystem
             </h1>
           </div>
         </div>
@@ -822,16 +813,20 @@ export default function Index() {
             <div className={`w-1.5 h-1.5 rounded-full ${running ? 'bg-success animate-pulse' : 'bg-muted-foreground/50'}`} />
             {running ? 'Live' : 'Standby'}
           </div>
-          {householdId && (
-            <span className="flex items-center gap-1 text-[10px] font-medium text-primary bg-primary/10 px-2 py-0.5 rounded-full">
+          {user && (
+            <button
+              onClick={() => navigate('/household')}
+              className="flex items-center gap-1 text-[11px] font-medium text-primary bg-primary/10 hover:bg-primary/20 px-2.5 py-1 rounded-full transition-colors"
+              title="Open Household"
+            >
               <Home className="w-3 h-3" /> Household
-            </span>
+            </button>
           )}
         </div>
 
         {/* Right: Actions */}
         <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1 text-[10px] text-muted-foreground mr-1">
+          <div className="hidden sm:flex items-center gap-1 text-[10px] text-muted-foreground mr-1">
             <Clock className="w-3 h-3" />
             <span className="font-mono">{new Date().toLocaleTimeString()}</span>
           </div>
@@ -857,15 +852,8 @@ export default function Index() {
 
           {user && (
             <>
-              <button
-                onClick={() => navigate('/household')}
-                className="p-1.5 rounded-lg hover:bg-muted transition-colors"
-                title="Household"
-              >
-                <Home className="w-4 h-4 text-muted-foreground" />
-              </button>
-              <div className="h-4 w-px bg-border" />
-              <span className="text-[11px] text-muted-foreground max-w-[140px] truncate">{user.email}</span>
+              <div className="hidden sm:block h-4 w-px bg-border" />
+              <span className="hidden sm:inline text-[11px] text-muted-foreground max-w-[140px] truncate">{user.email}</span>
               <button
                 onClick={signOut}
                 className="p-1.5 rounded-lg hover:bg-destructive/10 transition-colors"
@@ -894,11 +882,21 @@ export default function Index() {
               </button>
             );
           })()}
+
+          {/* Mobile hamburger to open sidebar drawer */}
+          <button
+            onClick={() => setSidebarOpen(true)}
+            className="lg:hidden p-1.5 rounded-lg hover:bg-muted transition-colors"
+            title="Open controls"
+            aria-label="Open controls"
+          >
+            <Menu className="w-5 h-5 text-foreground" />
+          </button>
         </div>
       </header>
 
       {/* Main content */}
-      <div className="flex h-[calc(100vh-41px)]">
+      <div className="flex flex-col lg:flex-row h-[calc(100vh-49px)]">
         {/* Left: Specialized camera grid + fusion */}
          <div className="flex-1 p-2 flex flex-col gap-2 overflow-y-auto">
           {/* Live camera view */}
@@ -1188,8 +1186,26 @@ export default function Index() {
           </div>
         </div>
 
-        {/* Right sidebar */}
-        <div id="tour-sidebar" className="w-72 border-l border-border p-2 space-y-2 overflow-y-auto">
+        {/* Mobile backdrop */}
+        {sidebarOpen && (
+          <div
+            className="lg:hidden fixed inset-0 z-40 bg-background/60 backdrop-blur-sm"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
+
+        {/* Right sidebar — drawer on mobile, fixed panel on lg+ */}
+        <div
+          id="tour-sidebar"
+          className={`${sidebarOpen ? 'translate-x-0' : 'translate-x-full'} lg:translate-x-0 fixed lg:static right-0 top-0 lg:top-auto z-50 lg:z-auto h-full lg:h-auto w-72 max-w-[90vw] border-l border-border p-2 space-y-2 overflow-y-auto bg-card lg:bg-transparent transition-transform duration-200 ease-out`}
+        >
+          <button
+            onClick={() => setSidebarOpen(false)}
+            className="lg:hidden w-full flex items-center justify-end p-1 text-muted-foreground hover:text-foreground"
+            aria-label="Close controls"
+          >
+            <X className="w-4 h-4" />
+          </button>
           {/* Start/Stop */}
           <div id="tour-start" className="bg-card rounded-md border border-border panel-glow p-3">
             <button
@@ -1200,8 +1216,11 @@ export default function Index() {
                   : 'bg-primary text-primary-foreground hover:bg-primary/80'
               }`}
             >
-              {running ? '■ STOP MONITORING' : '▶ START MONITORING'}
+              {running ? '■ Stop Monitoring' : '▶ Start Monitoring'}
             </button>
+            <p className="mt-1.5 text-[10px] text-muted-foreground text-center">
+              {running ? 'Live analysis is running.' : 'Press to start watching, listening, and detecting.'}
+            </p>
           </div>
 
           <AttentionGauge score={attentionScore} />
@@ -1210,7 +1229,6 @@ export default function Index() {
 
           <ControlsPanel
             running={running}
-            saliencyMode={saliencyMode}
             threshold={threshold}
             showBoundingBoxes={showBoundingBoxes}
             showHeatmap={showHeatmap}
@@ -1222,7 +1240,6 @@ export default function Index() {
             priorityObjects={priorityObjects}
             onStart={handleStart}
             onStop={handleStop}
-            onSaliencyModeChange={setSaliencyMode}
             onThresholdChange={setThreshold}
             onToggleBoundingBoxes={() => setShowBoundingBoxes(p => !p)}
             onToggleHeatmap={() => setShowHeatmap(p => !p)}
