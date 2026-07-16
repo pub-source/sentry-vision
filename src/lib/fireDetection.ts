@@ -44,9 +44,9 @@ export function createFireState(): FireDetectorState {
 
 const SCREEN_LABELS = new Set(['tv', 'cell phone', 'laptop', 'monitor']);
 
-const MIN_FIRE_RATIO = 0.008;
-const LIGHTER_AREA_RATIO = 0.004;
-const MIN_FLICKER = 0.000004;
+const MIN_FIRE_RATIO = 0.004;
+const LIGHTER_AREA_RATIO = 0.002;
+const MIN_FLICKER = 0.000002;
 // Smoke emergency: smoke must cover meaningful area AND drop visibility.
 const SMOKE_COVERAGE_HIGH = 0.18;     // ≥18% of frame
 const VISIBILITY_LOW = 45;            // visibility score (0..100)
@@ -256,7 +256,7 @@ export function detectFire(
   // Vanishing visibility while flames present -> boost.
   if (visibility < 60) conf = Math.min(1, conf + 0.1);
 
-  const fireDetected = conf > 0.4;
+  const fireDetected = conf > 0.3;
   return {
     ...baseResult,
     detected: fireDetected || smokeEmergency,
