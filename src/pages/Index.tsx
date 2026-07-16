@@ -520,7 +520,7 @@ export default function Index() {
     const interval = window.setInterval(() => {
       try {
         const ctx = target.getContext('2d');
-        if (!ctx) return;
+        if (!ctx || target.width === 0 || target.height === 0) return;
         const frame = ctx.getImageData(0, 0, target.width, target.height);
         const result = detectFire(frame, fireStateRef.current, fusedObjs);
         setFireStatus({
@@ -532,11 +532,12 @@ export default function Index() {
           visibility: result.visibility,
           reason: result.rejectedReason,
         });
-        if (result.detected && Date.now() - fireCooldown.current > 5000) {
+        if (result.detected && Date.now() - fireCooldown.current > 3000) {
           fireCooldown.current = Date.now();
           if (result.fireDetected) {
             addAlert(`Fire detected (${Math.round(result.confidence * 100)}% conf)`, 'critical', 1);
             logAlert('fire', `Fire signature confirmed (ratio ${result.firePixelRatio.toFixed(3)}, flicker ${result.flickerScore.toExponential(2)}, smoke ${(result.smokeRatio * 100).toFixed(1)}%, visibility ${result.visibility}/100)`);
+            setShowEmergency(true);
           } else if (result.smokeEmergency) {
             addAlert(`Heavy smoke - visibility ${result.visibility}/100`, 'high', 1);
             logAlert('smoke', `Smoke emergency: coverage ${(result.smokeRatio * 100).toFixed(1)}%, visibility ${result.visibility}/100`);
@@ -545,7 +546,7 @@ export default function Index() {
       } catch (err) {
         // Canvas may be tainted by cross-origin IP cam — skip silently
       }
-    }, 500);
+    }, 250);
     return () => window.clearInterval(interval);
   }, [running, sourceCanvas, cam2SourceCanvas, cameras, addAlert, logAlert]);
 
@@ -557,17 +558,34 @@ export default function Index() {
     const lastAlertRef = { current: 0 };
     const interval = window.setInterval(() => {
       faceDistress.analyze(target);
-    }, 700);
+    }, 350);
     return () => window.clearInterval(interval);
   }, [running, faceDistress.ready, faceDistress, cam2SourceCanvas, sourceCanvas]);
 
-  // Alert on severe facial distress
+  // Alert on facial distress (mild + severe)
   useEffect(() => {
-    if (faceDistress.distress.distressLevel === 'severe' && running) {
-      addAlert(`Facial distress: ${faceDistress.distress.expression} (${faceDistress.distress.distressScore}%)`, 'high', 2);
-      logAlert('facial_distress', `Facial distress detected: ${faceDistress.distress.expression}`);
+    if (!running) return;
+    const lvl = faceDistress.distress.distressLevel;
+    if (lvl === 'severe') {
+      addAlert(`Facial distress: ${faceDistress.distress.expression} (${faceDistress.distress.distressScore}%)`, 'critical', 2);
+      logAlert('facial_distress', `Severe facial distress: ${faceDistress.distress.expression}`);
+      setShowEmergency(true);
+    } else if (lvl === 'mild') {
+      addAlert(`Possible distress: ${faceDistress.distress.expression} (${faceDistress.distress.distressScore}%)`, 'high', 2);
     }
   }, [faceDistress.distress.distressLevel, faceDistress.distress.expression, faceDistress.distress.distressScore, running, addAlert, logAlert]);
+
+  // Alert on YAMNet audio distress (screams, crying, wails)
+  useEffect(() => {
+    if (!running) return;
+    if (yamnet.distressScore >= 60) {
+      addAlert(`Audio distress: ${yamnet.topLabel} (${yamnet.distressScore}%)`, 'critical', 0);
+      logAlert('audio_distress', `YAMNet distress: ${yamnet.topLabel} (${yamnet.distressScore}%)`);
+      setShowEmergency(true);
+    } else if (yamnet.distressScore >= 35) {
+      addAlert(`Elevated audio: ${yamnet.topLabel} (${yamnet.distressScore}%)`, 'high', 0);
+    }
+  }, [yamnet.distressScore, yamnet.topLabel, running, addAlert, logAlert]);
 
   const exportCSV = useCallback(() => {
     const rows = [
