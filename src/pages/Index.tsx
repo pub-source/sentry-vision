@@ -1032,8 +1032,9 @@ export default function Index() {
               const audioComponent = audioFeatures.speechDetected
                 ? Math.min(100, Math.abs(audioFeatures.decibel) + 20)
                 : Math.min(100, Math.max(0, (audioFeatures.decibel + 50) * 1.5));
-              const objectComponent = cameras[0].objects.length > 0
-                ? Math.min(100, cameras[0].objects.reduce((s, o) => s + o.confidence * 100, 0) / cameras[0].objects.length)
+              const activeObjs = cameras[1].active ? cameras[1].objects : cameras[0].objects;
+              const objectComponent = activeObjs.length > 0
+                ? Math.min(100, activeObjs.reduce((s, o) => s + o.confidence * 100, 0) / activeObjs.length)
                 : 0;
               const sContrib = Math.round(0.4 * globalSaliencyScore);
               const aContrib = Math.round(0.3 * audioComponent);
@@ -1041,7 +1042,7 @@ export default function Index() {
               const rows: Array<{ label: string; value: number; weight: number; contrib: number; color: string; explain: string }> = [
                 { label: 'Visual Saliency (S)', value: globalSaliencyScore, weight: 40, contrib: sContrib, color: 'bg-primary',     explain: 'Edge + motion energy from CAM 1 frame' },
                 { label: 'Audio Energy (A)',    value: Math.round(audioComponent), weight: 30, contrib: aContrib, color: 'bg-warning',     explain: audioFeatures.speechDetected ? 'Speech + dB level' : 'Ambient dB level' },
-                { label: 'Object Confidence (O)', value: Math.round(objectComponent), weight: 30, contrib: oContrib, color: 'bg-accent',    explain: `${cameras[0].objects.length} object(s) avg confidence` },
+                { label: 'Object Confidence (O)', value: Math.round(objectComponent), weight: 30, contrib: oContrib, color: 'bg-accent',    explain: `${activeObjs.length} object(s) avg confidence` },
               ];
               return (
                 <div className="space-y-1.5">
